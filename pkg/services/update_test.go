@@ -199,13 +199,17 @@ func TestIsVersionNewer(t *testing.T) {
 
 func TestFindDownloadURL_PrefersExactPlatformMatch(t *testing.T) {
 	svc := &UpdateServiceImpl{}
+	otherOS := "windows"
+	if runtime.GOOS == "windows" {
+		otherOS = "linux"
+	}
 	release := &GitHubRelease{
 		Assets: []struct {
 			Name               string `json:"name"`
 			BrowserDownloadURL string `json:"browser_download_url"`
 			Size               int64  `json:"size"`
 		}{
-			{Name: "argonaut-1.0.0-windows-amd64.zip", BrowserDownloadURL: "https://example.com/win.zip"},
+			{Name: "argonaut-1.0.0-" + otherOS + "-amd64.zip", BrowserDownloadURL: "https://example.com/other.zip"},
 			{Name: fmt.Sprintf("argonaut-1.0.0-%s-%s.tar.gz", runtime.GOOS, runtime.GOARCH), BrowserDownloadURL: "https://example.com/native.tar.gz"},
 			{Name: "argonaut-1.0.0-darwin-arm64.tar.gz", BrowserDownloadURL: "https://example.com/mac.tar.gz"},
 		},

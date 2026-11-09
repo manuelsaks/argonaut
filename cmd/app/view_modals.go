@@ -39,7 +39,7 @@ func (m *Model) renderHelpModal() string {
 		"\n",
 		mono(":appsets"), "|", mono(":applicationsets"), " ", bullet(), " ", mono(":theme"), " ", bullet(), " ", mono(":logs"),
 		"\n",
-		mono(":context"), "|", mono(":contexts"), "|", mono(":ctx"), "|", mono(":argocd"), " [name] ",
+		mono("c"), " Argo CD contexts ", bullet(), " ", mono(":ctx"), " [name] ",
 	}, "")
 
 	// COMMANDS

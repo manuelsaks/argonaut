@@ -128,6 +128,11 @@ func NewClient(server *model.Server) *Client {
 	streamHTTPClient := &http.Client{
 		Transport: streamTransport,
 	}
+	// Bearer credentials must never leave the original origin, even when Go's
+	// default redirect policy would forward them to the same hostname over HTTP.
+	redirectPolicy := sameOriginRedirectPolicy(httpClient.CheckRedirect)
+	httpClient.CheckRedirect = redirectPolicy
+	streamHTTPClient.CheckRedirect = redirectPolicy
 
 	return &Client{
 		baseURL:          server.BaseURL,
@@ -137,6 +142,37 @@ func NewClient(server *model.Server) *Client {
 		insecure:         server.Insecure,
 		grpcWebRootPath:  server.GrpcWebRootPath,
 	}
+}
+
+func sameOriginRedirectPolicy(next func(*http.Request, []*http.Request) error) func(*http.Request, []*http.Request) error {
+	return func(req *http.Request, via []*http.Request) error {
+		if len(via) == 0 {
+			return fmt.Errorf("redirect without an original request")
+		}
+		origin := via[0].URL
+		if !strings.EqualFold(req.URL.Scheme, origin.Scheme) ||
+			!strings.EqualFold(req.URL.Hostname(), origin.Hostname()) ||
+			effectivePort(req.URL) != effectivePort(origin) {
+			return fmt.Errorf("refusing Argo CD redirect to a different origin")
+		}
+		if len(via) >= 10 {
+			return fmt.Errorf("stopped after 10 redirects")
+		}
+		if next != nil {
+			return next(req, via)
+		}
+		return nil
+	}
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	if strings.EqualFold(u.Scheme, "https") {
+		return "443"
+	}
+	return "80"
 }
 
 // sanitizeURL removes any embedded credentials from a URL for safe logging

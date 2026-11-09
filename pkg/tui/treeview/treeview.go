@@ -70,15 +70,16 @@ type TreeView struct {
 
 // ResourceSelection represents a selected resource for deletion
 type ResourceSelection struct {
-	AppName   string
-	Group     string
-	Version   string
-	Kind      string
-	Namespace string
-	Name      string
-	UID       string // Kubernetes object UID (without the treeview's appName:: prefix)
-	Status    string // Sync status (e.g., "Synced", "OutOfSync", "Missing")
-	Health    string // Health status (e.g., "Healthy", "Degraded", "Missing")
+	AppName      string
+	AppNamespace *string
+	Group        string
+	Version      string
+	Kind         string
+	Namespace    string
+	Name         string
+	UID          string // Kubernetes object UID (without the treeview's appName:: prefix)
+	Status       string // Sync status (e.g., "Synced", "OutOfSync", "Missing")
+	Health       string // Health status (e.g., "Healthy", "Degraded", "Missing")
 	// HealthMessage is the controller's explanation of the health status
 	HealthMessage string
 	// CreatedAt is the resource's creation time; zero when unknown
@@ -286,6 +287,7 @@ func (v *TreeView) SetData(tree *api.ResourceTree) {
 
 // UpsertAppTree replaces/adds a single application's tree under a synthetic root
 func (v *TreeView) UpsertAppTree(appName string, tree *api.ResourceTree) {
+	applicationName, applicationNamespace := model.SplitAppKey(appName)
 	// Remove existing app entries
 	if keys, ok := v.nodesByApp[appName]; ok {
 		for _, k := range keys {
@@ -369,7 +371,8 @@ func (v *TreeView) UpsertAppTree(appName string, tree *api.ResourceTree) {
 	// Promote any children of the filtered node to roots.
 	filtered := make([]*treeNode, 0, len(tempRoots))
 	for _, node := range tempRoots {
-		if node.kind == "Application" && node.name == appName {
+		if node.kind == "Application" && node.name == applicationName &&
+			(applicationNamespace == "" || node.namespace == applicationNamespace) {
 			for _, child := range node.children {
 				child.parent = nil
 				filtered = append(filtered, child)
@@ -1108,8 +1111,10 @@ func (v *TreeView) SelectedResourceDetail() (ResourceSelection, bool) {
 		appName = node.uid[:idx]
 		uid = node.uid[idx+2:]
 	}
+	appName, appNamespace := splitApplicationKey(appName)
 	return ResourceSelection{
 		AppName:       appName,
+		AppNamespace:  appNamespace,
 		Group:         node.group,
 		Version:       node.version,
 		Kind:          node.kind,
@@ -1126,6 +1131,14 @@ func (v *TreeView) SelectedResourceDetail() (ResourceSelection, bool) {
 // GetAppName returns the name of the application being displayed.
 func (v *TreeView) GetAppName() string {
 	return v.appName
+}
+
+func splitApplicationKey(key string) (string, *string) {
+	name, namespace := model.SplitAppKey(key)
+	if namespace == "" {
+		return name, nil
+	}
+	return name, &namespace
 }
 
 // IsSelectedSyntheticRoot returns true if the currently selected node is a synthetic
@@ -1213,15 +1226,17 @@ func (v *TreeView) GetSelectedResources() []ResourceSelection {
 				if idx := strings.Index(uid, "::"); idx > 0 {
 					appName = uid[:idx]
 				}
+				appName, appNamespace := splitApplicationKey(appName)
 				result = append(result, ResourceSelection{
-					AppName:   appName,
-					Group:     node.group,
-					Version:   node.version,
-					Kind:      node.kind,
-					Namespace: node.namespace,
-					Name:      node.name,
-					Status:    node.status,
-					Health:    node.health,
+					AppName:      appName,
+					AppNamespace: appNamespace,
+					Group:        node.group,
+					Version:      node.version,
+					Kind:         node.kind,
+					Namespace:    node.namespace,
+					Name:         node.name,
+					Status:       node.status,
+					Health:       node.health,
 				})
 			}
 		}
@@ -1236,15 +1251,17 @@ func (v *TreeView) GetSelectedResources() []ResourceSelection {
 			if idx := strings.Index(node.uid, "::"); idx > 0 {
 				appName = node.uid[:idx]
 			}
+			appName, appNamespace := splitApplicationKey(appName)
 			result = append(result, ResourceSelection{
-				AppName:   appName,
-				Group:     node.group,
-				Version:   node.version,
-				Kind:      node.kind,
-				Namespace: node.namespace,
-				Name:      node.name,
-				Status:    node.status,
-				Health:    node.health,
+				AppName:      appName,
+				AppNamespace: appNamespace,
+				Group:        node.group,
+				Version:      node.version,
+				Kind:         node.kind,
+				Namespace:    node.namespace,
+				Name:         node.name,
+				Status:       node.status,
+				Health:       node.health,
 			})
 		}
 	}

@@ -20,9 +20,11 @@ ARGOCD_HOST ?= localhost
 
 # Local git daemon defaults — serves this repo to the k3d cluster via
 # host.k3d.internal so ArgoCD can resolve it without any remote push.
-# The daemon exposes all repos under GIT_DAEMON_BASE_PATH.
+# Only the explicit repositories below may be exported. Other siblings are private.
 GIT_DAEMON_PORT ?= 9418
 GIT_DAEMON_BASE_PATH ?= $(abspath $(CURDIR)/..)
+GIT_DAEMON_LISTEN ?= 127.0.0.1
+GIT_DAEMON_REPOSITORIES ?= "$(CURDIR)" "$(GIT_DAEMON_BASE_PATH)/argonaut-sync-fixtures-repo" "$(GIT_DAEMON_BASE_PATH)/argonaut-history-repo"
 
 # Dev loop: bring up the ArgoCD environment, then run the app under a
 # file watcher — every .go save recompiles and restarts the TUI.
@@ -101,18 +103,20 @@ argocd-git-daemon:
 		echo "git daemon already running (PID $$(cat .argocd-gitdaemon.pid))."; \
 		exit 0; \
 	fi
-	@# Free the port if a stale daemon is bound
-	@fuser -k -TERM $(GIT_DAEMON_PORT)/tcp 2>/dev/null || true
 	@rm -f .argocd-gitdaemon.pid
 	@sleep 0.2
-	@echo "Starting git daemon on :$(GIT_DAEMON_PORT) serving $(GIT_DAEMON_BASE_PATH) ..."
-	@setsid -f git daemon --reuseaddr --listen=0.0.0.0 --port=$(GIT_DAEMON_PORT) \
-		--base-path=$(GIT_DAEMON_BASE_PATH) --export-all --informative-errors \
-		>/tmp/argocd-gitdaemon.log 2>&1 < /dev/null & \
-		echo $$! > .argocd-gitdaemon.pid
+	@echo "Starting git daemon on $(GIT_DAEMON_LISTEN):$(GIT_DAEMON_PORT) with an explicit repository allowlist ..."
+	@setsid -f git daemon --pid-file="$(CURDIR)/.argocd-gitdaemon.pid" --log-destination=stderr \
+		--reuseaddr --listen="$(GIT_DAEMON_LISTEN)" --port=$(GIT_DAEMON_PORT) \
+		--base-path="$(GIT_DAEMON_BASE_PATH)" --export-all --strict-paths \
+		-- $(GIT_DAEMON_REPOSITORIES) \
+		>/tmp/argocd-gitdaemon.log 2>&1 < /dev/null
 	@# Wait until the daemon is accepting connections (bash required for /dev/tcp)
 	@for i in $$(seq 1 40); do \
-		if bash -c "exec 3<>/dev/tcp/127.0.0.1/$(GIT_DAEMON_PORT); exec 3<&-" 2>/dev/null; then \
+		if [ -f .argocd-gitdaemon.pid ] && ! kill -0 $$(cat .argocd-gitdaemon.pid) 2>/dev/null; then \
+			echo "git daemon exited; see /tmp/argocd-gitdaemon.log" >&2; exit 1; \
+		fi; \
+		if [ -f .argocd-gitdaemon.pid ] && bash -c "exec 3<>/dev/tcp/$(GIT_DAEMON_LISTEN)/$(GIT_DAEMON_PORT); exec 3<&-" 2>/dev/null; then \
 			echo "git daemon ready (PID $$(cat .argocd-gitdaemon.pid))."; \
 			exit 0; \
 		fi; \
@@ -129,8 +133,7 @@ argocd-git-daemon-stop:
 		kill $$PID 2>/dev/null || true; \
 		rm -f .argocd-gitdaemon.pid; \
 	else \
-		echo "No git daemon PID file; freeing port $(GIT_DAEMON_PORT) if bound..."; \
-		fuser -k -TERM $(GIT_DAEMON_PORT)/tcp 2>/dev/null || true; \
+		echo "No git daemon PID file; nothing to stop."; \
 	fi
 
 # Restart ArgoCD environment (stop, then full setup again)

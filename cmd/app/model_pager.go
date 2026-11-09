@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 	cblog "github.com/charmbracelet/log"
+	"github.com/darksworm/argonaut/pkg/model"
 )
 
 // pagerDoneMsg signals that an external pager has closed
@@ -16,11 +18,25 @@ type pagerDoneMsg struct{ Err error }
 type pauseRenderingMsg struct{}
 type resumeRenderingMsg struct{}
 
+// textPagerMsg transfers content to the UI loop without requiring an external
+// pager. Capture the epoch before starting the operation that produces it.
+type textPagerMsg struct {
+	Title, Text string
+	SwitchEpoch int
+}
+
 // SetProgram stores the Bubble Tea program pointer for terminal hand-off
 func (m *Model) SetProgram(p *tea.Program) { m.program = p }
 
-// openTextPager releases the terminal and runs less -R with the given text
+// openTextPager uses the built-in pager on Windows or when less is unavailable.
 func (m *Model) openTextPager(title, text string) tea.Cmd {
+	return m.openTextPagerForEpoch(title, text, m.switchEpoch)
+}
+
+func (m *Model) openTextPagerForEpoch(title, text string, epoch int) tea.Cmd {
+	if runtime.GOOS == "windows" || !inPath("less") {
+		return func() tea.Msg { return textPagerMsg{Title: title, Text: text, SwitchEpoch: epoch} }
+	}
 	return func() tea.Msg {
 		if m.program != nil {
 			m.program.Send(pauseRenderingMsg{})
@@ -66,9 +82,7 @@ func (m *Model) openInteractiveDiffViewer(leftFile, rightFile, cmdStr string) te
 		}
 	}()
 
-	cmdStr = strings.ReplaceAll(cmdStr, "{left}", shellEscape(leftFile))
-	cmdStr = strings.ReplaceAll(cmdStr, "{right}", shellEscape(rightFile))
-	c := exec.Command("sh", "-lc", cmdStr)
+	c := diffViewerCommand(cmdStr, leftFile, rightFile)
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
@@ -100,14 +114,24 @@ func (m *Model) runDiffFormatterWithTitle(diffText string, resourceName string) 
 	if cmdStr == "" {
 		return diffText, nil
 	}
-	c := exec.Command("sh", "-lc", cmdStr)
-	if cols > 0 {
-		c.Env = append(os.Environ(), fmt.Sprintf("COLUMNS=%d", cols), "DELTA_PAGER=cat")
+	var c *exec.Cmd
+	if usingDelta {
+		// Auto-detected native executables do not need a shell.
+		args := []string{"--side-by-side", "--line-numbers", "--navigate", "--paging=never"}
+		if cols > 0 {
+			args = append(args, fmt.Sprintf("--width=%d", cols))
+		}
+		c = exec.Command("delta", args...)
 	} else {
-		c.Env = append(os.Environ(), "DELTA_PAGER=cat")
+		c = configuredShellCommand(cmdStr, true)
+	}
+	if cols > 0 {
+		c.Env = append(os.Environ(), fmt.Sprintf("COLUMNS=%d", cols))
+	} else {
+		c.Env = os.Environ()
 	}
 	c.Stdin = strings.NewReader(diffText)
-	out, err := c.CombinedOutput()
+	out, err := c.Output()
 	if err != nil {
 		return diffText, err
 	}
@@ -156,7 +180,26 @@ func inPath(name string) bool {
 	_, err := exec.LookPath(name)
 	return err == nil
 }
-func shellEscape(s string) string { return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'" }
+
+// Paths stay in environment values rather than being interpolated into shell
+// code. A filename containing quotes or shell metacharacters remains one arg.
+func diffViewerCommand(command, left, right string) *exec.Cmd {
+	for _, binding := range []struct{ placeholder, variable string }{
+		{"{left}", "ARGONAUT_DIFF_LEFT"}, {"{right}", "ARGONAUT_DIFF_RIGHT"},
+	} {
+		argument := shellEnvironmentArgument(binding.variable)
+		command = strings.NewReplacer(`"`+binding.placeholder+`"`, argument,
+			"'"+binding.placeholder+"'", argument, binding.placeholder, argument).Replace(command)
+	}
+	c := configuredShellCommand(command, false)
+	c.Env = append(os.Environ(), "ARGONAUT_DIFF_LEFT="+left, "ARGONAUT_DIFF_RIGHT="+right)
+	return c
+}
+
+func (m *Model) showTextPager(msg textPagerMsg) {
+	m.state.Diff = &model.DiffState{Title: msg.Title, Content: strings.Split(strings.ReplaceAll(msg.Text, "\r\n", "\n"), "\n")}
+	m.state.Mode = model.ModeDiff
+}
 
 // k9sResourceMap maps Kubernetes resource kinds to k9s resource aliases
 var k9sResourceMap = map[string]string{

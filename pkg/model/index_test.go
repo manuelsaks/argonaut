@@ -15,8 +15,8 @@ func TestBuildAppIndex_Empty(t *testing.T) {
 	if len(idx.Clusters) != 0 {
 		t.Errorf("expected 0 clusters, got %d", len(idx.Clusters))
 	}
-	if len(idx.NameToIndex) != 0 {
-		t.Errorf("expected empty NameToIndex, got %d entries", len(idx.NameToIndex))
+	if len(idx.KeyToIndex) != 0 {
+		t.Errorf("expected empty KeyToIndex, got %d entries", len(idx.KeyToIndex))
 	}
 }
 
@@ -41,8 +41,8 @@ func TestBuildAppIndex_SingleApp(t *testing.T) {
 	if !reflect.DeepEqual(idx.ApplicationSets, []string{"web-set"}) {
 		t.Errorf("ApplicationSets = %v, want [web-set]", idx.ApplicationSets)
 	}
-	if i, ok := idx.NameToIndex["web"]; !ok || i != 0 {
-		t.Errorf("NameToIndex[web] = %d, %v; want 0, true", i, ok)
+	if i, ok := idx.KeyToIndex["web"]; !ok || i != 0 {
+		t.Errorf("KeyToIndex[web] = %d, %v; want 0, true", i, ok)
 	}
 }
 
@@ -67,8 +67,8 @@ func TestBuildAppIndex_NilFields(t *testing.T) {
 	if len(idx.ApplicationSets) != 0 {
 		t.Errorf("expected 0 appsets for nil ApplicationSet, got %v", idx.ApplicationSets)
 	}
-	if _, ok := idx.NameToIndex["bare"]; !ok {
-		t.Error("expected NameToIndex to contain 'bare'")
+	if _, ok := idx.KeyToIndex["bare"]; !ok {
+		t.Error("expected KeyToIndex to contain 'bare'")
 	}
 }
 
@@ -102,11 +102,19 @@ func TestBuildAppIndex_MultipleApps_SortedUnique(t *testing.T) {
 	if !reflect.DeepEqual(idx.ByCluster["staging"], []int{1}) {
 		t.Errorf("ByCluster[staging] = %v, want [1]", idx.ByCluster["staging"])
 	}
-	// NameToIndex
+	// KeyToIndex
 	for i, app := range apps {
-		if idx.NameToIndex[app.Name] != i {
-			t.Errorf("NameToIndex[%s] = %d, want %d", app.Name, idx.NameToIndex[app.Name], i)
+		if idx.KeyToIndex[app.Key()] != i {
+			t.Errorf("KeyToIndex[%s] = %d, want %d", app.Key(), idx.KeyToIndex[app.Key()], i)
 		}
+	}
+}
+
+func TestBuildAppIndex_SameNameDifferentNamespaces(t *testing.T) {
+	apps := []App{{Name: "shared", AppNamespace: strPtr("team-a")}, {Name: "shared", AppNamespace: strPtr("team-b")}}
+	idx := BuildAppIndex(apps)
+	if len(idx.KeyToIndex) != 2 || idx.KeyToIndex["team-a/shared"] != 0 || idx.KeyToIndex["team-b/shared"] != 1 {
+		t.Fatalf("application identities collided: %v", idx.KeyToIndex)
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -269,7 +269,7 @@ func classifyWatchEvent(ev services.ArgoApiEvent, epoch int) eventResult {
 		}
 	case "app-deleted":
 		if ev.AppName != "" {
-			return eventResult{deleteName: ev.AppName}
+			return eventResult{deleteName: model.AppKey(ev.AppName, &ev.AppNamespace)}
 		}
 	case "apps-loaded":
 		if ev.Apps != nil {
@@ -490,13 +490,17 @@ func stringSlicesEqual(a, b []string) bool {
 
 // startDiffSession loads diffs and opens the diff pager
 func (m *Model) startDiffSession(appName string, appNamespace *string) tea.Cmd {
+	epoch := m.switchEpoch
+	app, err := m.operationApplication(appName, appNamespace)
+	if err != nil {
+		return func() tea.Msg { return model.ApiErrorMsg{Message: err.Error(), SwitchEpoch: epoch} }
+	}
+	appName, appNamespace = app.Name, app.AppNamespace
 	if m.state.Server == nil {
-		epoch := m.switchEpoch
 		return func() tea.Msg {
 			return model.ApiErrorMsg{Message: "No server configured", SwitchEpoch: epoch}
 		}
 	}
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		ctx, cancel := appcontext.WithMinAPITimeout(context.Background(), 45*time.Second)
@@ -544,16 +548,17 @@ func (m *Model) startDiffSession(appName string, appNamespace *string) tea.Cmd {
 			return model.SetModeMsg{Mode: model.ModeNoDiff}
 		}
 
-		leftFile, _ := writeTempYAML("current-", normalizedDocs)
-		rightFile, _ := writeTempYAML("predicted-", predictedDocs)
-
-		// Build raw unified diff via git (no color so delta can format it)
-		cmd := exec.Command("git", "--no-pager", "diff", "--no-index", "--no-color", "--", leftFile, rightFile)
-		out, err := cmd.CombinedOutput()
-		if err != nil && cmd.ProcessState != nil && cmd.ProcessState.ExitCode() != 1 {
+		leftFile, rightFile, cleanup, err := writeDiffFiles(normalizedDocs, predictedDocs)
+		if err != nil {
 			return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
 		}
-		cleaned := stripDiffHeader(string(out))
+		defer cleanup()
+
+		// Build raw unified diff via git (no color so delta can format it)
+		cleaned, err := unifiedDiff(leftFile, rightFile)
+		if err != nil {
+			return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
+		}
 		if strings.TrimSpace(cleaned) == "" {
 			return model.SetModeMsg{Mode: model.ModeNoDiff}
 		}
@@ -569,7 +574,7 @@ func (m *Model) startDiffSession(appName string, appNamespace *string) tea.Cmd {
 			formatted = formattedOut
 		}
 		title := fmt.Sprintf("%s - Live vs Desired", appName)
-		return m.openTextPager(title, formatted)()
+		return m.openTextPagerForEpoch(title, formatted, epoch)()
 	}
 }
 
@@ -621,15 +626,16 @@ func (m *Model) startResourceDiffSession(res ResourceIdentifier) tea.Cmd {
 		}
 
 		// Use existing diff generation infrastructure
-		leftFile, _ := writeTempYAML("current-", []string{normalizedYAML})
-		rightFile, _ := writeTempYAML("predicted-", []string{predictedYAML})
-
-		cmd := exec.Command("git", "--no-pager", "diff", "--no-index", "--no-color", "--", leftFile, rightFile)
-		out, err := cmd.CombinedOutput()
-		if err != nil && cmd.ProcessState != nil && cmd.ProcessState.ExitCode() != 1 {
+		leftFile, rightFile, cleanup, err := writeDiffFiles([]string{normalizedYAML}, []string{predictedYAML})
+		if err != nil {
 			return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
 		}
-		cleaned := stripDiffHeader(string(out))
+		defer cleanup()
+
+		cleaned, err := unifiedDiff(leftFile, rightFile)
+		if err != nil {
+			return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
+		}
 		if strings.TrimSpace(cleaned) == "" {
 			return model.SetModeMsg{Mode: model.ModeNoDiff}
 		}
@@ -649,26 +655,28 @@ func (m *Model) startResourceDiffSession(res ResourceIdentifier) tea.Cmd {
 			formatted = formattedOut
 		}
 		title := fmt.Sprintf("%s - Live vs Desired", resourceTitle)
-		return m.openTextPager(title, formatted)()
+		return m.openTextPagerForEpoch(title, formatted, epoch)()
 	}
 }
 
-func writeTempYAML(prefix string, docs []string) (string, error) {
-	f, err := os.CreateTemp("", prefix+"*.yaml")
+// writeDiffFiles owns a private directory until the synchronous viewer/pager
+// returns. Callers must defer cleanup, including on command-start failures.
+func writeDiffFiles(leftDocs, rightDocs []string) (left, right string, cleanup func(), err error) {
+	dir, err := os.MkdirTemp("", "argonaut-diff-*")
 	if err != nil {
-		return "", err
+		return "", "", nil, err
 	}
-	content := strings.Join(docs, "\n---\n")
-	if _, err := f.WriteString(content); err != nil {
-		f.Close()
-		os.Remove(f.Name())
-		return "", err
+	cleanup = func() { _ = os.RemoveAll(dir) }
+	left, right = filepath.Join(dir, "current.yaml"), filepath.Join(dir, "desired.yaml")
+	if err = os.WriteFile(left, []byte(strings.Join(leftDocs, "\n---\n")), 0600); err != nil {
+		cleanup()
+		return "", "", nil, err
 	}
-	if err := f.Close(); err != nil {
-		os.Remove(f.Name())
-		return "", err
+	if err = os.WriteFile(right, []byte(strings.Join(rightDocs, "\n---\n")), 0600); err != nil {
+		cleanup()
+		return "", "", nil, err
 	}
-	return f.Name(), nil
+	return left, right, cleanup, nil
 }
 
 func cleanManifestToYAML(jsonOrYaml string) string {
@@ -694,13 +702,18 @@ func cleanManifestToYAML(jsonOrYaml string) string {
 }
 
 // startLoadingResourceTree loads the resource tree for the given app
+type treeLoadFailedMsg struct {
+	switchEpoch, treeSession int
+	message                  string
+}
+
 func (m *Model) startLoadingResourceTree(app model.App) tea.Cmd {
+	epoch, session := m.switchEpoch, m.treeSession
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No server configured"}
+			return treeLoadFailedMsg{epoch, session, "No server configured"}
 		}
 	}
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		ctx, cancel := appcontext.WithAPITimeout(context.Background())
@@ -713,12 +726,12 @@ func (m *Model) startLoadingResourceTree(app model.App) tea.Cmd {
 		}
 		tree, err := argo.GetResourceTree(ctx, server, app.Name, appNamespace)
 		if err != nil {
-			return model.ApiErrorMsg{Message: err.Error(), SwitchEpoch: epoch}
+			return treeLoadFailedMsg{epoch, session, err.Error()}
 		}
 		// Marshal to JSON to avoid import cycle in model messages
 		data, merr := json.Marshal(tree)
 		if merr != nil {
-			return model.ApiErrorMsg{Message: merr.Error(), SwitchEpoch: epoch}
+			return treeLoadFailedMsg{epoch, session, merr.Error()}
 		}
 
 		// Also fetch app details to get status.resources for sync status
@@ -736,12 +749,17 @@ func (m *Model) startLoadingResourceTree(app model.App) tea.Cmd {
 			TreeJSON:      data,
 			ResourcesJSON: resourcesData,
 			SwitchEpoch:   epoch,
+			TreeSession:   session,
 		}
 	}
 }
 
 // startWatchingResourceTree starts a streaming watcher for resource tree updates
-type treeWatchStartedMsg struct{ cleanup func() }
+type treeWatchStartedMsg struct {
+	cleanup                  func()
+	err                      error
+	switchEpoch, treeSession int
+}
 
 func (m *Model) startWatchingResourceTree(app model.App) tea.Cmd {
 	if m.state.Server == nil {
@@ -749,6 +767,8 @@ func (m *Model) startWatchingResourceTree(app model.App) tea.Cmd {
 	}
 	server := m.state.Server // capture at call time
 	done := m.treeStreamDone // capture at call time
+	delivery := m.treeStream
+	epoch, session := m.switchEpoch, m.treeSession
 	return func() tea.Msg {
 		ctx := context.Background()
 		apiService := services.NewArgoApiService(server)
@@ -760,9 +780,10 @@ func (m *Model) startWatchingResourceTree(app model.App) tea.Cmd {
 		ch, cleanup, err := apiService.WatchResourceTree(ctx, server, app.Name, appNamespace)
 		if err != nil {
 			cblog.With("component", "ui").Error("Tree watch failed", "err", err, "app", app.Name)
-			return model.StatusChangeMsg{Status: "Tree watch failed: " + err.Error()}
+			return treeWatchStartedMsg{err: err, switchEpoch: epoch, treeSession: session}
 		}
 		go func() {
+			defer cleanup()
 			eventCount := 0
 			for {
 				select {
@@ -777,14 +798,19 @@ func (m *Model) startWatchingResourceTree(app model.App) tea.Cmd {
 					eventCount++
 					cblog.With("component", "ui").Debug("Received tree event", "app", app.Name, "event", eventCount)
 					data, _ := json.Marshal(t)
-					m.watchTreeDeliver(model.ResourceTreeStreamMsg{AppName: app.Name, TreeJSON: data})
+					select {
+					case delivery <- model.ResourceTreeStreamMsg{AppName: app.Name, AppNamespace: appNamespace, TreeJSON: data, SwitchEpoch: epoch, TreeSession: session}:
+					case <-done:
+						return
+					default:
+					}
 				case <-done:
 					cblog.With("component", "ui").Info("Tree watch cancelled via done signal", "app", app.Name)
 					return
 				}
 			}
 		}()
-		return treeWatchStartedMsg{cleanup: cleanup}
+		return treeWatchStartedMsg{cleanup: cleanup, switchEpoch: epoch, treeSession: session}
 	}
 }
 
@@ -806,32 +832,32 @@ func stripDiffHeader(out string) string {
 
 // syncSelectedApplications syncs the currently selected applications
 func (m *Model) syncSelectedApplications(prune, force, dryRun bool) tea.Cmd {
+	epoch := m.switchEpoch
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No server configured"}
+			return model.ApiErrorMsg{Message: "No server configured", SwitchEpoch: epoch}
 		}
 	}
 
-	selectedApps := make([]string, 0, len(m.state.Selections.SelectedApps))
-	for appName := range m.state.Selections.SelectedApps {
-		selectedApps = append(selectedApps, appName)
+	selectedApps, err := m.selectedApplications()
+	if err != nil {
+		return func() tea.Msg { return model.ApiErrorMsg{Message: err.Error(), SwitchEpoch: epoch} }
 	}
 
 	if len(selectedApps) == 0 {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No applications selected"}
+			return model.ApiErrorMsg{Message: "No applications selected", SwitchEpoch: epoch}
 		}
 	}
 
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		apiService := services.NewArgoApiService(server)
 
-		for _, appName := range selectedApps {
+		for _, app := range selectedApps {
+			appName := app.Name
 			ctx, cancel := appcontext.WithAPITimeout(context.Background())
-			// Multi-app sync doesn't track per-app namespaces; pass nil (uses Argo CD default)
-			err := apiService.SyncApplication(ctx, server, appName, nil, api.SyncOptions{Prune: prune, Force: force, DryRun: dryRun})
+			err := apiService.SyncApplication(ctx, server, appName, app.AppNamespace, api.SyncOptions{Prune: prune, Force: force, DryRun: dryRun})
 			cancel()
 			if err != nil {
 				// Convert to structured error and return via TUI error handling
@@ -863,16 +889,24 @@ func (m *Model) syncSelectedApplications(prune, force, dryRun bool) tea.Cmd {
 
 // deleteApplication deletes a specific application
 func (m *Model) deleteApplication(req model.AppDeleteRequestMsg) tea.Cmd {
+	epoch := m.switchEpoch
+	app, err := m.operationApplication(req.AppName, req.AppNamespace)
+	if err != nil {
+		return func() tea.Msg {
+			return model.AppDeleteErrorMsg{AppName: req.AppName, Error: err.Error(), SwitchEpoch: epoch}
+		}
+	}
+	req.AppName, req.AppNamespace = app.Name, app.AppNamespace
 	if m.state.Server == nil {
 		return func() tea.Msg {
 			return model.AppDeleteErrorMsg{
-				AppName: req.AppName,
-				Error:   "No server configured",
+				AppName:     req.AppName,
+				Error:       "No server configured",
+				SwitchEpoch: epoch,
 			}
 		}
 	}
 
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		ctx, cancel := appcontext.WithAPITimeout(context.Background())
@@ -896,8 +930,9 @@ func (m *Model) deleteApplication(req model.AppDeleteRequestMsg) tea.Cmd {
 		if err != nil {
 			cblog.With("component", "app-delete").Error("Delete failed", "app", req.AppName, "err", err)
 			return model.AppDeleteErrorMsg{
-				AppName: req.AppName,
-				Error:   err.Error(),
+				AppName:     req.AppName,
+				Error:       err.Error(),
+				SwitchEpoch: epoch,
 			}
 		}
 
@@ -908,25 +943,31 @@ func (m *Model) deleteApplication(req model.AppDeleteRequestMsg) tea.Cmd {
 			}
 			cblog.With("component", "app-delete").Error("Delete returned failure", "app", req.AppName, "error", errorMsg)
 			return model.AppDeleteErrorMsg{
-				AppName: req.AppName,
-				Error:   errorMsg,
+				AppName:     req.AppName,
+				Error:       errorMsg,
+				SwitchEpoch: epoch,
 			}
 		}
 
 		cblog.With("component", "app-delete").Info("Delete completed", "app", req.AppName)
-		return model.AppDeleteSuccessMsg{AppName: req.AppName, SwitchEpoch: epoch}
+		return model.AppDeleteSuccessMsg{AppName: req.AppName, AppNamespace: req.AppNamespace, SwitchEpoch: epoch}
 	}
 }
 
 // syncSingleApplication syncs a specific application
 func (m *Model) syncSingleApplication(appName string, appNamespace *string, prune, force, dryRun bool) tea.Cmd {
+	epoch := m.switchEpoch
+	app, err := m.operationApplication(appName, appNamespace)
+	if err != nil {
+		return func() tea.Msg { return model.ApiErrorMsg{Message: err.Error(), SwitchEpoch: epoch} }
+	}
+	appName, appNamespace = app.Name, app.AppNamespace
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No server configured"}
+			return model.ApiErrorMsg{Message: "No server configured", SwitchEpoch: epoch}
 		}
 	}
 
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		ctx, cancel := appcontext.WithAPITimeout(context.Background())
@@ -1022,17 +1063,16 @@ func (m *Model) refreshSingleApplication(appName string, appNamespace *string, h
 
 // refreshMultipleApplications refreshes multiple selected applications
 func (m *Model) refreshMultipleApplications(hard bool) tea.Cmd {
+	epoch := m.switchEpoch
 	if m.state.Server == nil {
 		return func() tea.Msg {
 			return model.ApiErrorMsg{Message: "No server configured"}
 		}
 	}
 
-	selectedApps := make([]string, 0, len(m.state.Selections.SelectedApps))
-	for appName, selected := range m.state.Selections.SelectedApps {
-		if selected {
-			selectedApps = append(selectedApps, appName)
-		}
+	selectedApps, err := m.selectedApplications()
+	if err != nil {
+		return func() tea.Msg { return model.ApiErrorMsg{Message: err.Error(), SwitchEpoch: epoch} }
 	}
 
 	if len(selectedApps) == 0 {
@@ -1041,21 +1081,16 @@ func (m *Model) refreshMultipleApplications(hard bool) tea.Cmd {
 		}
 	}
 
-	// Build app namespace map
-	appNamespaces := make(map[string]*string)
-	for _, app := range m.state.Apps {
-		appNamespaces[app.Name] = app.AppNamespace
-	}
-
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		appService := api.NewApplicationService(server)
 
-		for _, appName := range selectedApps {
+		for _, app := range selectedApps {
+			appName := app.Name
 			ctx, cancel := appcontext.WithAPITimeout(context.Background())
 			opts := &api.RefreshOptions{
 				Hard:         hard,
-				AppNamespace: appNamespaces[appName],
+				AppNamespace: app.AppNamespace,
 			}
 
 			err := appService.RefreshApplication(ctx, appName, opts)
@@ -1294,39 +1329,22 @@ func (m *Model) startRollbackDiffSession(appName string, appNamespace *string, r
 			return model.ApiErrorMsg{Message: "Failed to load manifests at " + shortRevision(currentRevision) + ": " + err.Error(), SwitchEpoch: epoch}
 		}
 
-		leftFile, err := writeTempYAML("current-", cleanAll(currentManifests))
+		leftFile, rightFile, cleanup, err := writeDiffFiles(cleanAll(currentManifests), cleanAll(selectedManifests))
 		if err != nil {
 			return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
 		}
-		rightFile, err := writeTempYAML("rollback-", cleanAll(selectedManifests))
+		defer cleanup()
+
+		cleaned, err := unifiedDiff(leftFile, rightFile)
 		if err != nil {
-			_ = os.Remove(leftFile)
 			return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
 		}
-		removeTempFiles := func() {
-			_ = os.Remove(leftFile)
-			_ = os.Remove(rightFile)
-		}
 
-		cmd := exec.Command("git", "--no-pager", "diff", "--no-index", "--no-color", "--", leftFile, rightFile)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			// git exits 1 when the files differ; anything else — including
-			// a start failure with no process state — is a real error
-			var exitErr *exec.ExitError
-			if !stdErrors.As(err, &exitErr) || exitErr.ExitCode() != 1 {
-				removeTempFiles()
-				return model.ApiErrorMsg{Message: "Diff failed: " + err.Error(), SwitchEpoch: epoch}
-			}
-		}
-
-		cleaned := stripDiffHeader(string(out))
 		if strings.TrimSpace(cleaned) == "" {
-			removeTempFiles()
 			return rollbackDiffNoChangesMsg{switchEpoch: epoch, revision: shortRevision(revision)}
 		}
 
-		// The interactive viewer reads the files itself — leave them for it
+		// The files remain available until the interactive viewer exits.
 		if viewer := m.config.GetDiffViewer(); viewer != "" {
 			return m.openInteractiveDiffViewer(leftFile, rightFile, viewer)
 		}
@@ -1336,8 +1354,7 @@ func (m *Model) startRollbackDiffSession(appName string, appNamespace *string, r
 		if formattedOut, ferr := m.runDiffFormatterWithTitle(cleaned, appName); ferr == nil && strings.TrimSpace(formattedOut) != "" {
 			formatted = formattedOut
 		}
-		removeTempFiles()
-		return m.openTextPager(title, formatted)()
+		return m.openTextPagerForEpoch(title, formatted, epoch)()
 	}
 }
 
@@ -1352,20 +1369,21 @@ func shortRevision(revision string) string {
 
 // deleteSelectedApplications deletes the currently selected applications
 func (m *Model) deleteSelectedApplications(cascade bool, propagationPolicy string) tea.Cmd {
+	epoch := m.switchEpoch
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No server configured"}
+			return model.ApiErrorMsg{Message: "No server configured", SwitchEpoch: epoch}
 		}
 	}
 
-	selectedApps := make([]string, 0, len(m.state.Selections.SelectedApps))
-	for appName := range m.state.Selections.SelectedApps {
-		selectedApps = append(selectedApps, appName)
+	selectedApps, err := m.selectedApplications()
+	if err != nil {
+		return func() tea.Msg { return model.ApiErrorMsg{Message: err.Error(), SwitchEpoch: epoch} }
 	}
 
 	if len(selectedApps) == 0 {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No applications selected"}
+			return model.ApiErrorMsg{Message: "No applications selected", SwitchEpoch: epoch}
 		}
 	}
 
@@ -1380,22 +1398,14 @@ func (m *Model) deleteSelectedApplications(cascade bool, propagationPolicy strin
 		var failedApps []string
 		successCount := 0
 
-		for _, appName := range selectedApps {
+		for _, app := range selectedApps {
+			appName := app.Name
 			cblog.With("component", "app-delete").Debug("Deleting app", "app", appName, "progress", fmt.Sprintf("%d/%d", successCount+len(failedApps)+1, len(selectedApps)))
-
-			// Find the app namespace for this app
-			var appNamespace *string
-			for _, app := range m.state.Apps {
-				if app.Name == appName {
-					appNamespace = app.AppNamespace
-					break
-				}
-			}
 
 			ctx, cancel := appcontext.WithAPITimeout(context.Background())
 			err := m.deleteApplicationHelper(ctx, server, deleteService, AppDeleteParams{
 				AppName:   appName,
-				Namespace: appNamespace,
+				Namespace: app.AppNamespace,
 				Options: DeleteOptions{
 					Cascade:           cascade,
 					PropagationPolicy: propagationPolicy,
@@ -1418,14 +1428,15 @@ func (m *Model) deleteSelectedApplications(cascade bool, propagationPolicy strin
 			errorMsg := fmt.Sprintf("Failed to delete %d/%d apps: %s",
 				len(failedApps), len(selectedApps), strings.Join(failedApps, ", "))
 			return model.AppDeleteErrorMsg{
-				AppName: "multiple",
-				Error:   errorMsg,
+				AppName:     "multiple",
+				Error:       errorMsg,
+				SwitchEpoch: epoch,
 			}
 		}
 
 		cblog.With("component", "app-delete").Info("Sequential multi-delete completed successfully", "count", successCount)
 		// Clear selections after successful multi-delete
-		return model.MultiDeleteCompletedMsg{AppCount: successCount, Success: true}
+		return model.MultiDeleteCompletedMsg{AppCount: successCount, Success: true, SwitchEpoch: epoch}
 	}
 }
 
@@ -1456,16 +1467,24 @@ func (m *Model) deleteApplicationHelper(ctx context.Context, server *model.Serve
 
 // deleteSingleApplication deletes a specific application
 func (m *Model) deleteSingleApplication(params AppDeleteParams) tea.Cmd {
+	epoch := m.switchEpoch
+	app, err := m.operationApplication(params.AppName, params.Namespace)
+	if err != nil {
+		return func() tea.Msg {
+			return model.AppDeleteErrorMsg{AppName: params.AppName, Error: err.Error(), SwitchEpoch: epoch}
+		}
+	}
+	params.AppName, params.Namespace = app.Name, app.AppNamespace
 	if m.state.Server == nil {
 		return func() tea.Msg {
 			return model.AppDeleteErrorMsg{
-				AppName: params.AppName,
-				Error:   "No server configured",
+				AppName:     params.AppName,
+				Error:       "No server configured",
+				SwitchEpoch: epoch,
 			}
 		}
 	}
 
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		ctx, cancel := appcontext.WithAPITimeout(context.Background())
@@ -1475,27 +1494,37 @@ func (m *Model) deleteSingleApplication(params AppDeleteParams) tea.Cmd {
 
 		if err := m.deleteApplicationHelper(ctx, server, deleteService, params); err != nil {
 			return model.AppDeleteErrorMsg{
-				AppName: params.AppName,
-				Error:   fmt.Sprintf("Failed to delete application: %v", err),
+				AppName:     params.AppName,
+				Error:       fmt.Sprintf("Failed to delete application: %v", err),
+				SwitchEpoch: epoch,
 			}
 		}
 
-		return model.AppDeleteSuccessMsg{AppName: params.AppName, SwitchEpoch: epoch}
+		return model.AppDeleteSuccessMsg{AppName: params.AppName, AppNamespace: params.Namespace, SwitchEpoch: epoch}
 	}
 }
 
 // deleteSelectedResources deletes the specified resources from the cluster
 func (m *Model) deleteSelectedResources(targets []model.ResourceDeleteTarget, opts DeleteOptions) tea.Cmd {
+	epoch := m.switchEpoch
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ResourceDeleteErrorMsg{Error: "No server configured"}
+			return model.ResourceDeleteErrorMsg{Error: "No server configured", SwitchEpoch: epoch}
 		}
 	}
 
 	if len(targets) == 0 {
 		return func() tea.Msg {
-			return model.ResourceDeleteErrorMsg{Error: "No resources selected"}
+			return model.ResourceDeleteErrorMsg{Error: "No resources selected", SwitchEpoch: epoch}
 		}
+	}
+	targets = append([]model.ResourceDeleteTarget(nil), targets...)
+	for i := range targets {
+		app, err := m.operationApplication(targets[i].AppName, targets[i].AppNamespace)
+		if err != nil {
+			return func() tea.Msg { return model.ResourceDeleteErrorMsg{Error: err.Error(), SwitchEpoch: epoch} }
+		}
+		targets[i].AppName, targets[i].AppNamespace = app.Name, app.AppNamespace
 	}
 
 	// Map cascade/propagationPolicy to orphan parameter
@@ -1505,7 +1534,7 @@ func (m *Model) deleteSelectedResources(targets []model.ResourceDeleteTarget, op
 	// Collect unique app names for refresh after deletion
 	appNameSet := make(map[string]bool)
 	for _, target := range targets {
-		appNameSet[target.AppName] = true
+		appNameSet[model.AppKey(target.AppName, target.AppNamespace)] = true
 	}
 	appNames := make([]string, 0, len(appNameSet))
 	for name := range appNameSet {
@@ -1530,6 +1559,7 @@ func (m *Model) deleteSelectedResources(targets []model.ResourceDeleteTarget, op
 
 			req := api.DeleteResourceRequest{
 				AppName:      target.AppName,
+				AppNamespace: target.AppNamespace,
 				ResourceName: target.Name,
 				Kind:         target.Kind,
 				Namespace:    target.Namespace,
@@ -1559,11 +1589,11 @@ func (m *Model) deleteSelectedResources(targets []model.ResourceDeleteTarget, op
 				"failed", len(failedResources), "succeeded", successCount, "total", len(targets))
 			errorMsg := fmt.Sprintf("Failed to delete %d/%d resources: %s",
 				len(failedResources), len(targets), strings.Join(failedResources, "; "))
-			return model.ResourceDeleteErrorMsg{Error: errorMsg}
+			return model.ResourceDeleteErrorMsg{Error: errorMsg, SwitchEpoch: epoch}
 		}
 
 		cblog.With("component", "resource-delete").Info("Resource deletion completed successfully", "count", successCount)
-		return model.ResourceDeleteSuccessMsg{Count: successCount, AppNames: appNames}
+		return model.ResourceDeleteSuccessMsg{Count: successCount, AppNames: appNames, SwitchEpoch: epoch}
 	}
 }
 
@@ -1627,22 +1657,30 @@ func (m *Model) terminateOperation(appName string, appNamespace *string) tea.Cmd
 }
 
 func (m *Model) syncSelectedResources(targets []model.ResourceSyncTarget, prune, force bool) tea.Cmd {
+	epoch := m.switchEpoch
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ResourceSyncErrorMsg{Error: "No server configured"}
+			return model.ResourceSyncErrorMsg{Error: "No server configured", SwitchEpoch: epoch}
 		}
 	}
 
 	if len(targets) == 0 {
 		return func() tea.Msg {
-			return model.ResourceSyncErrorMsg{Error: "No resources selected"}
+			return model.ResourceSyncErrorMsg{Error: "No resources selected", SwitchEpoch: epoch}
 		}
 	}
 
-	// Group targets by app name (ArgoCD API requires separate calls per app)
+	// Snapshot and group by complete Application identity before starting work.
 	appResources := make(map[string][]api.SyncResourceTarget)
+	apps := make(map[string]model.App)
 	for _, target := range targets {
-		appResources[target.AppName] = append(appResources[target.AppName], api.SyncResourceTarget{
+		app, err := m.operationApplication(target.AppName, target.AppNamespace)
+		if err != nil {
+			return func() tea.Msg { return model.ResourceSyncErrorMsg{Error: err.Error(), SwitchEpoch: epoch} }
+		}
+		key := app.Key()
+		apps[key] = app
+		appResources[key] = append(appResources[key], api.SyncResourceTarget{
 			Group:     target.Group,
 			Kind:      target.Kind,
 			Name:      target.Name,
@@ -1656,7 +1694,6 @@ func (m *Model) syncSelectedResources(targets []model.ResourceSyncTarget, prune,
 		appNames = append(appNames, name)
 	}
 
-	epoch := m.switchEpoch   // capture at call time
 	server := m.state.Server // capture at call time
 	return func() tea.Msg {
 		cblog.With("component", "resource-sync").Info("Starting resource sync",
@@ -1667,17 +1704,15 @@ func (m *Model) syncSelectedResources(targets []model.ResourceSyncTarget, prune,
 		var failedApps []string
 		successCount := 0
 
-		for appName, resources := range appResources {
+		for key, resources := range appResources {
+			app := apps[key]
+			appName := app.Name
 			cblog.With("component", "resource-sync").Debug("Syncing resources for app",
 				"app", appName, "resourceCount", len(resources))
 
-			// Look up app namespace from state (required for namespaced ArgoCD installations)
 			var appNamespace string
-			for _, app := range m.state.Apps {
-				if app.Name == appName && app.AppNamespace != nil {
-					appNamespace = *app.AppNamespace
-					break
-				}
+			if app.AppNamespace != nil {
+				appNamespace = *app.AppNamespace
 			}
 
 			opts := &api.SyncOptions{
@@ -1708,7 +1743,7 @@ func (m *Model) syncSelectedResources(targets []model.ResourceSyncTarget, prune,
 			cblog.With("component", "resource-sync").Error("Resource sync partially failed",
 				"failed", len(failedApps), "apps", len(appResources))
 			errorMsg := fmt.Sprintf("Failed to sync resources: %s", strings.Join(failedApps, "; "))
-			return model.ResourceSyncErrorMsg{Error: errorMsg}
+			return model.ResourceSyncErrorMsg{Error: errorMsg, SwitchEpoch: epoch}
 		}
 
 		cblog.With("component", "resource-sync").Info("Resource sync completed successfully", "count", successCount)

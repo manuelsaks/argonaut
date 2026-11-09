@@ -475,6 +475,11 @@ func (e *AutocompleteEngine) getAppSetSuggestions(prefix string, state *model.Ap
 // getAppSuggestions returns app name suggestions (filtered by current selections)
 func (e *AutocompleteEngine) getAppSuggestions(prefix string, state *model.AppState) []string {
 	var suggestions []string
+	prefix = strings.ToLower(prefix)
+	nameCounts := make(map[string]int)
+	for _, app := range state.Apps {
+		nameCounts[app.Name]++
+	}
 
 	for _, app := range state.Apps {
 		// Apply all current filters
@@ -496,8 +501,13 @@ func (e *AutocompleteEngine) getAppSuggestions(prefix string, state *model.AppSt
 			}
 		}
 
-		if strings.HasPrefix(strings.ToLower(app.Name), prefix) {
-			suggestions = append(suggestions, app.Name)
+		key := app.Key()
+		if strings.HasPrefix(strings.ToLower(app.Name), prefix) || strings.HasPrefix(strings.ToLower(key), prefix) {
+			if nameCounts[app.Name] > 1 || strings.Contains(prefix, "/") {
+				suggestions = append(suggestions, key)
+			} else {
+				suggestions = append(suggestions, app.Name)
+			}
 		}
 	}
 

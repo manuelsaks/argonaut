@@ -17,8 +17,8 @@ type AppIndex struct {
 	ByProject        map[string][]int
 	ByApplicationSet map[string][]int
 
-	// App name → index in the Apps slice for O(1) upsert/delete
-	NameToIndex map[string]int
+	// Application key (namespace/name) → index in the Apps slice for O(1) upsert/delete
+	KeyToIndex map[string]int
 
 	// Total number of apps when the index was built
 	Total int
@@ -32,7 +32,7 @@ func BuildAppIndex(apps []App) *AppIndex {
 		ByNamespace:      make(map[string][]int),
 		ByProject:        make(map[string][]int),
 		ByApplicationSet: make(map[string][]int),
-		NameToIndex:      make(map[string]int, len(apps)),
+		KeyToIndex:       make(map[string]int, len(apps)),
 		Total:            len(apps),
 	}
 
@@ -42,7 +42,7 @@ func BuildAppIndex(apps []App) *AppIndex {
 	appsetSet := make(map[string]bool)
 
 	for i, app := range apps {
-		idx.NameToIndex[app.Name] = i
+		idx.KeyToIndex[app.Key()] = i
 
 		// Cluster
 		cl := ""

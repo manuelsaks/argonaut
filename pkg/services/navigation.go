@@ -272,10 +272,10 @@ func stringValue(item interface{}) string {
 // appNameFromItem extracts app name from an item (assuming it's an App)
 func appNameFromItem(item interface{}) string {
 	if app, ok := item.(model.App); ok {
-		return app.Name
+		return app.Key()
 	}
 	if app, ok := item.(*model.App); ok && app != nil {
-		return app.Name
+		return app.Key()
 	}
 	return ""
 }

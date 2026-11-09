@@ -118,10 +118,10 @@ func (m *Model) handleToggleSelection() (tea.Model, tea.Cmd) {
 	switch m.state.Navigation.View {
 	case model.ViewApps:
 		if app, ok := selectedItem.(model.App); ok {
-			if model.HasInStringSet(m.state.Selections.SelectedApps, app.Name) {
-				m.state.Selections.SelectedApps = model.RemoveFromStringSet(m.state.Selections.SelectedApps, app.Name)
+			if model.HasInStringSet(m.state.Selections.SelectedApps, app.Key()) {
+				m.state.Selections.SelectedApps = model.RemoveFromStringSet(m.state.Selections.SelectedApps, app.Key())
 			} else {
-				m.state.Selections.SelectedApps = model.AddToStringSet(m.state.Selections.SelectedApps, app.Name)
+				m.state.Selections.SelectedApps = model.AddToStringSet(m.state.Selections.SelectedApps, app.Key())
 			}
 		}
 		// For clusters/namespaces/projects views, Space has no effect by design.
@@ -435,8 +435,7 @@ func (m *Model) handleEscape() (tea.Model, tea.Cmd) {
 
 		switch curr {
 		case model.ViewContexts:
-			m = m.safeChangeView(model.ViewClusters)
-			m.state.Navigation.SelectedIdx = 0
+			return m.closeContextPicker()
 		case model.ViewTree:
 			if m.treeView != nil {
 				m.treeView.ClearFilter()
@@ -642,7 +641,16 @@ func (m *Model) handleDiffModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q", "esc":
 		m.state.Mode = model.ModeNormal
+		if m.state.Rollback != nil {
+			m.state.Mode = model.ModeRollback
+		}
 		m.state.Diff = nil
+		return m, nil
+	case "left", "h":
+		m.state.Diff.HorizontalOffset = max(0, m.state.Diff.HorizontalOffset-8)
+		return m, nil
+	case "right", "l":
+		m.state.Diff.HorizontalOffset += 8
 		return m, nil
 	case "/":
 		// Reuse search input for diff filtering
@@ -658,7 +666,7 @@ func (m *Model) handleDiffModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // diffPageSize returns the number of visible rows for page scrolling in diff mode
 func (m *Model) diffPageSize() int {
 	// Diff view uses most of the terminal height minus borders and header
-	overhead := 6 // header, footer, borders
+	overhead := 5 // title, footer, borders, container padding
 	return max(1, m.state.Terminal.Rows-overhead)
 }
 
@@ -781,7 +789,6 @@ func (m *Model) startConfirmedSync() (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
-	return m, nil
 }
 
 // rollbackPageSize is how many history entries one page scroll moves —
@@ -1070,12 +1077,13 @@ func (m *Model) handleResourceDelete() (tea.Model, tea.Cmd) {
 	targets := make([]model.ResourceDeleteTarget, 0, len(validSelections))
 	for _, sel := range validSelections {
 		targets = append(targets, model.ResourceDeleteTarget{
-			AppName:   sel.AppName,
-			Group:     sel.Group,
-			Version:   sel.Version,
-			Kind:      sel.Kind,
-			Namespace: sel.Namespace,
-			Name:      sel.Name,
+			AppName:      sel.AppName,
+			AppNamespace: sel.AppNamespace,
+			Group:        sel.Group,
+			Version:      sel.Version,
+			Kind:         sel.Kind,
+			Namespace:    sel.Namespace,
+			Name:         sel.Name,
 		})
 	}
 
@@ -1190,8 +1198,7 @@ func (m *Model) handleResourceSync() (tea.Model, tea.Cmd) {
 	// application sync. A child Application must target that child rather than
 	// falling back to the synthetic root app that owns the resource tree.
 	if len(selections) == 0 {
-		appName := m.treeView.GetAppName()
-		var appNamespace *string
+		appName, appNamespace := m.selectedTreeApplication()
 
 		_, kind, selectedNamespace, selectedName, ok := m.treeView.SelectedResource()
 		if ok && kind == "Application" && !m.treeView.IsSelectedSyntheticRoot() {
@@ -1220,11 +1227,12 @@ func (m *Model) handleResourceSync() (tea.Model, tea.Cmd) {
 	targets := make([]model.ResourceSyncTarget, 0, len(selections))
 	for _, sel := range selections {
 		targets = append(targets, model.ResourceSyncTarget{
-			AppName:   sel.AppName,
-			Group:     sel.Group,
-			Kind:      sel.Kind,
-			Namespace: sel.Namespace,
-			Name:      sel.Name,
+			AppName:      sel.AppName,
+			AppNamespace: sel.AppNamespace,
+			Group:        sel.Group,
+			Kind:         sel.Kind,
+			Namespace:    sel.Namespace,
+			Name:         sel.Name,
 		})
 	}
 
@@ -1258,23 +1266,11 @@ func (m *Model) handleRefreshCommand(arg string, hard bool) (tea.Model, tea.Cmd)
 
 	// In tree view, refresh the parent app
 	if m.state.Navigation.View == model.ViewTree {
-		appName := ""
-		if m.treeView != nil {
-			appName = m.treeView.GetAppName()
-		}
+		appName, appNamespace := m.selectedTreeApplication()
 
 		if appName == "" {
 			return m, func() tea.Msg {
 				return model.StatusChangeMsg{Status: "No application in tree view to refresh"}
-			}
-		}
-
-		// Find app namespace
-		var appNamespace *string
-		for _, app := range m.state.Apps {
-			if app.Name == appName {
-				appNamespace = app.AppNamespace
-				break
 			}
 		}
 
@@ -1308,7 +1304,7 @@ func (m *Model) handleRefreshCommand(arg string, hard bool) (tea.Model, tea.Cmd)
 				items := m.getVisibleItemsForCurrentView()
 				if len(items) > 0 && m.state.Navigation.SelectedIdx < len(items) {
 					if app, ok := items[m.state.Navigation.SelectedIdx].(model.App); ok {
-						target = app.Name
+						target = app.Key()
 					}
 				}
 			} else {
@@ -1326,13 +1322,7 @@ func (m *Model) handleRefreshCommand(arg string, hard bool) (tea.Model, tea.Cmd)
 	}
 
 	// Find the app to get namespace
-	var targetApp *model.App
-	for i := range m.state.Apps {
-		if strings.EqualFold(m.state.Apps[i].Name, target) {
-			targetApp = &m.state.Apps[i]
-			break
-		}
-	}
+	targetApp := m.findAppByNameAndNamespace(target, "")
 
 	if targetApp == nil {
 		return m, func() tea.Msg {
@@ -1565,17 +1555,16 @@ func (m *Model) handleResourceAction() (tea.Model, tea.Cmd) {
 	// Resolve AppNamespace using the tree-scoped app first — Argo CD apps are
 	// not unique by name across ArgoCD namespaces, so a first-name-match in
 	// m.state.Apps can pick the wrong app.
-	var appNamespace *string
-	if treeApp := m.state.UI.TreeApp; treeApp != nil && treeApp.Name == sel.AppName {
+	appNamespace := sel.AppNamespace
+	if treeApp := m.state.UI.TreeApp; appNamespace == nil && treeApp != nil && treeApp.Name == sel.AppName {
 		appNamespace = treeApp.AppNamespace
 	}
 	if appNamespace == nil {
-		for i := range m.state.Apps {
-			if m.state.Apps[i].Name == sel.AppName {
-				appNamespace = m.state.Apps[i].AppNamespace
-				break
-			}
+		app, err := m.operationApplication(sel.AppName, nil)
+		if err != nil {
+			return m, m.showFooterNotice(err.Error())
 		}
+		appNamespace = app.AppNamespace
 	}
 
 	target := model.ResourceActionTarget{
@@ -1869,6 +1858,14 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// Global kill: always quit on Ctrl+C
 	if msg.String() == "ctrl+c" {
 		return m, func() tea.Msg { return model.QuitMsg{} }
+	}
+	// Context selection is also available when the current server cannot be
+	// reached or its token expired. Do not intercept text input or confirmations.
+	if msg.String() == "c" {
+		switch m.state.Mode {
+		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
+			return m.openContextPicker()
+		}
 	}
 
 	// Global escape debounce to prevent rapid consecutive escape key presses
@@ -2186,16 +2183,9 @@ func (m *Model) handleOpenResourcesForSelection() (tea.Model, tea.Cmd) {
 		var cmds []tea.Cmd
 		for _, name := range selected {
 			// start initial load + watch stream for the tree view
-			var appObj *model.App
-			for i := range m.state.Apps {
-				if m.state.Apps[i].Name == name {
-					appObj = &m.state.Apps[i]
-					break
-				}
-			}
+			appObj := m.findAppByNameAndNamespace(name, "")
 			if appObj == nil {
-				tmp := model.App{Name: name}
-				appObj = &tmp
+				continue
 			}
 			cmds = append(cmds, m.startLoadingResourceTree(*appObj))
 			cmds = append(cmds, m.startWatchingResourceTree(*appObj))
@@ -2249,19 +2239,26 @@ func (m *Model) handleNavigateToChildApp(appName string, appNamespace string) (t
 }
 
 func (m *Model) findAppByNameAndNamespace(name string, namespace string) *model.App {
+	if parsedName, parsedNamespace := model.SplitAppKey(name); parsedNamespace != "" {
+		if namespace != "" && namespace != parsedNamespace {
+			return nil
+		}
+		name, namespace = parsedName, parsedNamespace
+	}
 	var fallback *model.App
 	for i := range m.state.Apps {
 		app := &m.state.Apps[i]
-		if app.Name != name {
+		if !strings.EqualFold(app.Name, name) {
 			continue
 		}
 		if namespace == "" {
-			if fallback == nil {
-				fallback = app
+			if fallback != nil {
+				return nil // Fail closed rather than choosing a same-named app.
 			}
+			fallback = app
 			continue
 		}
-		if app.AppNamespace != nil && *app.AppNamespace == namespace {
+		if app.AppNamespace != nil && strings.EqualFold(*app.AppNamespace, namespace) {
 			return app
 		}
 	}
@@ -2285,6 +2282,10 @@ func (m *Model) handleResourceDiff() (*Model, tea.Cmd) {
 	if !ok {
 		return m, nil
 	}
+	owner, ownerNamespace := m.selectedTreeApplication()
+	if owner == "" {
+		return m, nil
+	}
 
 	// For Application nodes
 	if kind == "Application" {
@@ -2294,11 +2295,11 @@ func (m *Model) handleResourceDiff() (*Model, tea.Cmd) {
 				m.state.Diff = &model.DiffState{}
 			}
 			m.state.Diff.Loading = true
-			return m, m.startDiffSession(name, m.currentTreeAppNamespace())
+			return m, m.startDiffSession(owner, ownerNamespace)
 		}
 		// Child Application CR (app-of-apps): show diff of the Application CR itself
 		// as a resource within the parent app
-		parentApp := m.treeView.SelectedNodeApp()
+		parentApp := owner
 		if parentApp == "" {
 			return m, func() tea.Msg {
 				return model.StatusChangeMsg{Status: "Could not determine parent application name"}
@@ -2310,7 +2311,7 @@ func (m *Model) handleResourceDiff() (*Model, tea.Cmd) {
 		m.state.Diff.Loading = true
 		return m, m.startResourceDiffSession(ResourceIdentifier{
 			AppName:      parentApp,
-			AppNamespace: m.currentTreeAppNamespace(),
+			AppNamespace: ownerNamespace,
 			Group:        group,
 			Kind:         kind,
 			Namespace:    namespace,
@@ -2319,12 +2320,7 @@ func (m *Model) handleResourceDiff() (*Model, tea.Cmd) {
 	}
 
 	// Get the app name for resource-level diff
-	appName := ""
-	if m.state.UI.TreeApp != nil {
-		appName = m.state.UI.TreeApp.Name
-	} else if m.treeView != nil {
-		appName = m.treeView.GetAppName()
-	}
+	appName := owner
 	if appName == "" {
 		return m, func() tea.Msg { return model.StatusChangeMsg{Status: "Could not determine application name"} }
 	}
@@ -2335,10 +2331,7 @@ func (m *Model) handleResourceDiff() (*Model, tea.Cmd) {
 	}
 	m.state.Diff.Loading = true
 
-	var treeAppNS *string
-	if m.state.UI.TreeApp != nil {
-		treeAppNS = m.state.UI.TreeApp.AppNamespace
-	}
+	treeAppNS := ownerNamespace
 	return m, m.startResourceDiffSession(ResourceIdentifier{
 		AppName:      appName,
 		AppNamespace: treeAppNS,
@@ -2362,7 +2355,7 @@ func (m *Model) handleOpenK9s() (tea.Model, tea.Cmd) {
 
 	// Application nodes: open the ArgoCD Application CR itself
 	if kind == "Application" {
-		return m.openK9sForApplicationCR(name)
+		return m.openK9sForApplicationCR(model.AppKey(name, &namespace))
 	}
 
 	cblog.With("component", "k9s").Debug("Opening k9s for resource",
@@ -2415,14 +2408,18 @@ func (m *Model) openK9sForApplicationCR(appName string) (tea.Model, tea.Cmd) {
 	// Override only when the app is found with an explicit AppNamespace.
 	namespace := "argocd"
 	usingDefault := true
-	for i := range m.state.Apps {
-		if m.state.Apps[i].Name == appName {
-			if m.state.Apps[i].AppNamespace != nil {
-				namespace = *m.state.Apps[i].AppNamespace
-				usingDefault = false
-			}
-			break
-		}
+	var appNamespace *string
+	if treeApp := m.state.UI.TreeApp; treeApp != nil && treeApp.Name == appName {
+		appNamespace = treeApp.AppNamespace
+	}
+	app, err := m.operationApplication(appName, appNamespace)
+	if err != nil {
+		return m, m.showFooterNotice(err.Error())
+	}
+	appName = app.Name
+	if app.AppNamespace != nil && *app.AppNamespace != "" {
+		namespace = *app.AppNamespace
+		usingDefault = false
 	}
 
 	cblog.With("component", "k9s").Debug("Opening k9s for Application CR",
@@ -2592,10 +2589,13 @@ func (m *Model) handleOpenDiffForSelection() (tea.Model, tea.Cmd) {
 	var appNamespace *string
 	if len(selected) == 1 {
 		// Use the single selected app — look up namespace from app list
-		appName = selected[0]
-		if found := m.findAppByNameAndNamespace(appName, ""); found != nil {
-			appNamespace = found.AppNamespace
+		found := m.findAppByNameAndNamespace(selected[0], "")
+		if found == nil {
+			return m, func() tea.Msg {
+				return model.StatusChangeMsg{Status: "Application missing or ambiguous; select namespace/name"}
+			}
 		}
+		appName, appNamespace = found.Name, found.AppNamespace
 		cblog.With("component", "diff").Debug("Using single selected app", "app", appName)
 	} else if len(selected) > 1 {
 		// Multiple apps selected - cannot show diff for multiple apps

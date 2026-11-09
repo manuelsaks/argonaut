@@ -118,6 +118,7 @@ type Model struct {
 	treeView *treeview.TreeView
 
 	// Tree watch internal channel delivery
+	treeSession    int // Incremented on every tree teardown, including within a context
 	treeStream     chan model.ResourceTreeStreamMsg
 	treeStreamDone chan struct{}
 
@@ -163,6 +164,7 @@ type Model struct {
 	argoConfigPath     string // Path to ArgoCD CLI config (for re-reads on switch)
 	currentContextName string // Active ArgoCD context name
 	switchEpoch        int    // Incremented on each context switch; captured by async closures
+	contextSwitchSeq   int    // Latest context switch request within this epoch
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -195,6 +197,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			currentValue := m.inputComponents.GetSearchValue()
 			newValue := currentValue + msg.Content
 			m.inputComponents.SetSearchValue(newValue)
+			if m.state.Diff != nil && len(m.state.Diff.Content) > 0 {
+				m.state.Diff.SearchQuery = newValue
+				m.state.Diff.Offset = 0
+				return m, nil
+			}
 			m.state.UI.SearchQuery = newValue
 			// Clamp selection within new filtered results
 			m.state.Navigation.SelectedIdx = m.navigationService.ValidateBounds(
@@ -239,12 +246,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Tree stream messages from watcher goroutine
 	case model.ResourceTreeStreamMsg:
+		if msg.SwitchEpoch != m.switchEpoch || msg.TreeSession != m.treeSession || m.state.Navigation.View != model.ViewTree {
+			return m, nil
+		}
 		cblog.With("component", "ui").Debug("Processing tree stream message", "app", msg.AppName, "hasData", len(msg.TreeJSON) > 0)
 		if len(msg.TreeJSON) > 0 && m.treeView != nil && m.state.Navigation.View == model.ViewTree {
 			var tree api.ResourceTree
 			if err := json.Unmarshal(msg.TreeJSON, &tree); err == nil {
 				cblog.With("component", "ui").Debug("Updating tree view", "app", msg.AppName, "nodes", len(tree.Nodes))
-				m.treeView.UpsertAppTree(msg.AppName, &tree)
+				m.treeView.UpsertAppTree(model.AppKey(msg.AppName, &msg.AppNamespace), &tree)
 			} else {
 				cblog.With("component", "ui").Error("Failed to unmarshal tree", "err", err, "app", msg.AppName)
 			}
@@ -255,6 +265,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Tree watch started (store cleanup)
 	case treeWatchStartedMsg:
+		if msg.switchEpoch != m.switchEpoch || msg.treeSession != m.treeSession || m.state.Navigation.View != model.ViewTree {
+			if msg.cleanup != nil {
+				msg.cleanup()
+			}
+			return m, nil
+		}
+		if msg.err != nil {
+			m.statusService.Error("Tree watch failed: " + msg.err.Error())
+			return m, nil
+		}
 		if msg.cleanup != nil {
 			m.treeWatchCleanups = append(m.treeWatchCleanups, msg.cleanup)
 			m.statusService.Set("Watching tree…")
@@ -339,10 +359,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if oldMode == model.ModeLoading {
 					return m, nil
 				}
-				m.state.Mode = model.ModeLoading
 				cblog.With("component", "model").Info("Triggering initial load (suppressed ModeLoading overlay for ViewContexts)")
 				return m, m.startLoadingApplications()
-			case model.ModeConnectionError, model.ModeAuthRequired, model.ModeError:
+			case model.ModeNormal, model.ModeConnectionError, model.ModeAuthRequired, model.ModeError, model.ModeDefaultViewWarning:
 				cblog.With("component", "model").Info("Suppressed mode change for ViewContexts",
 					"suppressed_mode", msg.Mode)
 				return m, nil
@@ -598,26 +617,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case model.ResourceTreeLoadedMsg:
 		// Gate by switch epoch
-		if msg.SwitchEpoch != m.switchEpoch {
+		if msg.SwitchEpoch != m.switchEpoch || msg.TreeSession != m.treeSession || m.state.Navigation.View != model.ViewTree {
 			return m, nil
 		}
+		appKey := model.AppKey(msg.AppName, &msg.AppNamespace)
 		// Populate tree view with loaded data (single or multi-app)
 		if m.treeView != nil && len(msg.TreeJSON) > 0 {
 			var tree api.ResourceTree
 			if err := json.Unmarshal(msg.TreeJSON, &tree); err == nil {
-				m.treeView.SetAppMeta(msg.AppName, msg.Health, msg.Sync)
-				m.treeView.UpsertAppTree(msg.AppName, &tree)
+				m.treeView.SetAppMeta(appKey, msg.Health, msg.Sync)
+				m.treeView.UpsertAppTree(appKey, &tree)
 				// Prefer the tree-scoped app's namespace (ADR-0004): a
 				// name-only scan can pick a same-named app elsewhere.
-				if app := m.findAppByNameAndNamespace(msg.AppName, m.resolveAppNamespace(msg.AppName)); app != nil {
-					m.treeView.SetAppSyncSummary(msg.AppName, app.SyncOp)
+				if app := m.findAppByNameAndNamespace(msg.AppName, msg.AppNamespace); app != nil {
+					m.treeView.SetAppSyncSummary(appKey, app.SyncOp)
 				}
 
 				// Apply resource sync statuses from Application.status.resources
 				if len(msg.ResourcesJSON) > 0 {
 					var resources []api.ResourceStatus
 					if json.Unmarshal(msg.ResourcesJSON, &resources) == nil {
-						m.treeView.SetResourceStatuses(msg.AppName, resources)
+						m.treeView.SetResourceStatuses(appKey, resources)
 					}
 				}
 
@@ -657,6 +677,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// removed: resources list loader
 
 		// Old spinner TickMsg removed - now using bubbles spinner
+
+	case treeLoadFailedMsg:
+		if msg.switchEpoch != m.switchEpoch || msg.treeSession != m.treeSession || m.state.Navigation.View != model.ViewTree {
+			return m, nil
+		}
+		m.treeLoading = false
+		return m.Update(model.ApiErrorMsg{Message: msg.message, SwitchEpoch: msg.switchEpoch})
 
 	case model.StructuredErrorMsg:
 		// Gate by switch epoch
@@ -819,6 +846,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case textPagerMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
+		m.showTextPager(msg)
+		return m, nil
+
 	case k9sDoneMsg:
 		// k9s exited - restore normal mode
 		m.inPager = false
@@ -944,27 +978,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Handle successful application deletion
 		m.statusService.Set(fmt.Sprintf("Application %s deleted successfully", msg.AppName))
 
-		// Remove app from local state using index for O(1) lookup
-		if idx := m.state.Index; idx != nil {
-			if i, ok := idx.NameToIndex[msg.AppName]; ok && i < len(m.state.Apps) && m.state.Apps[i].Name == msg.AppName {
-				m.state.Apps = append(m.state.Apps[:i], m.state.Apps[i+1:]...)
-			} else {
-				// Index stale — fall through to linear scan
-				for i, app := range m.state.Apps {
-					if app.Name == msg.AppName {
-						m.state.Apps = append(m.state.Apps[:i], m.state.Apps[i+1:]...)
-						break
-					}
-				}
-			}
-		} else {
-			for i, app := range m.state.Apps {
-				if app.Name == msg.AppName {
-					m.state.Apps = append(m.state.Apps[:i], m.state.Apps[i+1:]...)
-					break
-				}
-			}
-		}
+		m.applyBatchAppDelete(model.AppKey(msg.AppName, msg.AppNamespace))
 		m.state.Index = model.BuildAppIndex(m.state.Apps)
 
 		// Clear modal state and return to normal mode
@@ -985,6 +999,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case model.AppDeleteErrorMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle application deletion error
 		m.statusService.Set(fmt.Sprintf("Failed to delete %s: %s", msg.AppName, msg.Error))
 		m.state.Modals.DeleteError = &msg.Error
@@ -993,6 +1010,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case model.ResourceDeleteSuccessMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle successful resource deletion
 		m.statusService.Set(fmt.Sprintf("Successfully deleted %d resource(s)", msg.Count))
 
@@ -1013,15 +1033,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(msg.AppNames) > 0 && m.state.Navigation.View == model.ViewTree {
 			var cmds []tea.Cmd
 			for _, appName := range msg.AppNames {
-				var appObj *model.App
-				for i := range m.state.Apps {
-					if m.state.Apps[i].Name == appName {
-						appObj = &m.state.Apps[i]
-						break
-					}
-				}
+				appObj := m.findAppByNameAndNamespace(appName, "")
 				if appObj == nil {
-					appObj = &model.App{Name: appName}
+					continue
 				}
 				cmds = append(cmds, m.startLoadingResourceTree(*appObj))
 			}
@@ -1032,6 +1046,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case model.ResourceDeleteErrorMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle resource deletion error
 		m.statusService.Set(fmt.Sprintf("Resource deletion failed: %s", msg.Error))
 		m.state.Modals.ResourceDeleteError = &msg.Error
@@ -1063,15 +1080,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(msg.AppNames) > 0 && m.state.Navigation.View == model.ViewTree {
 			var cmds []tea.Cmd
 			for _, appName := range msg.AppNames {
-				var appObj *model.App
-				for i := range m.state.Apps {
-					if m.state.Apps[i].Name == appName {
-						appObj = &m.state.Apps[i]
-						break
-					}
-				}
+				appObj := m.findAppByNameAndNamespace(appName, "")
 				if appObj == nil {
-					appObj = &model.App{Name: appName}
+					continue
 				}
 				cmds = append(cmds, m.startLoadingResourceTree(*appObj))
 			}
@@ -1102,6 +1113,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case model.ResourceSyncErrorMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle resource sync error
 		m.statusService.Set(fmt.Sprintf("Resource sync failed: %s", msg.Error))
 		m.state.Modals.ResourceSyncError = &msg.Error
@@ -1333,16 +1347,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.clearTreeApp()
 					m.treeLoading = true
 					for _, n := range names {
-						var appObj *model.App
-						for i := range m.state.Apps {
-							if m.state.Apps[i].Name == n {
-								appObj = &m.state.Apps[i]
-								break
-							}
-						}
+						appObj := m.findAppByNameAndNamespace(n, "")
 						if appObj == nil {
-							tmp := model.App{Name: n}
-							appObj = &tmp
+							continue
 						}
 						cmds = append(cmds, m.startLoadingResourceTree(*appObj))
 						cmds = append(cmds, m.startWatchingResourceTree(*appObj))
@@ -1433,6 +1440,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case model.MultiDeleteCompletedMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle multiple app delete completion
 		if msg.Success {
 			m.statusService.Set(fmt.Sprintf("Successfully deleted %d app(s)", msg.AppCount))
@@ -1616,7 +1626,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) applyBatchAppUpdate(upd model.AppUpdatedMsg) {
 	found := false
 	if idx := m.state.Index; idx != nil {
-		if i, ok := idx.NameToIndex[upd.App.Name]; ok && i < len(m.state.Apps) && m.state.Apps[i].Name == upd.App.Name {
+		if i, ok := idx.KeyToIndex[upd.App.Key()]; ok && i < len(m.state.Apps) && m.state.Apps[i].Key() == upd.App.Key() {
 			m.state.Apps[i] = upd.App
 			found = true
 		}
@@ -1624,7 +1634,7 @@ func (m *Model) applyBatchAppUpdate(upd model.AppUpdatedMsg) {
 	if !found {
 		// Fallback to linear scan (index may be stale during in-batch mutations)
 		for i, a := range m.state.Apps {
-			if a.Name == upd.App.Name {
+			if a.Key() == upd.App.Key() {
 				m.state.Apps[i] = upd.App
 				found = true
 				break
@@ -1639,11 +1649,11 @@ func (m *Model) applyBatchAppUpdate(upd model.AppUpdatedMsg) {
 		if len(upd.ResourcesJSON) > 0 {
 			var resources []api.ResourceStatus
 			if json.Unmarshal(upd.ResourcesJSON, &resources) == nil {
-				m.treeView.SetResourceStatuses(upd.App.Name, resources)
+				m.treeView.SetResourceStatuses(upd.App.Key(), resources)
 			}
 		}
 		// The watch delivers full apps, so the summary line updates for free
-		m.treeView.SetAppSyncSummary(upd.App.Name, upd.App.SyncOp)
+		m.treeView.SetAppSyncSummary(upd.App.Key(), upd.App.SyncOp)
 	}
 }
 
@@ -1745,13 +1755,13 @@ func (m *Model) applyBatchAppDelete(name string) bool {
 		return false
 	}
 	if idx := m.state.Index; idx != nil {
-		if i, ok := idx.NameToIndex[name]; ok && i < len(m.state.Apps) && m.state.Apps[i].Name == name {
+		if i, ok := idx.KeyToIndex[name]; ok && i < len(m.state.Apps) && m.state.Apps[i].Key() == name {
 			m.state.Apps = append(m.state.Apps[:i], m.state.Apps[i+1:]...)
 			return true
 		}
 	}
 	for i, a := range m.state.Apps {
-		if a.Name == name {
+		if a.Key() == name {
 			m.state.Apps = append(m.state.Apps[:i], m.state.Apps[i+1:]...)
 			return true
 		}

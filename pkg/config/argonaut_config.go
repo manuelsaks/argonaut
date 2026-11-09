@@ -50,7 +50,7 @@ type K9sConfig struct {
 
 // DiffConfig holds diff viewer/formatter settings
 type DiffConfig struct {
-	Viewer    string `toml:"viewer,omitempty"`    // External diff viewer command (e.g., "code --diff {left} {right}")
+	Viewer    string `toml:"viewer,omitempty"`    // Must wait for the viewer to close (e.g., "code --wait --diff {left} {right}")
 	Formatter string `toml:"formatter,omitempty"` // Diff formatter command (e.g., "delta")
 }
 

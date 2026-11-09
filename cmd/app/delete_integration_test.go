@@ -78,7 +78,7 @@ func TestDeleteIntegration_FullFlow(t *testing.T) {
 	}
 
 	// Step 4: Test successful flow by simulating a success message
-	successMsg := model.AppDeleteSuccessMsg{AppName: "test-app"}
+	successMsg := model.AppDeleteSuccessMsg{AppName: "test-app", AppNamespace: newModel.state.Modals.DeleteAppNamespace}
 	teaModel, successCmd := newModel.Update(successMsg)
 	newModel = teaModel.(*Model) // Cast back to *Model
 
@@ -358,7 +358,7 @@ func TestDeleteIntegration_StateConsistency(t *testing.T) {
 	newModel = teaModel.(*Model) // Cast back to *Model
 
 	// Process successful delete response (simulating what would happen with real server)
-	successMsg := model.AppDeleteSuccessMsg{AppName: expectedApp.Name}
+	successMsg := model.AppDeleteSuccessMsg{AppName: expectedApp.Name, AppNamespace: expectedApp.AppNamespace}
 	teaModel, _ = newModel.Update(successMsg)
 	newModel = teaModel.(*Model) // Cast back to *Model
 

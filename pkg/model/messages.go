@@ -210,14 +210,16 @@ type AppDeleteRequestMsg struct {
 
 // AppDeleteSuccessMsg represents a successful application deletion
 type AppDeleteSuccessMsg struct {
-	AppName     string
-	SwitchEpoch int // Context switch epoch for stale message gating
+	AppName      string
+	AppNamespace *string
+	SwitchEpoch  int // Context switch epoch for stale message gating
 }
 
 // AppDeleteErrorMsg represents an application deletion error
 type AppDeleteErrorMsg struct {
-	AppName string
-	Error   string
+	AppName     string
+	Error       string
+	SwitchEpoch int
 }
 
 // ResourceDeleteRequestMsg represents a request to delete resources
@@ -232,25 +234,28 @@ type ResourceDeleteRequestMsg struct {
 
 // ResourceDeleteSuccessMsg represents successful resource deletion
 type ResourceDeleteSuccessMsg struct {
-	Count    int
-	AppNames []string // Names of apps whose resources were deleted (for refresh)
+	Count       int
+	AppNames    []string // Application keys (namespace/name) to refresh
+	SwitchEpoch int
 }
 
 // ResourceDeleteErrorMsg represents a resource deletion error
 type ResourceDeleteErrorMsg struct {
-	Error string
+	Error       string
+	SwitchEpoch int
 }
 
 // ResourceSyncSuccessMsg represents successful resource sync
 type ResourceSyncSuccessMsg struct {
 	Count       int
-	AppNames    []string // Names of apps whose resources were synced (for refresh)
+	AppNames    []string // Application keys (namespace/name) to refresh
 	SwitchEpoch int      // Context switch epoch for stale message gating
 }
 
 // ResourceSyncErrorMsg represents a resource sync error
 type ResourceSyncErrorMsg struct {
-	Error string
+	Error       string
+	SwitchEpoch int
 }
 
 // TerminateCompletedMsg reports the outcome of terminating an operation;
@@ -433,8 +438,9 @@ type MultiSyncCompletedMsg struct {
 
 // MultiDeleteCompletedMsg indicates multiple app delete has completed
 type MultiDeleteCompletedMsg struct {
-	AppCount int
-	Success  bool
+	AppCount    int
+	Success     bool
+	SwitchEpoch int
 }
 
 // RefreshCompletedMsg indicates a single app refresh has completed
@@ -504,12 +510,16 @@ type ResourceTreeLoadedMsg struct {
 	TreeJSON      []byte
 	ResourcesJSON []byte // JSON encoded []api.ResourceStatus for sync status
 	SwitchEpoch   int    // Context switch epoch for stale message gating
+	TreeSession   int    // Invalidated whenever the tree is rebuilt or closed
 }
 
 // ResourceTreeStreamMsg represents a streamed resource tree update
 type ResourceTreeStreamMsg struct {
-	AppName  string
-	TreeJSON []byte
+	AppName      string
+	AppNamespace string
+	TreeJSON     []byte
+	SwitchEpoch  int
+	TreeSession  int
 }
 
 // Update Messages - for version checking and updates
@@ -552,6 +562,8 @@ type ContextSwitchResultMsg struct {
 	ContextName  string
 	ContextNames []string
 	Error        error
+	SwitchEpoch  int
+	RequestID    int
 }
 
 // Events / Sync-status pane messages

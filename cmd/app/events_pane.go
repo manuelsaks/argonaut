@@ -11,16 +11,14 @@ import (
 // Prefers the tree-scoped app (ADR-0004) before falling back to a name scan
 // over the app list.
 func (m *Model) resolveAppNamespace(appName string) string {
+	if _, namespace := model.SplitAppKey(appName); namespace != "" {
+		return namespace
+	}
 	if treeApp := m.state.UI.TreeApp; treeApp != nil && treeApp.Name == appName && treeApp.AppNamespace != nil {
 		return *treeApp.AppNamespace
 	}
-	for i := range m.state.Apps {
-		if m.state.Apps[i].Name == appName {
-			if m.state.Apps[i].AppNamespace != nil {
-				return *m.state.Apps[i].AppNamespace
-			}
-			return ""
-		}
+	if app := m.findAppByNameAndNamespace(appName, ""); app != nil && app.AppNamespace != nil {
+		return *app.AppNamespace
 	}
 	return ""
 }
@@ -49,8 +47,11 @@ func (m *Model) canAutoOpenPane() bool {
 // app-level on the synthetic root, resource-scoped otherwise. A non-empty
 // notice means the target cannot have events (resource Missing → no UID).
 func (m *Model) eventsTargetForSelection() (model.EventsTarget, string, *model.ResourceStatusSummary) {
-	appName := m.treeView.SelectedNodeApp()
-	target := model.EventsTarget{AppName: appName, AppNamespace: m.resolveAppNamespace(appName)}
+	appName, appNamespace := m.selectedTreeApplication()
+	target := model.EventsTarget{AppName: appName}
+	if appNamespace != nil {
+		target.AppNamespace = *appNamespace
+	}
 	if detail, ok := m.treeView.SelectedResourceDetail(); ok {
 		target.Resource = model.EventsResource{
 			Kind:      detail.Kind,

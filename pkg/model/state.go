@@ -37,7 +37,7 @@ type SelectionState struct {
 	ScopeNamespaces      map[string]bool `json:"scopeNamespaces"`
 	ScopeProjects        map[string]bool `json:"scopeProjects"`
 	ScopeApplicationSets map[string]bool `json:"scopeApplicationSets"`
-	SelectedApps         map[string]bool `json:"selectedApps"`
+	SelectedApps         map[string]bool `json:"selectedApps"` // Keys are App.Key() (namespace/name).
 }
 
 // NewSelectionState creates a new SelectionState with empty sets
@@ -244,12 +244,13 @@ type ErrorState struct {
 
 // DiffState holds state for the diff pager view
 type DiffState struct {
-	Title       string   `json:"title"`
-	Content     []string `json:"content"`
-	Filtered    []int    `json:"filtered"`
-	Offset      int      `json:"offset"`
-	SearchQuery string   `json:"searchQuery"`
-	Loading     bool     `json:"loading"`
+	Title            string   `json:"title"`
+	Content          []string `json:"content"`
+	Filtered         []int    `json:"filtered"`
+	Offset           int      `json:"offset"`
+	HorizontalOffset int      `json:"horizontalOffset"`
+	SearchQuery      string   `json:"searchQuery"`
+	Loading          bool     `json:"loading"`
 }
 
 // SaveNavigationState pushes the current navigation state onto the saved stack.

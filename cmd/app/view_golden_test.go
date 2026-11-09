@@ -31,7 +31,10 @@ func compareWithGolden(t *testing.T, name, got string) {
 		}
 		t.Fatalf("failed to read golden %s: %v (set UPDATE_GOLDEN=1 to create)", path, err)
 	}
-	want := string(wantBytes)
+	// Git may check snapshots out with CRLF on Windows. Terminal rendering
+	// consistently emits LF; line-ending conversion is not a visual regression.
+	want := strings.ReplaceAll(string(wantBytes), "\r\n", "\n")
+	got = strings.ReplaceAll(got, "\r\n", "\n")
 	if want != got {
 		if os.Getenv("UPDATE_GOLDEN") == "1" {
 			if err := writeFile(path, got); err != nil {

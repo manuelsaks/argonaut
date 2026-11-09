@@ -14,11 +14,27 @@ Argonaut is a keyboard-first terminal UI for **Argo CD**, built with **Bubbletea
 ## 📦 Prerequisites
 
 - [**Argo CD CLI**](https://argo-cd.readthedocs.io/en/stable/cli_installation/) installed
+- **Git** installed for generating diffs
 - [**Delta**](https://dandavison.github.io/delta/installation.html) installed for enhanced diffs (optional, falls back to `git`)
 
 ---
 
 ## 🚀 Installation methods
+
+### Windows (PowerShell)
+
+Build with a current patched Go toolchain:
+
+```powershell
+$env:GOTOOLCHAIN = 'go1.26.10'
+go build -o argonaut.exe ./cmd/app
+.\argonaut.exe
+```
+
+The Windows TUI uses its built-in pager for diffs and logs; `less`, `sh`, Git
+Bash and WSL are not required. Optional `delta` runs directly. Install native
+`k9s` and `kubectl` to use their respective integrations. The development
+Makefile/k3d scripts still require a Unix environment.
 
 <details>
   <summary><strong>Install Script (Linux/macOS)</strong></summary>
@@ -164,6 +180,14 @@ argocd login
 argonaut
 ```
 
+Press `c` (or enter `:ctx`) to switch between contexts saved by the Argo CD CLI
+while Argonaut is running. Use the arrow keys or `j`/`k`, then `Enter` to switch;
+`/` filters the list and `Esc` returns to apps. The active context is marked `*`.
+The list is refreshed from the Argo CD CLI configuration each time it opens.
+Argonaut uses that context's server and token directly, without kubeconfig, and
+does not change the CLI's `current-context`. Core and port-forward contexts are
+not supported for live switching. You can also switch directly with `:ctx NAME`.
+
 ---
 
 ## ✨ Highlights
@@ -210,6 +234,11 @@ argonaut
 <img src="assets/argonaut_help.png" alt="the :help command describes all commands"/>
 
 ## Advanced Features
+
+Application commands accept `namespace/name`, for example `:delete team-a/my-app`
+or `:sync team-a/my-app`. An unqualified name is accepted only when it identifies
+one application. Autocomplete qualifies duplicate names, and checkbox selections
+retain the Application namespace for batch operations.
 
 ### Client certificate authentication
 Argonaut supports client certificate authentication. You just need to pass a couple arguments to the argonaut command:
@@ -276,7 +305,7 @@ command = "k9s"           # Path to k9s executable
 context = ""              # Override Kubernetes context for k9s
 
 [diff]
-viewer = ""               # Interactive diff viewer (e.g., "code --diff {left} {right}", "meld {left} {right}")
+viewer = ""               # Interactive diff viewer (e.g., "code --wait --diff {left} {right}", "meld {left} {right}")
 formatter = ""            # Diff formatter command (e.g., "delta --side-by-side")
 
 [events]
@@ -341,7 +370,7 @@ Settings for diff viewing and formatting.
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `viewer` | Interactive diff viewer command. Use `{left}` and `{right}` as placeholders for file paths. | (none) |
+| `viewer` | Interactive diff viewer command. Use `{left}` and `{right}` as placeholders for file paths. The command must wait until the files are no longer needed (e.g., `code --wait --diff`); temporary manifests are deleted when it exits. | (none) |
 | `formatter` | Non-interactive diff formatter piped through before display | (none, falls back to `delta` if installed) |
 
 **Examples:**
@@ -355,10 +384,23 @@ viewer = "code --diff {left} {right} --wait"
 viewer = "meld {left} {right}"
 
 # Use delta with custom options
-formatter = "delta --side-by-side --line-numbers"
+formatter = "delta --side-by-side --line-numbers --paging=never"
 ```
 
-If no `viewer` is set, diffs are shown in an internal pager. If no `formatter` is set but [delta](https://dandavison.github.io/delta/) is installed, it will be used automatically.
+If no `viewer` is set, Windows uses the built-in pager; other platforms use
+`less -R` when available and the built-in pager otherwise. Navigate with `j/k`,
+Page Up/Down, `g/G`, and `h/l`, search with `/`, and return with `Esc` or `q`.
+If no `formatter` is set but [delta](https://dandavison.github.io/delta/) is
+installed, it will be used automatically without a shell.
+
+Custom viewer/formatter commands use PowerShell on Windows and `sh` on Unix;
+use command syntax and executables appropriate for that platform. Quote an
+executable path containing spaces, for example:
+
+```toml
+[diff]
+viewer = "'C:\\Tools Folder\\viewer.exe' {left} {right}"
+```
 
 #### `[events]`
 

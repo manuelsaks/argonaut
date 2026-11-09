@@ -5,7 +5,7 @@ k3d Argo CD.
 
 ```bash
 make argocd-up
-make argocd-git-daemon
+make argocd-git-daemon GIT_DAEMON_LISTEN=<host-address-reachable-from-k3d>
 ./argocd/fixtures/seed-sync-fixtures.sh
 ```
 
@@ -21,6 +21,15 @@ before rebuilding the repository or applying new Applications.
 
 The script derives the daemon base path from `git rev-parse --show-toplevel`.
 Outside a checkout, set `GIT_DAEMON_BASE_PATH`.
+
+The daemon binds to `127.0.0.1` by default. For k3d containers, explicitly set
+`GIT_DAEMON_LISTEN` to the host's Docker bridge/gateway address and restrict access
+to the local cluster. The Git protocol is unauthenticated and unencrypted. The
+daemon uses `--strict-paths`: only this checkout, `argonaut-sync-fixtures-repo`,
+and `argonaut-history-repo` are exported, even though the base path is their
+parent directory. `GIT_DAEMON_REPOSITORIES` overrides that exact allowlist; never
+add private repositories. Subdirectories and other sibling repositories are
+not exported. A port conflict fails startup instead of killing another process.
 
 The real e2e harness accepts only loopback endpoints (`localhost`, `127.0.0.1`,
 or `::1`) and honors the CLI context's `insecure` setting. Use the local context

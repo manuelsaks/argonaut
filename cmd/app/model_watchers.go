@@ -16,6 +16,7 @@ func (m *Model) cleanupAppWatcher() *Model {
 // another app), so the side pane — a lens over that session — closes with it;
 // auto-open reopens it against whatever tree loads next.
 func (m *Model) cleanupTreeWatchers() *Model {
+	m.treeSession++
 	if len(m.treeWatchCleanups) > 0 {
 		for _, c := range m.treeWatchCleanups {
 			if c != nil {
@@ -24,6 +25,8 @@ func (m *Model) cleanupTreeWatchers() *Model {
 		}
 	}
 	m.treeWatchCleanups = nil
+	// A retired producer must never write into the next session's channel.
+	m.treeStream = make(chan model.ResourceTreeStreamMsg, 64)
 	if m.treeStreamDone != nil {
 		close(m.treeStreamDone)
 		m.treeStreamDone = make(chan struct{})

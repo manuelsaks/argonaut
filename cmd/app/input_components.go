@@ -245,13 +245,8 @@ func (m *Model) validateCommand(input string) bool {
 				}
 			}
 			return false
-		case "app", "delete", "sync", "diff", "rollback", "resources":
-			for _, a := range m.state.Apps {
-				if strings.EqualFold(a.Name, arg) {
-					return true
-				}
-			}
-			return false
+		case "app", "delete", "sync", "diff", "rollback", "resources", "refresh", "refresh!":
+			return m.findAppByNameAndNamespace(arg, "") != nil
 		case "theme":
 			themeNames := theme.GetAvailableThemes()
 			for _, themeName := range themeNames {
@@ -417,6 +412,20 @@ func (m *Model) renderCommandInputWithAutocomplete(maxWidth int) string {
 
 // handleEnhancedSearchModeKeys handles input when in search mode with bubbles textinput
 func (m *Model) handleEnhancedSearchModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.state.Diff != nil && len(m.state.Diff.Content) > 0 {
+		switch msg.String() {
+		case "enter", "esc", "ctrl+c":
+			m.inputComponents.BlurInputs()
+			m.inputComponents.ClearSearchInput()
+			m.state.Mode = model.ModeDiff
+			return m, nil
+		default:
+			cmd := m.inputComponents.UpdateSearchInput(msg)
+			m.state.Diff.SearchQuery = m.inputComponents.GetSearchValue()
+			m.state.Diff.Offset = 0
+			return m, cmd
+		}
+	}
 
 	switch msg.String() {
 	case "paste":
@@ -499,6 +508,13 @@ func (m *Model) handleEnhancedSearchModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd
 		// For other views, drill down using current filtered results
 		// Do NOT exit search mode until after drill-down so filtering remains active
 		m.state.UI.SearchQuery = searchValue
+		if m.state.Navigation.View == model.ViewContexts {
+			// Keep the same filtered rows visible while switching, including if
+			// the selected context cannot be resolved and the picker stays open.
+			m.state.UI.ActiveFilter = searchValue
+			m.listNav.SetItemCount(len(m.getVisibleItems()))
+			m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
+		}
 		// Perform drill-down based on current selection under active search filter
 		newModel, cmd := m.handleDrillDown()
 		if modelPtr, ok := newModel.(*Model); ok {
@@ -655,14 +671,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 					return m, func() tea.Msg { return model.StatusChangeMsg{Status: "Unknown project: " + arg} }
 				}
 			case "app", "delete":
-				ok := false
-				for _, a := range m.state.Apps {
-					if strings.EqualFold(a.Name, arg) {
-						ok = true
-						break
-					}
-				}
-				if !ok {
+				if m.findAppByNameAndNamespace(arg, "") == nil {
 					return m, func() tea.Msg { return model.StatusChangeMsg{Status: "Unknown app: " + arg} }
 				}
 			}
@@ -708,6 +717,17 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			body := m.readLogContent()
 			return m, m.openTextPager("Logs", body)
 		case "sync":
+			if arg != "" {
+				app := m.findAppByNameAndNamespace(arg, "")
+				if app == nil {
+					return m, m.showFooterNotice("Application missing or ambiguous; select namespace/name")
+				}
+				m.state.Modals.ConfirmTarget = &app.Name
+				m.state.Modals.ConfirmTargetNamespace = app.AppNamespace
+				m.state.Modals.ConfirmSyncSelected = 0
+				m.state.Mode = model.ModeConfirmSync
+				return m, nil
+			}
 			// In tree view, sync the selected resource(s); in apps view, sync the app
 			if m.state.Navigation.View == model.ViewTree {
 				return m.handleResourceSync()
@@ -736,7 +756,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 					items := m.getVisibleItemsForCurrentView()
 					if len(items) > 0 && m.state.Navigation.SelectedIdx < len(items) {
 						if app, ok := items[m.state.Navigation.SelectedIdx].(model.App); ok {
-							target = app.Name
+							target = app.Key()
 						}
 					}
 					if target == "" {
@@ -744,13 +764,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 					}
 
 					// Find the app object to get namespace
-					var targetApp *model.App
-					for _, app := range m.state.Apps {
-						if strings.EqualFold(app.Name, target) {
-							targetApp = &app
-							break
-						}
-					}
+					targetApp := m.findAppByNameAndNamespace(target, "")
 					if targetApp == nil {
 						return m, func() tea.Msg { return model.StatusChangeMsg{Status: "App not found: " + target} }
 					}
@@ -758,8 +772,8 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 					// Single app deletion
 					cblog.With("component", "app-delete").Debug(":delete command invoked", "app", target)
 					m.state.Mode = model.ModeConfirmAppDelete
-					m.state.Modals.DeleteAppName = &target
-					m.state.Modals.DeleteAppNamespace = targetApp.Namespace
+					m.state.Modals.DeleteAppName = &targetApp.Name
+					m.state.Modals.DeleteAppNamespace = targetApp.AppNamespace
 					m.state.Modals.DeleteConfirmationKey = ""
 					m.state.Modals.DeleteError = nil
 					m.state.Modals.DeleteLoading = false
@@ -783,13 +797,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			} else {
 				// Specific app name provided as argument
 				// Find the app object to get namespace
-				var targetApp *model.App
-				for _, app := range m.state.Apps {
-					if strings.EqualFold(app.Name, target) {
-						targetApp = &app
-						break
-					}
-				}
+				targetApp := m.findAppByNameAndNamespace(target, "")
 				if targetApp == nil {
 					return m, func() tea.Msg { return model.StatusChangeMsg{Status: "App not found: " + target} }
 				}
@@ -797,8 +805,8 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 				// Single app deletion
 				cblog.With("component", "app-delete").Debug(":delete command invoked", "app", target)
 				m.state.Mode = model.ModeConfirmAppDelete
-				m.state.Modals.DeleteAppName = &target
-				m.state.Modals.DeleteAppNamespace = targetApp.Namespace
+				m.state.Modals.DeleteAppName = &targetApp.Name
+				m.state.Modals.DeleteAppNamespace = targetApp.AppNamespace
 				m.state.Modals.DeleteConfirmationKey = ""
 				m.state.Modals.DeleteError = nil
 				m.state.Modals.DeleteLoading = false
@@ -835,6 +843,13 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			}
 			if target == "" {
 				return m, func() tea.Msg { return model.StatusChangeMsg{Status: "No app selected for rollback"} }
+			}
+			if targetNamespace == nil {
+				app := m.findAppByNameAndNamespace(target, "")
+				if app == nil {
+					return m, m.showFooterNotice("Application missing or ambiguous; select namespace/name")
+				}
+				target, targetNamespace = app.Name, app.AppNamespace
 			}
 
 			// Use the same rollback logic as the R key
@@ -878,16 +893,9 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 					m.treeLoading = true
 					var cmds []tea.Cmd
 					for _, n := range names {
-						var appObj *model.App
-						for i := range m.state.Apps {
-							if m.state.Apps[i].Name == n {
-								appObj = &m.state.Apps[i]
-								break
-							}
-						}
+						appObj := m.findAppByNameAndNamespace(n, "")
 						if appObj == nil {
-							tmp := model.App{Name: n}
-							appObj = &tmp
+							continue
 						}
 						cmds = append(cmds, m.startLoadingResourceTree(*appObj))
 						cmds = append(cmds, m.startWatchingResourceTree(*appObj))
@@ -925,15 +933,12 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			// selectedApp may already be set by the cursor-position path above.
 			// Fall back to name-only lookup when target came from a text argument or checkbox.
 			if selectedApp == nil {
-				for i := range m.state.Apps {
-					if m.state.Apps[i].Name == target {
-						selectedApp = &m.state.Apps[i]
-						break
-					}
-				}
+				selectedApp = m.findAppByNameAndNamespace(target, "")
 			}
 			if selectedApp == nil {
-				selectedApp = &model.App{Name: target}
+				return m, func() tea.Msg {
+					return model.StatusChangeMsg{Status: "Application missing or ambiguous; select namespace/name"}
+				}
 			}
 			// Clean up any existing tree watchers before starting new one
 			m.cleanupTreeWatchers()
@@ -1086,10 +1091,14 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			m = m.safeChangeView(model.ViewApps)
 			if arg != "" {
 				// Select the app and move cursor to it if found
-				m.state.Selections.SelectedApps = model.StringSetFromSlice([]string{arg})
+				app := m.findAppByNameAndNamespace(arg, "")
+				if app == nil {
+					return m, m.showFooterNotice("Application missing or ambiguous; select namespace/name")
+				}
+				m.state.Selections.SelectedApps = model.StringSetFromSlice([]string{app.Key()})
 				idx := -1
 				for i, a := range m.state.Apps {
-					if a.Name == arg {
+					if a.Key() == app.Key() {
 						idx = i
 						break
 					}
@@ -1152,14 +1161,10 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			m.state.Modals.ChangelogLoading = true
 			return m, m.fetchChangelog()
 		case "context", "contexts", "argocd", "ctx":
-			m.clearTreeApp()
-			m.treeLoading = false
-			m.state.Navigation.SelectedIdx = 0
 			if arg != "" {
 				return m, m.performContextSwitch(arg)
 			}
-			m = m.safeChangeView(model.ViewContexts)
-			return m, nil
+			return m.openContextPicker()
 		default:
 			// Unknown: set status for feedback
 			return m, func() tea.Msg { return model.StatusChangeMsg{Status: "Unknown command: " + raw} }

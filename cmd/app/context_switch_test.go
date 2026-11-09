@@ -170,6 +170,7 @@ func TestContextSwitchPreservedFields(t *testing.T) {
 		Server:       newServer,
 		ContextName:  "new-context",
 		ContextNames: contextNames,
+		SwitchEpoch:  3,
 	})
 	newM := result.(*Model)
 
@@ -238,7 +239,7 @@ func TestContextSwitch_UpstreamCleanupCalledOnce(t *testing.T) {
 }
 
 // TestContextSwitchSameContextNoOp verifies that switching to the same context
-// produces a status message without teardown.
+// only changes status, without teardown.
 func TestContextSwitchSameContextNoOp(t *testing.T) {
 	m := NewModel(nil)
 	m.state.Server = &model.Server{BaseURL: "https://test.example.com", Token: "tok"}
@@ -251,11 +252,12 @@ func TestContextSwitchSameContextNoOp(t *testing.T) {
 	}
 
 	msg := cmd()
-	if statusMsg, ok := msg.(model.StatusChangeMsg); ok {
-		if statusMsg.Status != "Already on context: my-context" {
-			t.Errorf("unexpected status: %q", statusMsg.Status)
-		}
-	} else {
-		t.Errorf("expected StatusChangeMsg, got %T", msg)
+	result, ok := msg.(model.ContextSwitchResultMsg)
+	if !ok {
+		t.Fatalf("expected ContextSwitchResultMsg, got %T", msg)
+	}
+	updated, next := m.Update(result)
+	if updated != m || next != nil || m.statusService.GetCurrentStatus() != "Already on context: my-context" {
+		t.Fatal("same-context switch should only set status without replacing the model")
 	}
 }

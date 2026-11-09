@@ -10,6 +10,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/darksworm/argonaut/pkg/model"
 	"github.com/darksworm/argonaut/pkg/sort"
 )
@@ -298,6 +299,12 @@ func (m *Model) View() tea.View {
 			content = ""
 		case model.ModeDiff:
 			content = m.renderDiffView()
+		case model.ModeSearch:
+			if m.state.Diff != nil && len(m.state.Diff.Content) > 0 {
+				content = m.renderDiffView()
+			} else {
+				content = m.renderMainLayout()
+			}
 		case model.ModeRulerLine:
 			content = m.renderOfficeSupplyManager()
 		case model.ModeError:
@@ -809,7 +816,7 @@ func (m *Model) renderDiffView() string {
 	if q := strings.ToLower(strings.TrimSpace(m.state.Diff.SearchQuery)); q != "" {
 		filtered := make([]string, 0, len(lines))
 		for _, ln := range lines {
-			if strings.Contains(strings.ToLower(ln), q) {
+			if strings.Contains(strings.ToLower(ansi.Strip(ln)), q) {
 				filtered = append(filtered, ln)
 			}
 		}
@@ -826,7 +833,10 @@ func (m *Model) renderDiffView() string {
 		MAIN_CONTAINER_PADDING = 1 // main container has some margin
 	)
 	overhead := TITLE_LINES + STATUS_LINES + BORDER_LINES + MAIN_CONTAINER_PADDING
-	contentHeight := max(3, m.state.Terminal.Rows-overhead)
+	if m.state.Mode == model.ModeSearch {
+		overhead++
+	}
+	contentHeight := max(1, m.state.Terminal.Rows-overhead)
 
 	// Clamp offset - the content area height should be used for pagination
 	if m.state.Diff.Offset < 0 {
@@ -837,13 +847,17 @@ func (m *Model) renderDiffView() string {
 	}
 	start := m.state.Diff.Offset
 	end := min(len(lines), start+contentHeight)
-	body := strings.Join(lines[start:end], "\n")
+	contentWidth := max(1, m.state.Terminal.Cols-4)
+	visible := make([]string, 0, end-start)
+	for _, line := range lines[start:end] {
+		visible = append(visible, ansi.Cut(line, m.state.Diff.HorizontalOffset, m.state.Diff.HorizontalOffset+contentWidth))
+	}
+	body := strings.Join(visible, "\n")
 
 	title := headerStyle.Render(m.state.Diff.Title)
-	status := statusStyle.Render(fmt.Sprintf("%d-%d/%d  j/k, g/G, / search, esc/q back", start+1, end, len(lines)))
+	status := statusStyle.Render(fmt.Sprintf("%d-%d/%d  j/k, PgUp/PgDn, h/l, / search, esc/q back", min(start+1, len(lines)), end, len(lines)))
 
 	// Width should account for main container padding (2) and content border padding (2)
-	contentWidth := max(0, m.state.Terminal.Cols-4)
 
 	// Don't set a fixed height on the content border - let it size naturally
 	content := contentBorderStyle.Width(contentWidth).Render(body)
@@ -853,6 +867,9 @@ func (m *Model) renderDiffView() string {
 	var sections []string
 	sections = append(sections, title)
 	sections = append(sections, content)
+	if m.state.Mode == model.ModeSearch {
+		sections = append(sections, m.renderEnhancedSearchBar())
+	}
 	sections = append(sections, status)
 
 	// Join sections and apply main container style WITHOUT fixed height

@@ -25,11 +25,11 @@ func buildEventsPaneTestModel() *Model {
 	ns := "test-namespace"
 	m.state.UI.TreeApp = &model.TreeAppInfo{Name: "test-app", AppNamespace: &ns}
 	m.treeView = treeview.NewTreeView(100, 30)
-	m.treeView.SetAppMeta("test-app", "Healthy", "Synced")
+	m.treeView.SetAppMeta("test-namespace/test-app", "Healthy", "Synced")
 	demoNs := "demo"
 	degraded := "Degraded"
 	healthMsg := "Back-off restarting container"
-	m.treeView.UpsertAppTree("test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
+	m.treeView.UpsertAppTree("test-namespace/test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
 		{UID: "pod-uid", Version: "v1", Kind: "Pod", Name: "web-1", Namespace: &demoNs,
 			Health: &api.ResourceHealth{Status: &degraded, Message: &healthMsg}},
 	}})
@@ -176,7 +176,7 @@ func TestTreeKeyEnter_OnChildApplicationRow_KeepsDrillIn(t *testing.T) {
 	m := buildEventsPaneTestModel()
 	childNs := "argocd"
 	m.state.Apps = append(m.state.Apps, model.App{Name: "child-app", Sync: "Synced", Health: "Healthy", AppNamespace: &childNs})
-	m.treeView.UpsertAppTree("test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
+	m.treeView.UpsertAppTree("test-namespace/test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
 		{UID: "child-app-uid", Group: "argoproj.io", Version: "v1alpha1", Kind: "Application", Name: "child-app", Namespace: &childNs},
 	}})
 	m.treeView.SetSelectedIndex(1) // the child Application row
@@ -203,7 +203,7 @@ func TestTreeKeyEnter_OnChildApplicationRow_KeepsDrillIn(t *testing.T) {
 func TestTreeKeyE_OnMissingResource_OpensWithNotice(t *testing.T) {
 	m := buildEventsPaneTestModel()
 	ns := "argonaut-demo"
-	m.treeView.UpsertAppTree("test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
+	m.treeView.UpsertAppTree("test-namespace/test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
 		{Group: "argoproj.io", Version: "v1alpha1", Kind: "Rollout", Name: "bluegreen-demo", Namespace: &ns},
 	}})
 	m.treeView.SetSelectedIndex(1)
@@ -642,7 +642,7 @@ func TestEventsPane_RetargetSkipsWhenTargetUnchanged(t *testing.T) {
 func TestEventsPane_CursorOntoMissingResource_ShowsNotice(t *testing.T) {
 	m := buildEventsPaneTestModel()
 	ns := "argonaut-demo"
-	m.treeView.UpsertAppTree("test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
+	m.treeView.UpsertAppTree("test-namespace/test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
 		{UID: "pod-uid", Version: "v1", Kind: "Pod", Name: "web-1", Namespace: &ns},
 		{Group: "argoproj.io", Version: "v1alpha1", Kind: "Rollout", Name: "bluegreen-demo", Namespace: &ns},
 	}})
@@ -779,7 +779,7 @@ func TestEventsCommand_Off_ClosesPaneAndStopsAutoOpen(t *testing.T) {
 		t.Fatal(err)
 	}
 	teaModel, _ = m.Update(model.ResourceTreeLoadedMsg{
-		AppName: "test-app", Health: "Healthy", Sync: "Synced",
+		AppName: "test-app", AppNamespace: "test-namespace", Health: "Healthy", Sync: "Synced",
 		TreeJSON: treeJSON, SwitchEpoch: m.switchEpoch,
 	})
 	if teaModel.(*Model).state.Events != nil {
@@ -1102,7 +1102,7 @@ func TestResourceTreeLoaded_AutoOpensThePane(t *testing.T) {
 	}
 
 	teaModel, cmd := m.Update(model.ResourceTreeLoadedMsg{
-		AppName: "test-app", Health: "Healthy", Sync: "Synced",
+		AppName: "test-app", AppNamespace: "test-namespace", Health: "Healthy", Sync: "Synced",
 		TreeJSON: treeJSON, SwitchEpoch: m.switchEpoch,
 	})
 	mm := teaModel.(*Model)
@@ -1132,7 +1132,7 @@ func TestResourceTreeLoaded_AutoOpenDisabled_KeepsPaneClosed(t *testing.T) {
 	}
 
 	teaModel, _ := m.Update(model.ResourceTreeLoadedMsg{
-		AppName: "test-app", Health: "Healthy", Sync: "Synced",
+		AppName: "test-app", AppNamespace: "test-namespace", Health: "Healthy", Sync: "Synced",
 		TreeJSON: treeJSON, SwitchEpoch: m.switchEpoch,
 	})
 	mm := teaModel.(*Model)
@@ -1156,7 +1156,7 @@ func TestResourceTreeLoaded_PaneAlreadyOpen_IsLeftAlone(t *testing.T) {
 	}
 
 	teaModel, _ := m.Update(model.ResourceTreeLoadedMsg{
-		AppName: "test-app", Health: "Healthy", Sync: "Synced",
+		AppName: "test-app", AppNamespace: "test-namespace", Health: "Healthy", Sync: "Synced",
 		TreeJSON: treeJSON, SwitchEpoch: m.switchEpoch,
 	})
 	mm := teaModel.(*Model)
@@ -1172,7 +1172,7 @@ func TestDrillIntoChildApp_ClosesTheStalePane(t *testing.T) {
 	m := openEventsPane(t, buildEventsPaneTestModel())
 	childNs := "argocd"
 	m.state.Apps = append(m.state.Apps, model.App{Name: "child-app", Sync: "Synced", Health: "Healthy", AppNamespace: &childNs})
-	m.treeView.UpsertAppTree("test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
+	m.treeView.UpsertAppTree("test-namespace/test-app", &api.ResourceTree{Nodes: []api.ResourceNode{
 		{UID: "child-app-uid", Group: "argoproj.io", Version: "v1alpha1", Kind: "Application", Name: "child-app", Namespace: &childNs},
 	}})
 	m.treeView.SetSelectedIndex(1) // the child Application row
@@ -1209,11 +1209,12 @@ func TestResourceTreeLoaded_SyncSummary_DisambiguatesAppByNamespace(t *testing.T
 	}
 
 	teaModel, _ := m.Update(model.ResourceTreeLoadedMsg{
-		AppName:     "my-app",
-		Health:      "Healthy",
-		Sync:        "Synced",
-		TreeJSON:    treeJSON,
-		SwitchEpoch: m.switchEpoch,
+		AppName:      "my-app",
+		AppNamespace: nsTeamA,
+		Health:       "Healthy",
+		Sync:         "Synced",
+		TreeJSON:     treeJSON,
+		SwitchEpoch:  m.switchEpoch,
 	})
 	mm := teaModel.(*Model)
 
@@ -1240,11 +1241,12 @@ func TestResourceTreeLoaded_SetsSyncSummaryFromAppList(t *testing.T) {
 	}
 
 	teaModel, _ := m.Update(model.ResourceTreeLoadedMsg{
-		AppName:     "test-app",
-		Health:      "Healthy",
-		Sync:        "Synced",
-		TreeJSON:    treeJSON,
-		SwitchEpoch: m.switchEpoch,
+		AppName:      "test-app",
+		AppNamespace: "test-namespace",
+		Health:       "Healthy",
+		Sync:         "Synced",
+		TreeJSON:     treeJSON,
+		SwitchEpoch:  m.switchEpoch,
 	})
 	mm := teaModel.(*Model)
 

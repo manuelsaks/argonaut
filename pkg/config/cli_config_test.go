@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -38,7 +39,7 @@ func TestGetConfigPath(t *testing.T) {
 			name:                 "ARGOCD_CONFIG_DIR is used",
 			envARGOCD_CONFIG_DIR: "/custom/config/dir",
 			expectedPath: func(tmpDir string) string {
-				return "/custom/config/dir/config"
+				return filepath.Join("/custom/config/dir", "config")
 			},
 		},
 		{
@@ -70,6 +71,9 @@ func TestGetConfigPath(t *testing.T) {
 
 			// Set HOME to our test-specific temp directory
 			os.Setenv("HOME", tmpDir)
+			if runtime.GOOS == "windows" {
+				t.Setenv("USERPROFILE", tmpDir)
+			}
 
 			// Clear environment variables
 			os.Unsetenv("ARGOCD_CONFIG")

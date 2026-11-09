@@ -201,7 +201,11 @@ func (m *Model) renderListHeader() string {
 
 	// Simple header for other views padded to full content width
 	contentWidth := m.contentInnerWidth()
-	hdr := headerStyle.Render("NAME")
+	heading := "NAME"
+	if m.state.Navigation.View == model.ViewContexts {
+		heading = "ARGO CD CONTEXTS (Enter: switch, Esc: apps, /: filter)"
+	}
+	hdr := headerStyle.Render(heading)
 	if lipgloss.Width(hdr) < contentWidth {
 		hdr = padRight(hdr, contentWidth)
 	} else if lipgloss.Width(hdr) > contentWidth {
@@ -213,7 +217,7 @@ func (m *Model) renderListHeader() string {
 // renderAppRow - matches ListView app row rendering
 func (m *Model) renderAppRow(app model.App, isCursor bool) string {
 	// Selection checking (matches ListView isChecked logic)
-	isSelected := m.state.Selections.HasSelectedApp(app.Name)
+	isSelected := m.state.Selections.HasSelectedApp(app.Key())
 	// While a desaturating modal is up, suppress the cursor-only highlight
 	// so unrelated rows don't appear bright behind the popup. Truly
 	// selected rows still keep their bg so the user can see what's
@@ -310,6 +314,12 @@ func (m *Model) renderSimpleRow(label string, isCursor bool) string {
 		isSelected = m.state.Selections.HasNamespace(label)
 	case model.ViewProjects:
 		isSelected = m.state.Selections.HasProject(label)
+	case model.ViewContexts:
+		if label == m.currentContextName {
+			label = "* " + label + " (active)"
+		} else {
+			label = "  " + label
+		}
 	}
 
 	if m.willDesaturateBase() {

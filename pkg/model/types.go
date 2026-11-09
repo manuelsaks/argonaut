@@ -315,21 +315,23 @@ type UpdateInfo struct {
 
 // ResourceDeleteTarget represents a resource to be deleted
 type ResourceDeleteTarget struct {
-	AppName   string `json:"appName"`
-	Group     string `json:"group"`
-	Kind      string `json:"kind"`
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-	Version   string `json:"version"`
+	AppName      string  `json:"appName"`
+	AppNamespace *string `json:"appNamespace,omitempty"`
+	Group        string  `json:"group"`
+	Kind         string  `json:"kind"`
+	Namespace    string  `json:"namespace"`
+	Name         string  `json:"name"`
+	Version      string  `json:"version"`
 }
 
 // ResourceSyncTarget represents a resource to be synced
 type ResourceSyncTarget struct {
-	AppName   string `json:"appName"`
-	Group     string `json:"group"`
-	Kind      string `json:"kind"`
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
+	AppName      string  `json:"appName"`
+	AppNamespace *string `json:"appNamespace,omitempty"`
+	Group        string  `json:"group"`
+	Kind         string  `json:"kind"`
+	Namespace    string  `json:"namespace"`
+	Name         string  `json:"name"`
 }
 
 // ResourceActionTarget identifies a resource on which a custom action is to be performed
