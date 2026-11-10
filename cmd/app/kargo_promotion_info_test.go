@@ -130,7 +130,7 @@ func TestKargoPromotionMetadataAndColorsRenderWithoutNetworkReads(t *testing.T) 
 		t.Fatalf("promote label lost its success color: %q", got)
 	}
 	kargoKey(t, m, "ctrl+t")
-	if out := m.renderKargoView(); !strings.Contains(out, lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("RETRY PROMOTION")) {
+	if out := m.renderKargoForm(80)[0]; !strings.Contains(out, lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("RETRY PROMOTION")) {
 		t.Fatal("retry confirmation title lost its warning color")
 	}
 	kargoKey(t, m, "esc")

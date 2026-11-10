@@ -21,7 +21,10 @@ type kargoCacheEntry struct {
 	Items []kargo.Resource
 	At    time.Time
 }
-type kargoPromotion struct{ Connection, Server, Project, Stage, Freight, RetryOf string }
+type kargoPromotion struct {
+	Connection, Server, Project, Stage, Freight, RetryOf string
+	FromUpstream                                         bool
+}
 type kargoUIState struct {
 	Connections                             []kargo.Connection
 	Connection                              int
@@ -458,12 +461,14 @@ func (m *Model) executeKargoPromotion() tea.Cmd {
 	m.cancelKargoLoad()
 	st.Executing = true
 	epoch, seq, client := m.switchEpoch, st.Sequence, st.Client
-	ctx, cancel := appcontext.WithAPITimeout(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 	st.Cancel = cancel
 	return func() tea.Msg {
 		defer cancel()
 		if target.RetryOf != "" {
-			previous, err := client.Get(ctx, "Promotion", target.Project, target.RetryOf)
+			readCtx, done := appcontext.WithAPITimeout(ctx)
+			previous, err := client.Get(readCtx, "Promotion", target.Project, target.RetryOf)
+			done()
 			if err != nil {
 				return kargoPromotedMsg{epoch, seq, target, kargo.Resource{}, err}
 			}
@@ -471,7 +476,20 @@ func (m *Model) executeKargoPromotion() tea.Cmd {
 				return kargoPromotedMsg{epoch, seq, target, kargo.Resource{}, fmt.Errorf("promotion changed or is no longer retryable; refresh Promotions")}
 			}
 		}
-		promotion, err := client.Promote(ctx, target.Project, target.Stage, target.Freight)
+		if target.FromUpstream {
+			readCtx, done := appcontext.WithAPITimeout(ctx)
+			stages, err := client.List(readCtx, "Stage", target.Project, "", "")
+			done()
+			if err != nil {
+				return kargoPromotedMsg{epoch, seq, target, kargo.Resource{}, err}
+			}
+			if kargoUpstreamFreight(stages, target.Project, target.Stage)[target.Freight] == "" {
+				return kargoPromotedMsg{epoch, seq, target, kargo.Resource{}, fmt.Errorf("upstream Freight changed; reopen Promote from upstream and review the current Freight")}
+			}
+		}
+		writeCtx, done := appcontext.WithAPITimeout(ctx)
+		promotion, err := client.Promote(writeCtx, target.Project, target.Stage, target.Freight)
+		done()
 		return kargoPromotedMsg{epoch, seq, target, promotion, err}
 	}
 }

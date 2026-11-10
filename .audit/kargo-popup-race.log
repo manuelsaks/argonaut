@@ -1,0 +1,24 @@
+ok  	github.com/darksworm/argonaut/cmd/app	35.792s
+ok  	github.com/darksworm/argonaut/pkg/api	(cached)
+ok  	github.com/darksworm/argonaut/pkg/autocomplete	(cached)
+ok  	github.com/darksworm/argonaut/pkg/config	(cached)
+ok  	github.com/darksworm/argonaut/pkg/context	(cached)
+?   	github.com/darksworm/argonaut/pkg/errors	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/humantime	(cached)
+ok  	github.com/darksworm/argonaut/pkg/kargo	(cached)
+ok  	github.com/darksworm/argonaut/pkg/kubeconfig	(cached)
+ok  	github.com/darksworm/argonaut/pkg/model	(cached)
+ok  	github.com/darksworm/argonaut/pkg/neat	(cached)
+?   	github.com/darksworm/argonaut/pkg/portforward	[no test files]
+?   	github.com/darksworm/argonaut/pkg/retry	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/services	(cached)
+ok  	github.com/darksworm/argonaut/pkg/services/appdelete	(cached)
+ok  	github.com/darksworm/argonaut/pkg/sort	(cached)
+ok  	github.com/darksworm/argonaut/pkg/theme	(cached)
+ok  	github.com/darksworm/argonaut/pkg/trust	(cached)
+ok  	github.com/darksworm/argonaut/pkg/tui	(cached)
+ok  	github.com/darksworm/argonaut/pkg/tui/clipboard	(cached)
+ok  	github.com/darksworm/argonaut/pkg/tui/listnav	(cached)
+ok  	github.com/darksworm/argonaut/pkg/tui/selection	(cached)
+ok  	github.com/darksworm/argonaut/pkg/tui/treeview	(cached)
+ok  	github.com/darksworm/argonaut/scripts	(cached)

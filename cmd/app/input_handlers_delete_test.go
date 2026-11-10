@@ -31,6 +31,10 @@ func testKeyMsg(s string) tea.KeyMsg {
 		return tea.KeyPressMsg{Code: tea.KeyUp}
 	case "down":
 		return tea.KeyPressMsg{Code: tea.KeyDown}
+	case "left":
+		return tea.KeyPressMsg{Code: tea.KeyLeft}
+	case "right":
+		return tea.KeyPressMsg{Code: tea.KeyRight}
 	case "space":
 		return tea.KeyPressMsg{Code: ' ', Text: " "}
 	case "backspace":

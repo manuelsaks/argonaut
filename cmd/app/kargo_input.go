@@ -286,6 +286,8 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.toggleKargoAutoLogin()
 	case "ctrl+p":
 		return m, m.startKargoPromotion()
+	case "ctrl+u":
+		return m, m.startKargoPromotionFromUpstream()
 	case "ctrl+e":
 		if st.Error != "" {
 			m.saveKargoLocation()
@@ -320,7 +322,7 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.state.Mode = model.ModeCommand
 	case "?":
 		m.saveKargoLocation()
-		m.showKargoText("Kargo help", "Navigate:\n  0/c: instances, 1: projects, 2: stages, 3: promotions\n  4: warehouses, 5: freight, a: Argo CD\n\nInspect:\n  Enter: open; d: describe; y: full YAML; /: filter\n  Ctrl+E: show the last request error\n\nPromote:\n  Select Stage or Freight and press Ctrl+P.\n  Choose with arrows; type to filter; Tab / Shift+Tab moves focus.\n  Review instance, project, Stage and Freight.\n  Tab to Cancel / Promote, then Enter; Esc cancels.\n  Ctrl+P also submits the reviewed promotion.\n  The result opens with phase, step results and error messages.\n  Ctrl+R: refresh now. Writes are never retried automatically.\n\nSSO:\n  Ctrl+L: Kargo CLI browser SSO.\n  Ctrl+A: toggle auto-login for the current/selected instance.\n\nNetwork:\n  Normal: poll the visible data every 10s.\n  --low-bandwidth: every 2m, cached lists, no background fan-out.\n  [network] refresh_interval=\"0\": manual refresh only.")
+		m.showKargoText("Kargo help", "Navigate:\n  0/c: instances, 1: projects, 2: stages, 3: promotions\n  4: warehouses, 5: freight, a: Argo CD\n\nInspect:\n  Enter: open; d: describe; y: full YAML; /: filter\n  Ctrl+E: show the last request error\n\nPromote:\n  Select Stage or Freight and press Ctrl+P to open a popup.\n  Ctrl+U: Promote from upstream (select a target Stage).\n  The Mode field switches Promote / Promote from upstream with Left/Right.\n  Choose with arrows; type to filter; Tab / Shift+Tab moves focus.\n  Review instance, project, Stage and Freight.\n  Tab to Cancel / Promote, then Enter; Esc cancels.\n  Ctrl+P also submits the reviewed promotion.\n  The result opens with phase, step results and error messages.\n  Ctrl+R: refresh now. Writes are never retried automatically.\n\nSSO:\n  Ctrl+L: Kargo CLI browser SSO.\n  Ctrl+A: toggle auto-login for the current/selected instance.\n\nNetwork:\n  Normal: poll the visible data every 10s.\n  --low-bandwidth: every 2m, cached lists, no background fan-out.\n  [network] refresh_interval=\"0\": manual refresh only.")
 	case "j", "down":
 		st.Cursor++
 	case "k", "up":
@@ -411,19 +413,30 @@ func (m *Model) selectKargoConnection(index int) {
 }
 
 func (m *Model) startKargoPromotion() tea.Cmd {
+	return m.openKargoPromotionForm(false)
+}
+
+func (m *Model) startKargoPromotionFromUpstream() tea.Cmd {
+	return m.openKargoPromotionForm(true)
+}
+
+func (m *Model) openKargoPromotionForm(upstream bool) tea.Cmd {
 	st := m.kargo
 	rows := m.kargoRows()
 	if st.Cursor < 0 || st.Cursor >= len(rows) || st.Client == nil {
 		return m.showFooterNotice("Select a Stage or Freight after loading the project")
 	}
 	resource := rows[st.Cursor].Resource
+	if upstream && resource.Kind != "Stage" {
+		return m.showFooterNotice("Select the target Stage for Promote from upstream")
+	}
 	if resource.Kind != "Stage" && resource.Kind != "Freight" {
 		return m.showFooterNotice("Select a Stage or Freight and press Ctrl+P")
 	}
 	origin := m.kargoLocation()
 	m.cancelKargoLoad()
 	connection := st.Connections[st.Connection]
-	st.Draft = &kargoPromotion{Connection: connection.Name, Server: st.Client.Connection.Server, Project: st.Project}
+	st.Draft = &kargoPromotion{Connection: connection.Name, Server: st.Client.Connection.Server, Project: st.Project, FromUpstream: upstream}
 	kind := "Freight"
 	if resource.Kind == "Stage" {
 		st.Draft.Stage = resource.Name

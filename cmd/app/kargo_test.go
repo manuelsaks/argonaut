@@ -25,6 +25,8 @@ type kargoFixture struct {
 	Reads       atomic.Int32
 	Phase       atomic.Value
 	LastProject atomic.Value
+	Stages      atomic.Value
+	Freights    atomic.Value
 	Home        string
 	Server      *httptest.Server
 }
@@ -44,11 +46,19 @@ func newKargoFixture(t *testing.T) (*Model, *kargoFixture) {
 		case r.URL.Path == "/v1beta1/projects":
 			fmt.Fprint(w, `{"items":[{"kind":"Project","metadata":{"name":"team-a"}},{"kind":"Project","metadata":{"name":"team-b"}}]}`)
 		case strings.HasSuffix(r.URL.Path, "/stages"):
+			if value := fixture.Stages.Load(); value != nil {
+				fmt.Fprint(w, value.(string))
+				return
+			}
 			project := strings.Split(r.URL.Path, "/")[3]
 			fmt.Fprintf(w, `{"items":[{"kind":"Stage","metadata":{"name":"prod","namespace":%q},"status":{"health":{"status":"Healthy"},"freightSummary":"freight-old"}}]}`, project)
 		case strings.HasSuffix(r.URL.Path, "/warehouses"):
 			fmt.Fprint(w, `{"items":[{"kind":"Warehouse","metadata":{"name":"registry","namespace":"team-b"},"spec":{"subscriptions":[{"git":{"repoURL":"https://git.example/team/repo"}}]},"status":{"conditions":[{"type":"Ready","status":"False","message":"registry timeout"}],"lastFreightID":"freight-old"}}]}`)
 		case strings.HasSuffix(r.URL.Path, "/freight"):
+			if value := fixture.Freights.Load(); value != nil {
+				fmt.Fprint(w, value.(string))
+				return
+			}
 			fmt.Fprint(w, `{"groups":{"":{"items":[{"kind":"Freight","metadata":{"name":"freight-a","namespace":"team-b","labels":{"kargo.akuity.io/alias":"sleepy-owl"}},"origin":{"kind":"Warehouse","name":"registry"},"images":[{"repoURL":"registry.example/web","tag":"v2"}]}]}}}`)
 		case r.Method == http.MethodPost && strings.HasSuffix(r.URL.Path, "/stages/prod/promotions"):
 			project := strings.Split(r.URL.Path, "/")[3]

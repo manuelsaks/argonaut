@@ -1,0 +1,48 @@
+Kargo promotion popup and upstream mode - 2026-11-10
+
+Changes
+- Promotion and Retry forms are centered, bordered, opaque popups above the
+  dimmed originating list or describe/YAML view. They no longer replace it.
+- Ctrl+P opens Promote; Ctrl+U on a target Stage opens Promote from upstream.
+  Both modes are also available in the popup's Mode field: Shift+Tab from the
+  choice field focuses Mode, Left/Right changes it, Tab advances through the
+  choice and Cancel/Promote buttons. Enter activates; Esc closes the popup.
+- Upstream mode matches the current Freight collection of the Stage's
+  configured upstream Stages, by requested Warehouse origin. It intersects
+  those IDs with Freight eligible for the target Stage. Historical Freight,
+  another Warehouse and another project cannot become implicit choices.
+- The popup shows source Stage(s), selected Freight/alias, target Stage,
+  project and instance. Empty/ineligible choices cannot submit. Source Stage
+  state is re-read before submitting; a changed upstream requires a new review.
+- Normal Promote keeps all eligible Freight choices. Unfiltered eligible
+  Freight lists remain cached across mode switches; only one project-level
+  Stage list and, on a cold cache, one scoped Freight list are read for upstream.
+- Every asynchronous response remains gated by view, epoch, sequence, exact
+  target including promotion mode, and session identity. Writes are submitted
+  once after explicit confirmation; no auth flow or refresh replays them.
+- Sequential API calls receive separate configured per-call timeout budgets.
+- Supports both REST and existing Connect clients without Kubernetes access.
+
+Validation
+- PASS: full go test -race -mod=readonly -timeout=180s
+  ./cmd/... ./pkg/... ./scripts, with go1.26.10 and the existing optional
+  ARGONAUT_REAL_ARGOCD=C:\tools\argocd.exe compatibility fixture.
+  See kargo-popup-race.log.
+- PASS: final Kargo race tests, including popup cancel/submit, mode switching,
+  old responses, no eligible upstream, changed upstream, project/origin/history
+  isolation, one POST after double Enter and unchanged normal-promotion cache.
+  See kargo-popup-final.log. Operation tests use local HTTP fixtures.
+- PASS: batched popup layout inspection at 60x20, 80x24 and 120x30, including
+  visible Cancel/Promote buttons and keyboard hints. See kargo-popup-captures.log.
+- PASS: Windows amd64 build, Linux amd64 cross-build, Git Bash --version and
+  Windows console-mode restoration test under a real PTY.
+
+Updated main Windows executable
+C:\tmp\argonaut\argonaut.exe
+SHA256: C34EC64EDF4EC3ED83E28B92D4338365E57F2B1C35BC4502255F610E50893A91
+
+Official upstream behavior verified against
+https://github.com/akuity/kargo/blob/main/ui/src/features/project/pipelines/nodes/use-get-upstream-freight.ts
+https://github.com/akuity/kargo/blob/main/ui/src/features/project/pipelines/nodes/promotion/use-get-promotion-dropdown-items.tsx
+https://github.com/akuity/kargo/blob/main/ui/src/features/common/utils.ts
+https://docs.kargo.io/user-guide/how-to-guides/working-with-stages

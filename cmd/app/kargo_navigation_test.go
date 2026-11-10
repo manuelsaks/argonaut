@@ -55,6 +55,10 @@ func TestKargoPromotionFormTabCancelAndReturnFromResult(t *testing.T) {
 		t.Fatal("reopening form ignored cached Freight")
 	}
 	kargoKey(t, m, "shift+tab")
+	if m.kargo.Form.Focus != 3 {
+		t.Fatal("Shift+Tab should focus promotion mode")
+	}
+	kargoKey(t, m, "shift+tab")
 	if m.kargo.Form.Focus != 2 {
 		t.Fatal("Shift+Tab should focus Promote")
 	}
