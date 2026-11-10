@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/darksworm/argonaut/pkg/api"
@@ -16,6 +17,13 @@ type destinationServersMsg struct {
 	SwitchEpoch, Sequence int
 	Servers               []model.DestinationServer
 	Error                 error
+}
+
+func (m *Model) ensureDestinationServers() tea.Cmd {
+	if m.destinationLoading || (m.destinationLoaded && m.now().Sub(m.destinationFetchedAt) < 5*time.Minute) {
+		return nil
+	}
+	return m.loadDestinationServers()
 }
 
 func (m *Model) loadDestinationServers() tea.Cmd {
@@ -47,6 +55,7 @@ func (m *Model) handleDestinationServers(msg destinationServersMsg) (tea.Model, 
 		return m, nil
 	}
 	m.destinationLoaded = true
+	m.destinationFetchedAt = m.now()
 	m.state.DestinationServers = msg.Servers
 	sort.Slice(m.state.DestinationServers, func(i, j int) bool {
 		if m.state.DestinationServers[i].Name != m.state.DestinationServers[j].Name {

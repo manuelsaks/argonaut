@@ -30,18 +30,22 @@ import (
 
 // Model represents the main Bubbletea model containing all application state
 type Model struct {
-	allContexts         *allContextsState
-	allOverview         *Model
-	lastRenderedContent string
-	selectionSnapshot   string
-	selectedText        string
-	inspection          *resourceInspection
-	inspectionSeq       int
-	helpOffset          int
-	destinationSeq      int
-	destinationLoaded   bool
-	destinationLoading  bool
-	destinationError    string
+	allContexts          *allContextsState
+	allOverview          *Model
+	lastRenderedContent  string
+	selectionSnapshot    string
+	selectedText         string
+	inspection           *resourceInspection
+	inspectionSeq        int
+	helpOffset           int
+	destinationSeq       int
+	destinationLoaded    bool
+	destinationLoading   bool
+	destinationError     string
+	destinationFetchedAt time.Time
+	networkPollSeq       int
+	networkPollCancel    context.CancelFunc
+	networkPollLoading   bool
 	// Core application state
 	state *model.AppState
 
@@ -558,12 +562,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(
 				func() tea.Msg { return model.SetModeMsg{Mode: targetMode} },
 				m.startWatchingApplications(),
-				m.loadDestinationServers(),
+				m.ensureDestinationServers(),
 			)
 		}
 		// Watch is already running — the batch handler maintains the chain.
 		// Do NOT call consumeWatchEvents() here to avoid duplicate consumers.
-		return m, tea.Batch(func() tea.Msg { return model.SetModeMsg{Mode: targetMode} }, m.loadDestinationServers())
+		return m, tea.Batch(func() tea.Msg { return model.SetModeMsg{Mode: targetMode} }, m.ensureDestinationServers())
 
 	case model.AppsBatchUpdateMsg:
 		// Gate by switch epoch — discard entire batch from a previous context
@@ -672,8 +676,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.treeView.SetSort(m.state.UI.Sort)
 			}
 			// Reset cursor for tree view
-			m.state.Navigation.SelectedIdx = 0
-			m.statusService.Set("Tree loaded")
+			if !msg.Background {
+				m.state.Navigation.SelectedIdx = 0
+				m.statusService.Set("Tree loaded")
+			}
 		}
 		// Clear loading overlay once initial tree is loaded
 		m.treeLoading = false
@@ -1423,6 +1429,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case model.RefreshCompletedMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle single app refresh completion
 		if msg.Success {
 			refreshType := "Refresh"
@@ -1444,13 +1453,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state.UI.RefreshFlashApps[msg.AppName] = true
 			}
 			// Schedule flash clear after 1 second
-			return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
+			flash := tea.Tick(time.Second, func(t time.Time) tea.Msg {
 				return model.ClearRefreshFlashMsg{}
 			})
+			var tree tea.Cmd
+			if m.config.IsLowBandwidth() && m.state.Navigation.View == model.ViewTree {
+				namespace := ""
+				if msg.AppNamespace != nil {
+					namespace = *msg.AppNamespace
+				}
+				if app := m.findAppByNameAndNamespace(msg.AppName, namespace); app != nil {
+					tree = m.startLoadingResourceTree(*app)
+				}
+			}
+			return m, tea.Batch(flash, tree, m.refreshNetworkSnapshot())
 		}
 		return m, nil
 
 	case model.MultiRefreshCompletedMsg:
+		if msg.SwitchEpoch != m.switchEpoch {
+			return m, nil
+		}
 		// Handle multiple app refresh completion
 		if msg.Success {
 			refreshType := "Refresh"
@@ -1469,9 +1492,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 			// Schedule flash clear after 1 second
-			return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
+			return m, tea.Batch(m.refreshNetworkSnapshot(), tea.Tick(time.Second, func(t time.Time) tea.Msg {
 				return model.ClearRefreshFlashMsg{}
-			})
+			}))
 		}
 		return m, nil
 
@@ -1597,11 +1620,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case allContextLoadedMsg:
 		return m.handleAllContextLoaded(msg)
+	case allContextDestinationsMsg:
+		return m.handleAllContextDestinations(msg)
 	case allContextsRefreshMsg:
 		if m.allContexts != nil && msg.SwitchEpoch == m.switchEpoch && msg.Sequence == m.allContexts.Sequence {
-			return m, m.reloadAllContexts()
+			return m, m.loadAllContexts(false)
 		}
 		return m, nil
+	case networkPollDueMsg:
+		return m.handleNetworkPollDue(msg)
+	case networkSnapshotMsg:
+		return m.handleNetworkSnapshot(msg)
+	case networkTreeDueMsg:
+		return m.handleNetworkTreeDue(msg)
+	case networkTreeSnapshotMsg:
+		return m.handleNetworkTreeSnapshot(msg)
 	case resourceInspectionMsg:
 		return m.handleResourceInspection(msg)
 	case destinationServersMsg:

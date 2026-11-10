@@ -353,6 +353,27 @@ func (s *ApplicationService) ListApplicationsWithMeta(ctx context.Context) (*Lis
 	}, nil
 }
 
+// GetApplicationResourceStatuses fetches only the per-resource comparison
+// statuses needed by the tree, without downloading spec, history or manifests.
+func (s *ApplicationService) GetApplicationResourceStatuses(ctx context.Context, name, appNamespace string) ([]ResourceStatus, error) {
+	if name == "" {
+		return nil, fmt.Errorf("application name is required")
+	}
+	query := url.Values{"fields": {"status.resources"}}
+	if appNamespace != "" {
+		query.Set("appNamespace", appNamespace)
+	}
+	data, err := s.client.Get(ctx, "/api/v1/applications/"+url.PathEscape(name)+"?"+query.Encode())
+	if err != nil {
+		return nil, err
+	}
+	var app ArgoApplication
+	if err := json.Unmarshal(data, &app); err != nil {
+		return nil, fmt.Errorf("decode resource statuses: %w", err)
+	}
+	return app.Status.Resources, nil
+}
+
 // GetManagedResourceDiffs fetches managed resource diffs for an application
 func (s *ApplicationService) GetManagedResourceDiffs(ctx context.Context, appName string, appNamespace string) ([]ManagedResourceDiff, error) {
 	if appName == "" {

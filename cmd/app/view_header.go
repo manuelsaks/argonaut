@@ -146,11 +146,21 @@ func (m *Model) renderK9sHeader() string {
 	if m.currentUsername != "" {
 		meta[4] += " (" + m.currentUsername + ")"
 	}
+	if m.config.IsLowBandwidth() {
+		label := "manual refresh"
+		if interval := m.config.GetNetworkRefreshInterval(); interval > 0 {
+			label = "poll " + interval.String()
+		}
+		meta = append(meta, "Network: low bandwidth / "+label)
+	}
 	if len(m.state.Selections.ScopeClusters) > 0 {
 		meta = append(meta, "Target:  "+m.destinationScopeLabel())
 	}
 	keyStyle := lipgloss.NewStyle().Foreground(cyanBright).Bold(true)
 	title := keyStyle.Render("Context: ") + ctx
+	if m.config.IsLowBandwidth() {
+		title += " [slow link]"
+	}
 	brand := lipgloss.NewStyle().Foreground(magentaBright).Bold(true).Render("Argonaut " + appVersion)
 	actions := m.viewHotkeys()
 	var rows []string

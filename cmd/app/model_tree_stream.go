@@ -7,6 +7,9 @@ import (
 
 // consumeTreeEvent reads a single tree stream event and returns it as a tea message
 func (m *Model) consumeTreeEvent() tea.Cmd {
+	if m.config.IsLowBandwidth() {
+		return nil
+	}
 	ch := m.treeStream       // capture at call time
 	done := m.treeStreamDone // capture at call time
 	return func() tea.Msg {

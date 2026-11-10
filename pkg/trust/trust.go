@@ -144,15 +144,15 @@ func NewHTTP(pool *x509.CertPool, clientCert *tls.Certificate, minTLS uint16, ti
 		TLSClientConfig: tlsConfig,
 		// Connection establishment timeout - should be fast
 		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,
+			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).DialContext,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ResponseHeaderTimeout: 10 * time.Second,
+		TLSHandshakeTimeout: 30 * time.Second,
+		ForceAttemptHTTP2:   true,
 		// Keep connections alive for efficiency
-		IdleConnTimeout:     30 * time.Second,
-		MaxIdleConns:        10,
-		MaxIdleConnsPerHost: 2,
+		IdleConnTimeout:     5 * time.Minute,
+		MaxIdleConns:        64,
+		MaxIdleConnsPerHost: 8,
 	}
 
 	// Create HTTP client WITHOUT a default timeout

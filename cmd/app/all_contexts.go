@@ -18,21 +18,29 @@ const allContextsChoice = "\x00all-contexts"
 const allServersChoice = "all"
 
 type allContextsState struct {
-	Sequence     int
-	Servers      map[string]*model.Server
-	Apps         map[string][]model.App
-	Destinations map[string][]model.DestinationServer
-	Errors       map[string]string
-	Pending      map[string]bool
-	Cancel       context.CancelFunc
+	Sequence             int
+	Servers              map[string]*model.Server
+	Apps                 map[string][]model.App
+	Destinations         map[string][]model.DestinationServer
+	DestinationFetchedAt map[string]time.Time
+	DestinationPending   map[string]bool
+	Errors               map[string]string
+	Pending              map[string]bool
+	Cancel               context.CancelFunc
 }
 
 type allContextLoadedMsg struct {
-	SwitchEpoch, Sequence   int
-	ContextName             string
-	Apps                    []model.App
-	Destinations            []model.DestinationServer
-	Error, DestinationError error
+	SwitchEpoch, Sequence int
+	ContextName           string
+	Apps                  []model.App
+	Error                 error
+}
+
+type allContextDestinationsMsg struct {
+	SwitchEpoch, Sequence int
+	ContextName           string
+	Servers               []model.DestinationServer
+	Error                 error
 }
 
 type allContextsRefreshMsg struct{ SwitchEpoch, Sequence int }
@@ -72,6 +80,10 @@ func (m *Model) openAllContexts() (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) reloadAllContexts() tea.Cmd {
+	return m.loadAllContexts(true)
+}
+
+func (m *Model) loadAllContexts(force bool) tea.Cmd {
 	st := m.allContexts
 	if st == nil {
 		return nil
@@ -94,9 +106,17 @@ func (m *Model) reloadAllContexts() tea.Cmd {
 	st.Servers = map[string]*model.Server{}
 	st.Errors = map[string]string{}
 	st.Pending = map[string]bool{}
+	st.DestinationPending = map[string]bool{}
+	if st.DestinationFetchedAt == nil {
+		st.DestinationFetchedAt = map[string]time.Time{}
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	st.Cancel = cancel
-	limit := make(chan struct{}, 4)
+	concurrency := 4
+	if m.config.IsLowBandwidth() {
+		concurrency = 2
+	}
+	limit := make(chan struct{}, concurrency)
 	var commands []tea.Cmd
 	for _, name := range m.state.ContextNames {
 		if core, _ := cfg.IsContextCore(name); core {
@@ -113,9 +133,10 @@ func (m *Model) reloadAllContexts() tea.Cmd {
 			continue
 		}
 		st.Servers[name] = server
-		if previous := previousServers[name]; previous != nil && (previous.BaseURL != server.BaseURL || previous.GrpcWebRootPath != server.GrpcWebRootPath) {
+		if previous := previousServers[name]; previous != nil && *previous != *server {
 			delete(st.Apps, name)
 			delete(st.Destinations, name)
+			delete(st.DestinationFetchedAt, name)
 		}
 		st.Pending[name] = true
 		commands = append(commands, func() tea.Msg {
@@ -131,19 +152,33 @@ func (m *Model) reloadAllContexts() tea.Cmd {
 			appCtx, appCancel := appcontext.WithAPITimeout(ctx)
 			msg.Apps, msg.Error = service.ListApplications(appCtx)
 			appCancel()
-			if msg.Error != nil {
-				return msg
-			}
-			serverCtx, serverCancel := appcontext.WithAPITimeout(ctx)
-			msg.Destinations, msg.DestinationError = service.ListDestinationServers(serverCtx)
-			serverCancel()
 			return msg
 		})
+		// Registry data changes infrequently. Keep it in memory, and deliver it
+		// independently so a slow /clusters never delays rendering Applications.
+		if force || m.now().Sub(st.DestinationFetchedAt[name]) >= 5*time.Minute {
+			st.DestinationPending[name] = true
+			commands = append(commands, func() tea.Msg {
+				msg := allContextDestinationsMsg{SwitchEpoch: epoch, Sequence: sequence, ContextName: name}
+				select {
+				case limit <- struct{}{}:
+				case <-ctx.Done():
+					msg.Error = ctx.Err()
+					return msg
+				}
+				defer func() { <-limit }()
+				serverCtx, serverCancel := appcontext.WithAPITimeout(ctx)
+				defer serverCancel()
+				msg.Servers, msg.Error = api.NewApplicationService(server).ListDestinationServers(serverCtx)
+				return msg
+			})
+		}
 	}
 	for name := range st.Apps {
 		if st.Servers[name] == nil {
 			delete(st.Apps, name)
 			delete(st.Destinations, name)
+			delete(st.DestinationFetchedAt, name)
 		}
 	}
 	m.rebuildAllContextItems()
@@ -155,8 +190,12 @@ func (m *Model) reloadAllContexts() tea.Cmd {
 }
 
 func (m *Model) nextAllContextsRefresh() tea.Cmd {
+	interval := m.config.GetNetworkRefreshInterval()
+	if interval <= 0 {
+		return nil
+	}
 	epoch, seq := m.switchEpoch, m.allContexts.Sequence
-	return tea.Tick(20*time.Second, func(time.Time) tea.Msg { return allContextsRefreshMsg{epoch, seq} })
+	return tea.Tick(interval, func(time.Time) tea.Msg { return allContextsRefreshMsg{epoch, seq} })
 }
 
 func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.Cmd) {
@@ -167,8 +206,13 @@ func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.
 	delete(st.Pending, msg.ContextName)
 	var relogin tea.Cmd
 	if msg.Error != nil {
-		delete(st.Apps, msg.ContextName)
-		delete(st.Destinations, msg.ContextName)
+		// Keep the last snapshot during transient VPN failures; auth failures
+		// must clear it so a previous identity's data cannot leak into a session.
+		if isAuthenticationError(msg.Error.Error()) {
+			delete(st.Apps, msg.ContextName)
+			delete(st.Destinations, msg.ContextName)
+			delete(st.DestinationFetchedAt, msg.ContextName)
+		}
 		st.Errors[msg.ContextName] = msg.Error.Error()
 		if requiresRelogin(msg.Error) {
 			relogin, _ = m.maybeAutoReloginForContext(msg.ContextName)
@@ -177,21 +221,37 @@ func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.
 		for i := range msg.Apps {
 			msg.Apps[i].ContextName = msg.ContextName
 		}
-		for i := range msg.Destinations {
-			msg.Destinations[i].ContextName = msg.ContextName
-		}
 		st.Apps[msg.ContextName] = msg.Apps
-		st.Destinations[msg.ContextName] = msg.Destinations
-		if msg.DestinationError != nil {
-			st.Errors[msg.ContextName] = "server registry: " + msg.DestinationError.Error()
-		}
 	}
 	m.rebuildAllContextItems()
 	m.updateAllContextsStatus()
-	if len(st.Pending) == 0 {
+	if len(st.Pending) == 0 && len(st.DestinationPending) == 0 {
 		return m, tea.Batch(relogin, m.nextAllContextsRefresh())
 	}
 	return m, relogin
+}
+
+func (m *Model) handleAllContextDestinations(msg allContextDestinationsMsg) (tea.Model, tea.Cmd) {
+	st := m.allContexts
+	if st == nil || msg.SwitchEpoch != m.switchEpoch || msg.Sequence != st.Sequence || !st.DestinationPending[msg.ContextName] {
+		return m, nil
+	}
+	delete(st.DestinationPending, msg.ContextName)
+	if msg.Error != nil {
+		st.Errors[msg.ContextName+" (servers)"] = "server registry: " + msg.Error.Error()
+	} else if st.Errors[msg.ContextName] == "" {
+		for i := range msg.Servers {
+			msg.Servers[i].ContextName = msg.ContextName
+		}
+		st.Destinations[msg.ContextName] = msg.Servers
+		st.DestinationFetchedAt[msg.ContextName] = m.now()
+	}
+	m.rebuildAllContextItems()
+	m.updateAllContextsStatus()
+	if len(st.Pending) == 0 && len(st.DestinationPending) == 0 {
+		return m, m.nextAllContextsRefresh()
+	}
+	return m, nil
 }
 
 func (m *Model) rebuildAllContextItems() {
@@ -231,10 +291,18 @@ func (m *Model) updateAllContextsStatus() {
 	st := m.allContexts
 	var failures []string
 	for name, err := range st.Errors {
+		if len(st.Apps[name]) > 0 {
+			err += " (showing last known data)"
+		}
 		failures = append(failures, name+": "+inspectionPlainText(err))
 	}
 	sort.Strings(failures)
 	status := fmt.Sprintf("all contexts: %d apps", len(m.state.Apps))
+	if interval := m.config.GetNetworkRefreshInterval(); interval > 0 {
+		status += " | refresh " + interval.String()
+	} else {
+		status += " | manual refresh"
+	}
 	if len(st.Pending) > 0 {
 		status += fmt.Sprintf(" | loading %d", len(st.Pending))
 	}
@@ -277,6 +345,7 @@ func (m *Model) enterOverviewApplication(app model.App, selected []model.App) *M
 		child.state.DestinationServers[i].ContextName = ""
 	}
 	child.destinationLoaded = true
+	child.destinationFetchedAt = m.allContexts.DestinationFetchedAt[app.ContextName]
 	child.rebuildAppIndex()
 	child.allOverview = m
 	for i, item := range child.getVisibleItems() {
@@ -301,7 +370,7 @@ func (m *Model) returnToAllOverview() (tea.Model, tea.Cmd) {
 	parent.switchEpoch = m.switchEpoch + 1
 	parent.state.Mode = model.ModeNormal
 	parent.state.Navigation.View = model.ViewApps
-	return parent, parent.reloadAllContexts()
+	return parent, parent.loadAllContexts(false)
 }
 
 func (m *Model) overviewOperationTarget() (model.App, []model.App, error) {

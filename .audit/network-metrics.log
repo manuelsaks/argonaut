@@ -1,0 +1,13 @@
+=== RUN   TestClientsReuseConnectionsWithoutSharingBearerTokens
+--- PASS: TestClientsReuseConnectionsWithoutSharingBearerTokens (0.00s)
+=== RUN   TestPooledTransportKeepsTLSVerificationIsolated
+2026/11/10 16:48:11 WARN HTTP request failed component=api op=http method=GET url=https://127.0.0.1:6148/ error="Get \"https://127.0.0.1:6148/\": tls: failed to verify certificate: x509: certificate signed by unknown authority"
+2026/11/10 16:48:11 http: TLS handshake error from 127.0.0.1:6150: remote error: tls: bad certificate
+--- PASS: TestPooledTransportKeepsTLSVerificationIsolated (0.03s)
+=== RUN   TestRESTUsesGzipAndHTTP2WithCustomTrust
+    network_test.go:97: gzip fixture transferred 369 bytes instead of 98000 (99.6% less)
+--- PASS: TestRESTUsesGzipAndHTTP2WithCustomTrust (0.00s)
+=== RUN   TestResourceStatusesRequestKeepsExactApplicationNamespace
+--- PASS: TestResourceStatusesRequestKeepsExactApplicationNamespace (0.00s)
+PASS
+ok  	github.com/darksworm/argonaut/pkg/api	0.065s

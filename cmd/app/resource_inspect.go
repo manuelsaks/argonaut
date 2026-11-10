@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -202,6 +203,19 @@ func (m *Model) startResourceInspection(target inspectionTarget, kind string) te
 			params.ResourceName, params.ResourceNamespace = target.Name, target.Namespace
 		}
 		var events []model.ResourceEvent
+		var diffText string
+		var diffLoad sync.WaitGroup
+		diffLoad.Go(func() {
+			diffCtx, diffCancel := appcontext.WithMinAPITimeout(ctx, 45*time.Second)
+			defer diffCancel()
+			ns := target.AppNamespace
+			diffs, err := services.NewArgoApiService(server).GetResourceDiffs(diffCtx, server, target.AppName, &ns)
+			if err != nil {
+				diffText = "  Unavailable through Argo CD: " + err.Error() + "\n"
+			} else {
+				diffText = inspectionDiff(target, diffs)
+			}
+		})
 		notice := ""
 		if document.Desired {
 			notice = "Not available: resource is not present in the cluster."
@@ -218,16 +232,8 @@ func (m *Model) startResourceInspection(target inspectionTarget, kind string) te
 			}
 		}
 		msg.Text = describeInspectionObject(object, document.Desired, events, notice)
-		diffCtx, diffCancel := appcontext.WithMinAPITimeout(ctx, 45*time.Second)
-		ns := target.AppNamespace
-		diffs, diffErr := services.NewArgoApiService(server).GetResourceDiffs(diffCtx, server, target.AppName, &ns)
-		diffCancel()
-		msg.Text += "\nDiff (live -> desired):\n"
-		if diffErr != nil {
-			msg.Text += "  Unavailable through Argo CD: " + diffErr.Error() + "\n"
-		} else {
-			msg.Text += inspectionDiff(target, diffs)
-		}
+		diffLoad.Wait()
+		msg.Text += "\nDiff (live -> desired):\n" + diffText
 		return msg
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	cblog "github.com/charmbracelet/log"
@@ -30,117 +31,86 @@ type Client struct {
 	grpcWebRootPath  string
 }
 
+// Transports own connection pools, not credentials. Reuse them across short-lived
+// API services while keeping verified and insecure TLS pools separate.
+var clientTransportMu sync.Mutex
 var customHTTPClient *http.Client
+var clientTransports = map[transportKey]*http.Transport{}
 
-// SetHTTPClient sets a custom HTTP client to be used by all new Client instances
+type transportKey struct{ insecure, stream bool }
+
+// SetHTTPClient sets the TLS/client configuration used by new API clients.
 func SetHTTPClient(client *http.Client) {
+	clientTransportMu.Lock()
+	defer clientTransportMu.Unlock()
+	for _, transport := range clientTransports {
+		transport.CloseIdleConnections()
+	}
+	clientTransports = map[transportKey]*http.Transport{}
 	customHTTPClient = client
 }
 
-// NewClient creates a new ArgoCD API client
-func NewClient(server *model.Server) *Client {
-	var httpClient *http.Client
-
-	// Use custom HTTP client if available
+func pooledHTTPClient(insecure, stream bool) *http.Client {
+	clientTransportMu.Lock()
+	defer clientTransportMu.Unlock()
+	client := &http.Client{}
 	if customHTTPClient != nil {
-		// Clone the custom client to avoid modifying the shared instance
-		httpClient = &http.Client{
-			Transport:     customHTTPClient.Transport,
-			CheckRedirect: customHTTPClient.CheckRedirect,
-			Jar:           customHTTPClient.Jar,
-			Timeout:       customHTTPClient.Timeout,
+		*client = *customHTTPClient
+	}
+	// Streaming requests are bounded by cancellation, never a total timeout.
+	if stream {
+		client.Timeout = 0
+	}
+	key := transportKey{insecure, stream}
+	if transport := clientTransports[key]; transport != nil {
+		client.Transport = transport
+		return client
+	}
+	var transport *http.Transport
+	if customHTTPClient != nil && customHTTPClient.Transport != nil {
+		configured, ok := customHTTPClient.Transport.(*http.Transport)
+		// Preserve injected round trippers, including streams.
+		if !ok {
+			return client
 		}
-
-		// If insecure flag is set, we need to modify the transport
-		if server.Insecure {
-			// Clone the transport to avoid modifying the shared one
-			if transport, ok := httpClient.Transport.(*http.Transport); ok {
-				clonedTransport := transport.Clone()
-				if clonedTransport.TLSClientConfig == nil {
-					clonedTransport.TLSClientConfig = &tls.Config{}
-				} else {
-					// Clone TLS config to avoid modifying shared config
-					clonedTLSConfig := clonedTransport.TLSClientConfig.Clone()
-					clonedTransport.TLSClientConfig = clonedTLSConfig
-				}
-				clonedTransport.TLSClientConfig.InsecureSkipVerify = true
-				httpClient.Transport = clonedTransport
-			}
-		}
+		transport = configured.Clone()
 	} else {
-		// Create HTTP transport with reasonable timeouts for problematic TLS
-		transport := &http.Transport{
-			// Connection establishment timeout - should be very fast
-			DialContext: (&net.Dialer{
-				Timeout:   5 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).DialContext,
-			TLSHandshakeTimeout:   10 * time.Second, // Increased for slow certificate validation
-			ResponseHeaderTimeout: 10 * time.Second, // Increased to match TLS timeout
-			// Keep connections alive for efficiency
-			IdleConnTimeout:     30 * time.Second,
-			MaxIdleConns:        10,
-			MaxIdleConnsPerHost: 2,
+		transport = &http.Transport{
+			DialContext:         (&net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}).DialContext,
+			TLSHandshakeTimeout: 30 * time.Second,
+			ForceAttemptHTTP2:   true,
+			IdleConnTimeout:     5 * time.Minute,
+			MaxIdleConns:        64,
+			MaxIdleConnsPerHost: 8,
 		}
+	}
+	if stream {
+		transport.ResponseHeaderTimeout = 0
+	}
+	if transport.TLSClientConfig == nil {
+		transport.TLSClientConfig = &tls.Config{}
+	}
+	transport.TLSClientConfig.InsecureSkipVerify = insecure || transport.TLSClientConfig.InsecureSkipVerify
+	if transport.TLSClientConfig.ClientSessionCache == nil {
+		transport.TLSClientConfig.ClientSessionCache = tls.NewLRUClientSessionCache(64)
+	}
+	clientTransports[key] = transport
+	client.Transport = transport
+	return client
+}
 
-		// If insecure flag is set, skip TLS verification
-		if server.Insecure {
-			transport.TLSClientConfig = &tls.Config{
-				InsecureSkipVerify: true,
-			}
-		}
-
-		// Create HTTP client without a default timeout (we'll use context timeouts)
-		httpClient = &http.Client{
-			Transport: transport,
-			// No timeout here - we use context timeouts for request-specific timing
-		}
-	}
-
-	// Create a separate HTTP client for SSE streams.
-	// Streams must not have ResponseHeaderTimeout because the server may
-	// not send headers until the first event (which could be minutes away
-	// when using resourceVersion).
-	streamTransport := &http.Transport{
-		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		TLSHandshakeTimeout: 10 * time.Second,
-		// No ResponseHeaderTimeout for streams
-		IdleConnTimeout:     30 * time.Second,
-		MaxIdleConns:        10,
-		MaxIdleConnsPerHost: 2,
-	}
-	if server.Insecure {
-		streamTransport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
-	// If we cloned a custom transport for regular requests, also apply its TLS config to stream
-	if customHTTPClient != nil {
-		if transport, ok := httpClient.Transport.(*http.Transport); ok {
-			streamTransport = transport.Clone()
-			// Remove ResponseHeaderTimeout for streams
-			streamTransport.ResponseHeaderTimeout = 0
-		}
-	}
-	streamHTTPClient := &http.Client{
-		Transport: streamTransport,
-	}
-	// Bearer credentials must never leave the original origin, even when Go's
-	// default redirect policy would forward them to the same hostname over HTTP.
+// NewClient creates an Argo CD API client. Only transports are shared; bearer
+// tokens remain on each Client and are attached separately to every request.
+func NewClient(server *model.Server) *Client {
+	httpClient := pooledHTTPClient(server.Insecure, false)
+	streamHTTPClient := pooledHTTPClient(server.Insecure, true)
 	redirectPolicy := sameOriginRedirectPolicy(httpClient.CheckRedirect)
 	httpClient.CheckRedirect = redirectPolicy
 	streamHTTPClient.CheckRedirect = redirectPolicy
-
 	return &Client{
-		baseURL:          server.BaseURL,
-		token:            server.Token,
-		httpClient:       httpClient,
-		streamHTTPClient: streamHTTPClient,
-		insecure:         server.Insecure,
-		grpcWebRootPath:  server.GrpcWebRootPath,
+		baseURL: server.BaseURL, token: server.Token,
+		httpClient: httpClient, streamHTTPClient: streamHTTPClient,
+		insecure: server.Insecure, grpcWebRootPath: server.GrpcWebRootPath,
 	}
 }
 

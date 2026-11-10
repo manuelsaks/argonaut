@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	stdErrors "errors"
@@ -147,6 +148,10 @@ func (m *Model) startWatchingApplications() tea.Cmd {
 }
 
 func (m *Model) startWatchingApplicationsWithConfig(projects []string, generation int) tea.Cmd {
+	if m.config.IsLowBandwidth() {
+		m.cleanupAppWatcher()
+		return m.nextNetworkPoll()
+	}
 	cblog.With("component", "api_integration").Info("startWatchingApplications called",
 		"watchChan_nil", m.watchChan == nil,
 		"resourceVersion", m.lastResourceVersion,
@@ -436,7 +441,7 @@ func (m *Model) consumeWatchEvents() tea.Cmd {
 // differs from the user's active ScopeProjects selection. If different, it schedules
 // a debounced watch restart (500ms) to avoid thrashing during rapid navigation.
 func (m *Model) maybeRestartWatchForScope() tea.Cmd {
-	if m.allContexts != nil {
+	if m.allContexts != nil || m.config.IsLowBandwidth() {
 		return nil
 	}
 	newProjects := sortedScopeProjects(m.state.Selections.ScopeProjects)
@@ -729,7 +734,19 @@ func (m *Model) startLoadingResourceTree(app model.App) tea.Cmd {
 		if app.AppNamespace != nil {
 			appNamespace = *app.AppNamespace
 		}
+		// These independent reads share the same budget and run concurrently:
+		// VPN latency should not be paid twice, and the second read needs only
+		// resource statuses rather than a full Application object.
+		var resourcesData []byte
+		var statusLoad sync.WaitGroup
+		statusLoad.Go(func() {
+			resources, err := api.NewApplicationService(server).GetApplicationResourceStatuses(ctx, app.Name, appNamespace)
+			if err == nil && len(resources) > 0 {
+				resourcesData, _ = json.Marshal(resources)
+			}
+		})
 		tree, err := argo.GetResourceTree(ctx, server, app.Name, appNamespace)
+		statusLoad.Wait()
 		if err != nil {
 			return treeLoadFailedMsg{epoch, session, err.Error()}
 		}
@@ -737,13 +754,6 @@ func (m *Model) startLoadingResourceTree(app model.App) tea.Cmd {
 		data, merr := json.Marshal(tree)
 		if merr != nil {
 			return treeLoadFailedMsg{epoch, session, merr.Error()}
-		}
-
-		// Also fetch app details to get status.resources for sync status
-		var resourcesData []byte
-		argoApp, appErr := argo.GetApplication(ctx, server, app.Name, app.AppNamespace)
-		if appErr == nil && argoApp != nil && len(argoApp.Status.Resources) > 0 {
-			resourcesData, _ = json.Marshal(argoApp.Status.Resources)
 		}
 
 		return model.ResourceTreeLoadedMsg{
@@ -769,6 +779,9 @@ type treeWatchStartedMsg struct {
 func (m *Model) startWatchingResourceTree(app model.App) tea.Cmd {
 	if m.state.Server == nil {
 		return nil
+	}
+	if m.config.IsLowBandwidth() {
+		return m.nextNetworkTreePoll(app)
 	}
 	server := m.state.Server // capture at call time
 	done := m.treeStreamDone // capture at call time
@@ -1062,7 +1075,7 @@ func (m *Model) refreshSingleApplication(appName string, appNamespace *string, h
 		}
 
 		cblog.With("component", "api").Info("Refresh completed", "app", appName, "hard", hard)
-		return model.RefreshCompletedMsg{AppName: appName, Success: true, Hard: hard}
+		return model.RefreshCompletedMsg{AppName: appName, AppNamespace: appNamespace, SwitchEpoch: epoch, Success: true, Hard: hard}
 	}
 }
 
@@ -1106,7 +1119,7 @@ func (m *Model) refreshMultipleApplications(hard bool) tea.Cmd {
 			}
 		}
 
-		return model.MultiRefreshCompletedMsg{AppCount: len(selectedApps), Success: true, Hard: hard}
+		return model.MultiRefreshCompletedMsg{SwitchEpoch: epoch, AppCount: len(selectedApps), Success: true, Hard: hard}
 	}
 }
 

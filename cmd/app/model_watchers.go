@@ -4,6 +4,12 @@ import "github.com/darksworm/argonaut/pkg/model"
 
 // cleanupAppWatcher stops the active applications watcher if present.
 func (m *Model) cleanupAppWatcher() *Model {
+	m.networkPollSeq++
+	m.networkPollLoading = false
+	if m.networkPollCancel != nil {
+		m.networkPollCancel()
+		m.networkPollCancel = nil
+	}
 	if m.appWatchCleanup != nil {
 		m.appWatchCleanup()
 		m.appWatchCleanup = nil

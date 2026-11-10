@@ -295,12 +295,45 @@ Application namespaces remain separate. `?` opens scrollable help.
 The context picker (`c`) also has an `all` option, available directly as
 `:ctx all`. It aggregates Applications, ApplicationSets and destination servers
 from saved Argo CD API contexts, with a CONTEXT column and context-qualified
-identities (`context::namespace/name`). It refreshes every 20 seconds; Ctrl+R
+identities (`context::namespace/name`). It refreshes every minute; Ctrl+R
 reloads immediately. Failed or unsupported contexts are reported independently.
 Core and port-forward contexts are excluded. YAML/describe use the selected
 row's Argo CD server; actions and resource trees enter that context before
 confirmation. Esc from its apps view returns to the overview. Batch operations
 use selections from one context.
+
+For a slow connection or VPN, run `argonaut --low-bandwidth` (PowerShell:
+`.\argonaut.exe --low-bandwidth`, Git Bash: `./argonaut.exe --low-bandwidth`).
+This replaces Application and resource-tree streams with snapshots every two
+minutes, stops polling while an operation or inspection modal is open, and
+disables automatic events-panel refresh and release checks. YAML, describe,
+diff, events and actions remain available on demand. `Ctrl+R` still refreshes
+immediately. Sync progress is sampled at the polling interval in this mode;
+run without the flag for live streams.
+
+All modes reuse TCP/TLS connections, negotiate HTTP/2 when supported, and accept
+gzip responses. The registry is cached **in memory** for five minutes; manual
+refresh bypasses it. Applications appear independently of the registry response.
+Resource trees fetch only the Application's resource-status fields instead of
+its entire spec and deployment history. Actual compression depends on the server
+and proxy configuration.
+
+To keep low-bandwidth mode enabled, add this to your Argonaut `config.toml`
+(Windows: `%APPDATA%\argonaut\config.toml`):
+
+```toml
+[network]
+low_bandwidth = true
+refresh_interval = "2m"   # "0" disables automatic snapshot refresh
+
+[http_timeouts]
+request_timeout = "60s"   # Default with low_bandwidth; normal default is 10s
+```
+
+Without `low_bandwidth`, `network.refresh_interval` controls only the all-context
+overview (default `"1m"`); single-context views retain live streams. An explicit
+`http_timeouts.request_timeout` always takes precedence. Edit existing TOML
+sections rather than adding duplicate section headers.
 
 Mouse selections remain highlighted after release and are copied automatically.
 The selected screen stays stable during watch updates. Ctrl+C or Ctrl+Y copies

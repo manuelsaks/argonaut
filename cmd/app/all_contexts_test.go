@@ -75,6 +75,8 @@ func driveAllContextLoads(t *testing.T, m *Model, msg tea.Msg) {
 		}
 	case allContextLoadedMsg:
 		m.Update(msg)
+	case allContextDestinationsMsg:
+		m.Update(msg)
 	default:
 		t.Fatalf("unexpected all-context load result %T", msg)
 	}
@@ -148,8 +150,8 @@ func TestAllContextRepliesAreGatedAndFailuresAreVisible(t *testing.T) {
 		}
 	}
 	m.allContexts.Pending["dev"] = true
-	m.Update(allContextLoadedMsg{SwitchEpoch: m.switchEpoch, Sequence: m.allContexts.Sequence, ContextName: "dev", Error: fmt.Errorf("login required")})
-	if len(m.state.Apps) != 1 || m.state.Apps[0].ContextName != "prod" || !strings.Contains(m.allContexts.Errors["dev"], "login required") {
+	m.Update(allContextLoadedMsg{SwitchEpoch: m.switchEpoch, Sequence: m.allContexts.Sequence, ContextName: "dev", Error: fmt.Errorf("401 unauthorized")})
+	if len(m.state.Apps) != 1 || m.state.Apps[0].ContextName != "prod" || !strings.Contains(m.allContexts.Errors["dev"], "401 unauthorized") {
 		t.Fatal("one context failure must preserve other context results")
 	}
 	seq := m.allContexts.Sequence

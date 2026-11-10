@@ -1,0 +1,47 @@
+Argonaut network optimization - 2026-11-10
+
+Changes:
+- Reuse credential-free HTTP transports across API service instances. Separate
+  pools for verified/insecure TLS and REST/streams. Tokens remain per request.
+- Enable HTTP/2 with the built-in TLS transport and custom CA trust, retain
+  automatic gzip negotiation, and reuse TLS sessions. Idle pools last 5 minutes.
+- Remove the hidden 10-second response-header timeout for built-in/custom-CA
+  transports; respect call-site request deadlines. Explicit custom transports
+  retain their settings.
+- All-context overview refresh: 1 minute normally, 2 minutes with low bandwidth.
+- Registry cache: memory only, 5 minutes; Ctrl+R bypasses it. Credential or endpoint
+  changes invalidate cached data. Apps and registry results arrive independently.
+- Fetch only status.resources for the resource tree's Application request.
+  Run tree/status reads and describe event/diff reads concurrently.
+- --low-bandwidth / [network] low_bandwidth=true replaces Application and tree
+  SSE streams with snapshots, limits overview requests to two concurrent calls,
+  disables automatic event-panel opening/refresh and release checks, and uses a
+  60-second default request timeout unless configured explicitly.
+- [network] refresh_interval sets polling; "0" disables periodic snapshots.
+  Single-context normal mode retains streams. Manual refresh still works.
+- Preserve command/search state, list identity and tree navigation on background
+  snapshots. Gate late replies by context/session/sequence and cancel pending
+  single-context requests on context changes. Show last-known data on transient
+  overview failures, with an explicit error; clear cached data on auth failure.
+
+Verification:
+PASS: go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+PASS: actual connection reuse (three clients, different tokens, one TCP connection).
+PASS: verified TLS rejects a test self-signed cert after an insecure context used it.
+PASS: actual HTTP/2 and gzip through custom trust; fixture 98,000 -> 369 bytes.
+      This is a repetitive synthetic response, not a prediction for a real VPN.
+PASS: exact Application namespace on the reduced resource-status request.
+PASS: registry cache expiry, force refresh and credential invalidation.
+PASS: context/request cancellation, stale-result gating, modal/cursor preservation,
+      concurrent describe reads and small-terminal layout checks.
+PASS: Windows build, PowerShell and Git Bash --version / --help smoke checks.
+PASS: Linux amd64 cross-build.
+
+Logs: .audit/network-race.log, .audit/network-metrics.log
+Executable: C:\tmp\argonaut\argonaut.exe
+SHA256: F5252E6DF606C0B6E6AEE18F2E58FDE0FC8859571260CE76507718EB6909DB95
+Copy: .audit/argonaut-windows.exe
+This executable supersedes the build hash in UX-ALL-CONTEXTS-2026-11-10.txt.
+
+No live company Argo CD or SSO account was accessed. Actual VPN timing and
+compression availability depend on the user's Argo CD server/proxy and link.

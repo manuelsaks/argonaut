@@ -445,17 +445,20 @@ type MultiDeleteCompletedMsg struct {
 
 // RefreshCompletedMsg indicates a single app refresh has completed
 type RefreshCompletedMsg struct {
-	AppName string
-	Success bool
-	Hard    bool // Indicates if it was a hard refresh
-	Error   error
+	SwitchEpoch  int
+	AppNamespace *string
+	AppName      string
+	Success      bool
+	Hard         bool // Indicates if it was a hard refresh
+	Error        error
 }
 
 // MultiRefreshCompletedMsg indicates multiple app refresh has completed
 type MultiRefreshCompletedMsg struct {
-	AppCount int
-	Success  bool
-	Hard     bool
+	SwitchEpoch int
+	AppCount    int
+	Success     bool
+	Hard        bool
 }
 
 // ClearRefreshFlashMsg clears the refresh flash highlight after timeout
@@ -503,6 +506,7 @@ type RollbackExecutedMsg struct {
 
 // ResourceTreeLoadedMsg is sent when a resource tree is loaded for an app
 type ResourceTreeLoadedMsg struct {
+	Background    bool // Preserve navigation during a periodic snapshot refresh.
 	AppName       string
 	AppNamespace  string
 	Health        string

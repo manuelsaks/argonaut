@@ -27,8 +27,39 @@ type ArgonautConfig struct {
 	Updates         UpdatesConfig     `toml:"updates,omitempty"`
 	Events          EventsConfig      `toml:"events,omitempty"`
 	Auth            AuthConfig        `toml:"auth,omitempty"`
+	Network         NetworkConfig     `toml:"network,omitempty"`
 	DefaultView     string            `toml:"default_view,omitempty"`
 	LastSeenVersion string            `toml:"last_seen_version,omitempty"`
+}
+
+// NetworkConfig limits background traffic on slow or metered connections.
+type NetworkConfig struct {
+	LowBandwidth    bool   `toml:"low_bandwidth,omitempty"`
+	RefreshInterval string `toml:"refresh_interval,omitempty"`
+}
+
+func (c *ArgonautConfig) IsLowBandwidth() bool {
+	return c != nil && c.Network.LowBandwidth
+}
+
+// GetNetworkRefreshInterval controls overview polling, and single-context
+// polling in low-bandwidth mode. Zero disables it; manual refresh still works.
+func (c *ArgonautConfig) GetNetworkRefreshInterval() time.Duration {
+	fallback := time.Minute
+	if c.IsLowBandwidth() {
+		fallback = 2 * time.Minute
+	}
+	if c == nil || c.Network.RefreshInterval == "" {
+		return fallback
+	}
+	if c.Network.RefreshInterval == "0" {
+		return 0
+	}
+	d, err := time.ParseDuration(c.Network.RefreshInterval)
+	if err != nil {
+		return fallback
+	}
+	return max(0, d)
 }
 
 // AuthConfig stores preferences only. Authentication and credential storage
@@ -101,6 +132,9 @@ type UpdatesConfig struct {
 // IsUpdateCheckEnabled returns true when the update check should run.
 // Defaults to true when the config key is omitted.
 func (c *ArgonautConfig) IsUpdateCheckEnabled() bool {
+	if c.IsLowBandwidth() {
+		return false
+	}
 	if c == nil || c.Updates.CheckEnabled == nil {
 		return true
 	}
@@ -131,6 +165,9 @@ type EventsConfig struct {
 // IsEventsAutoOpenEnabled reports whether the events pane opens by itself in
 // the tree view. Defaults to true when unset.
 func (c *ArgonautConfig) IsEventsAutoOpenEnabled() bool {
+	if c.IsLowBandwidth() {
+		return false
+	}
 	if c == nil || c.Events.AutoOpen == nil {
 		return true
 	}
@@ -141,6 +178,9 @@ func (c *ArgonautConfig) IsEventsAutoOpenEnabled() bool {
 // Defaults to 10s when unset or unparseable; zero or negative disables.
 func (c *ArgonautConfig) GetEventsRefreshInterval() time.Duration {
 	const fallback = 10 * time.Second
+	if c.IsLowBandwidth() {
+		return 0
+	}
 	if c == nil || c.Events.RefreshInterval == "" {
 		return fallback
 	}
@@ -351,6 +391,9 @@ func (c *ArgonautConfig) GetRequestTimeoutString() string {
 	if c.HTTPTimeouts.RequestTimeout != "" {
 		return c.HTTPTimeouts.RequestTimeout
 	}
+	if c.IsLowBandwidth() {
+		return "60s"
+	}
 	return "10s"
 }
 
@@ -420,20 +463,20 @@ func (c *ArgonautConfig) ParseDefaultView() (view string, scopeType string, scop
 // GetRequestTimeout returns the parsed duration for request timeout, defaulting to 10s
 // Validates that the timeout is positive and returns default if invalid
 func (c *ArgonautConfig) GetRequestTimeout() time.Duration {
-	if c.HTTPTimeouts.RequestTimeout == "" {
-		return 10 * time.Second
+	fallback := 10 * time.Second
+	if c.IsLowBandwidth() {
+		fallback = time.Minute
 	}
-
 	duration, err := time.ParseDuration(c.HTTPTimeouts.RequestTimeout)
 	if err != nil {
 		// If parsing fails, return default
-		return 10 * time.Second
+		return fallback
 	}
 
 	// Validate that timeout is positive
 	if duration <= 0 {
 		// Log warning and return default for zero or negative durations
-		return 10 * time.Second
+		return fallback
 	}
 
 	return duration
