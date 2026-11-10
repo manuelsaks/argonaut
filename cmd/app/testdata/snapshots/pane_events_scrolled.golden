@@ -1,8 +1,8 @@
  Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Namespace: all | Project: all | Login: manual                                    
- <enter/e> events  <h/l> fold/unfold  <space> select  <s> sync  <d> diff  <a> actions               
- <ctrl-d> delete  <R> rollback  <t> terminate  <K> k9s  <u/i> scroll events  <esc> back             
- <0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                    
+ View: Resources | Target: all | Scope: all/all | Login: manual                                     
+ <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync  <d> describe  <y> YAML         
+ <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete  <ctrl-b> rollback  <ctrl-t> terminate         
+ <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                
  ╭──────────────────────────────────────────────╮╭─ Pod web-… ─ ⟳ updated 12s ago ─ ▲ more above ─╮ 
  │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
  │ ├── Deployment [demo/web] (Degraded)         ││               [web]                            │ 

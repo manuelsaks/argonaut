@@ -199,17 +199,18 @@ type ModalState struct {
 
 // AppState represents the complete application state for Bubbletea
 type AppState struct {
-	Mode         Mode            `json:"mode"`
-	Terminal     TerminalState   `json:"terminal"`
-	Navigation   NavigationState `json:"navigation"`
-	Selections   SelectionState  `json:"selections"`
-	UI           UIState         `json:"ui"`
-	Modals       ModalState      `json:"modals"`
-	Server       *Server         `json:"server,omitempty"`
-	Apps         []App           `json:"apps"`
-	Index        *AppIndex       `json:"-"` // Pre-computed index, rebuilt on mutation
-	APIVersion   string          `json:"apiVersion"`
-	ContextNames []string        `json:"contextNames,omitempty"`
+	DestinationServers []DestinationServer `json:"destinationServers,omitempty"`
+	Mode               Mode                `json:"mode"`
+	Terminal           TerminalState       `json:"terminal"`
+	Navigation         NavigationState     `json:"navigation"`
+	Selections         SelectionState      `json:"selections"`
+	UI                 UIState             `json:"ui"`
+	Modals             ModalState          `json:"modals"`
+	Server             *Server             `json:"server,omitempty"`
+	Apps               []App               `json:"apps"`
+	Index              *AppIndex           `json:"-"` // Pre-computed index, rebuilt on mutation
+	APIVersion         string              `json:"apiVersion"`
+	ContextNames       []string            `json:"contextNames,omitempty"`
 	// Note: AbortController equivalent will use context.Context in Go services
 	Diff     *DiffState     `json:"diff,omitempty"`
 	Rollback *RollbackState `json:"rollback,omitempty"`
@@ -244,6 +245,7 @@ type ErrorState struct {
 
 // DiffState holds state for the diff pager view
 type DiffState struct {
+	InspectionKind   string   `json:"inspectionKind,omitempty"`
 	Title            string   `json:"title"`
 	Content          []string `json:"content"`
 	Filtered         []int    `json:"filtered"`

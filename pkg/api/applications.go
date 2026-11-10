@@ -292,21 +292,19 @@ func (s *ApplicationService) ListApplicationsWithMeta(ctx context.Context) (*Lis
 		} `json:"metadata"`
 		Items []json.RawMessage `json:"items"`
 	}
-	if err := json.Unmarshal(data, &withItems); err != nil {
-		return nil, fmt.Errorf("failed to parse applications response: %w", err)
-	}
-
-	resourceVersion := withItems.Metadata.ResourceVersion
-
 	var rawItems []json.RawMessage
-	if len(withItems.Items) > 0 {
-		rawItems = withItems.Items
-	} else {
+	if strings.HasPrefix(strings.TrimSpace(string(data)), "[") {
 		// Some servers may return a bare array instead of an object with items
 		if err := json.Unmarshal(data, &rawItems); err != nil {
 			return nil, fmt.Errorf("failed to parse applications array: %w", err)
 		}
+	} else {
+		if err := json.Unmarshal(data, &withItems); err != nil {
+			return nil, fmt.Errorf("failed to parse applications response: %w", err)
+		}
+		rawItems = withItems.Items
 	}
+	resourceVersion := withItems.Metadata.ResourceVersion
 
 	apps := make([]model.App, 0, len(rawItems))
 	for _, raw := range rawItems {
@@ -373,14 +371,17 @@ func (s *ApplicationService) GetManagedResourceDiffs(ctx context.Context, appNam
 
 	// Accept both {items:[...]} and bare array
 	var withItems ManagedResourcesResponse
-	if err := json.Unmarshal(data, &withItems); err == nil && len(withItems.Items) > 0 {
-		return withItems.Items, nil
-	}
-	var arr []ManagedResourceDiff
-	if err := json.Unmarshal(data, &arr); err == nil {
+	if strings.HasPrefix(strings.TrimSpace(string(data)), "[") {
+		var arr []ManagedResourceDiff
+		if err := json.Unmarshal(data, &arr); err != nil {
+			return nil, fmt.Errorf("failed to parse managed resources: %w", err)
+		}
 		return arr, nil
 	}
-	return []ManagedResourceDiff{}, nil
+	if err := json.Unmarshal(data, &withItems); err != nil {
+		return nil, fmt.Errorf("failed to parse managed resources: %w", err)
+	}
+	return withItems.Items, nil
 }
 
 // SyncApplication triggers a sync for the specified application
@@ -567,9 +568,11 @@ type SyncOptions struct {
 // ConvertToApp converts an ArgoApplication to our model.App
 func (s *ApplicationService) ConvertToApp(argoApp ArgoApplication) model.App {
 	app := model.App{
-		Name:   argoApp.Metadata.Name,
-		Sync:   argoApp.Status.Sync.Status,
-		Health: argoApp.Status.Health.Status,
+		DestinationName:   argoApp.Spec.Destination.Name,
+		DestinationServer: argoApp.Spec.Destination.Server,
+		Name:              argoApp.Metadata.Name,
+		Sync:              argoApp.Status.Sync.Status,
+		Health:            argoApp.Status.Health.Status,
 	}
 
 	// Set optional fields

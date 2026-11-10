@@ -14,14 +14,14 @@ func TestHeaderShowsCurrentViewAndAvailableActions(t *testing.T) {
 		mode         model.Mode
 		want, absent string
 	}{
-		{model.ViewApps, model.ModeNormal, "<s> sync", "<a> actions"},
-		{model.ViewTree, model.ModeNormal, "<a> actions", "auto-login on/off"},
-		{model.ViewContexts, model.ModeNormal, "<a> auto-login on/off", "<ctrl-d> delete"},
+		{model.ViewApps, model.ModeNormal, "<ctrl-s> sync", "<ctrl-a> actions"},
+		{model.ViewTree, model.ModeNormal, "<ctrl-a> actions", "auto-login on/off"},
+		{model.ViewContexts, model.ModeNormal, "<ctrl-a> auto-login on/off", "<ctrl-d> delete"},
 		{model.ViewApps, model.ModeSearch, "<enter> apply", "<ctrl-d> delete"},
 		{model.ViewApps, model.ModeConfirmAppDelete, "<y> delete", "<enter> confirm"},
 		{model.ViewTree, model.ModeConfirmResourceDelete, "<f> force", "<enter> confirm"},
-		{model.ViewApps, model.ModeAuthRequired, "<L> SSO login", "<s> sync"},
-		{model.ViewApps, model.ModeDiff, "<h/l> pan", "<s> sync"},
+		{model.ViewApps, model.ModeAuthRequired, "<ctrl-l> SSO login", "<ctrl-s> sync"},
+		{model.ViewApps, model.ModeDiff, "<h/l> pan", "<ctrl-s> sync"},
 	} {
 		t.Run(string(tc.view)+"/"+string(tc.mode), func(t *testing.T) {
 			m := buildSyncTestModel(140, 35)

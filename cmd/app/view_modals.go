@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
-func (m *Model) renderHelpModal() string {
+func (m *Model) helpContentLines() []string {
 
 	// Layout toggle (match earlier TS threshold)
 	isWide := m.state.Terminal.Cols >= 60
@@ -24,7 +25,7 @@ func (m *Model) renderHelpModal() string {
 	// GENERAL
 	general := strings.Join([]string{
 		mono(":"), " command ", bullet(), " ", mono("/"), " search ", bullet(), " ", mono("?"), " help",
-		"\n", mono("0/c"), " contexts ", bullet(), " ", mono("1"), " apps ", bullet(), " ", mono("2"), " clusters ", bullet(), " ", mono("3"), " namespaces ", bullet(), " ", mono("4"), " projects ", bullet(), " ", mono("5"), " appsets",
+		"\n", mono("0/c"), " contexts ", bullet(), " ", mono("1"), " apps ", bullet(), " ", mono("2"), " servers ", bullet(), " ", mono("3"), " namespaces ", bullet(), " ", mono("4"), " projects ", bullet(), " ", mono("5"), " appsets",
 	}, "")
 
 	// NAVIGATION
@@ -36,12 +37,12 @@ func (m *Model) renderHelpModal() string {
 
 	// VIEWS
 	views := strings.Join([]string{
-		mono(":cls"), "|", mono(":clusters"), " ", bullet(), " ", mono(":ns"), "|", mono(":namespaces"), " ", bullet(), " ", mono(":proj"), "|", mono(":projects"), " ", bullet(), " ", mono(":apps"),
+		mono(":servers"), "|", mono(":clusters"), " ", bullet(), " ", mono(":ns"), "|", mono(":namespaces"), " ", bullet(), " ", mono(":proj"), "|", mono(":projects"), " ", bullet(), " ", mono(":apps"),
 		"\n",
 		mono(":appsets"), "|", mono(":applicationsets"), " ", bullet(), " ", mono(":theme"), " ", bullet(), " ", mono(":logs"),
 		"\n",
 		mono("c"), " Argo CD contexts ", bullet(), " ", mono(":ctx"), " [name] ",
-		"\n", mono("a"), " auto-login on/off (contexts) ", bullet(), " ", mono("L"), " SSO login",
+		"\n", mono("Ctrl+A"), " auto-login on/off (contexts) ", bullet(), " ", mono("Ctrl+L"), " SSO login",
 	}, "")
 
 	// COMMANDS
@@ -51,7 +52,7 @@ func (m *Model) renderHelpModal() string {
 
 	// APPS VIEW - hotkeys and commands specific to apps view
 	appsView := strings.Join([]string{
-		keycap("s"), " sync ", bullet(), " ", keycap("t"), " terminate ", bullet(), " ", keycap("R"), " rollback ", bullet(), " ", keycap("r"), " resources ", bullet(), " ", keycap("d"), " diff ", bullet(), " ", keycap("K"), " open in k9s ", bullet(), " ", keycap("Ctrl+D"), " delete",
+		keycap("Ctrl+S"), " sync ", bullet(), " ", keycap("Ctrl+T"), " terminate ", bullet(), " ", keycap("Ctrl+B"), " rollback ", bullet(), " ", keycap("r"), " resources ", bullet(), " ", keycap("d"), " describe + diff ", bullet(), " ", keycap("y"), " YAML ", bullet(), " ", keycap("Ctrl+R"), " refresh ", bullet(), " ", keycap("Ctrl+K"), " open in k9s ", bullet(), " ", keycap("Ctrl+D"), " delete",
 		"\n",
 		mono(":diff"), " [app] ", bullet(), " ", mono(":sync"), " [app] ", bullet(), " ", mono(":rollback"), " [app] ", bullet(), " ", mono(":delete"), " [app]",
 		"\n",
@@ -64,11 +65,11 @@ func (m *Model) renderHelpModal() string {
 
 	// TREE VIEW - hotkeys specific to tree/resources view
 	treeView := strings.Join([]string{
-		mono("/"), " filter ", bullet(), " ", mono("n"), "/", mono("N"), " next/prev match ", bullet(), " ", keycap("d"), " diff ", bullet(), " ", mono("K"), " open in k9s",
+		mono("/"), " filter ", bullet(), " ", mono("n"), "/", mono("N"), " next/prev match ", bullet(), " ", keycap("d"), " describe + diff ", bullet(), " ", keycap("y"), " YAML ", bullet(), " ", keycap("Ctrl+R"), " refresh ", bullet(), " ", mono("Ctrl+K"), " open in k9s",
 		"\n",
-		keycap("Space"), " select ", bullet(), " ", keycap("s"), " sync ", bullet(), " ", keycap("a"), " actions (Rollouts) ", bullet(), " ", keycap("Ctrl+D"), " delete",
+		keycap("Space"), " select ", bullet(), " ", keycap("Ctrl+S"), " sync ", bullet(), " ", keycap("Ctrl+A"), " actions (Rollouts) ", bullet(), " ", keycap("Ctrl+D"), " delete",
 		"\n",
-		keycap("e"), " toggle events ", bullet(), " ", keycap("t"), " terminate ", bullet(), " ", keycap("u"), "/", keycap("i"), " or ", keycap("⇧↓"), "/", keycap("⇧↑"), " scroll events",
+		keycap("e"), " toggle events ", bullet(), " ", keycap("Ctrl+T"), " terminate ", bullet(), " ", keycap("u"), "/", keycap("i"), " or ", keycap("⇧↓"), "/", keycap("⇧↑"), " scroll events",
 		"\n",
 		mono(":refresh"), "|", mono(":refresh!"), " ", bullet(), " ", mono(":up"),
 	}, "")
@@ -89,9 +90,23 @@ func (m *Model) renderHelpModal() string {
 	helpSections = append(helpSections, "")
 	helpSections = append(helpSections, statusStyle.Render("Press ?, q or Esc to close"))
 
-	body := "\n" + strings.Join(helpSections, "\n") + "\n"
-	// No header: occupy full screen with the help box and status line
-	return m.renderFullScreenViewWithOptions("", body, m.renderStatusLine(), FullScreenViewOptions{ContentBordered: true, BorderColor: magentaBright})
+	return strings.Split(ansi.Wrap(strings.Join(helpSections, "\n"), max(1, m.contentInnerWidth()), ""), "\n")
+}
+
+func (m *Model) helpPageSize() int { return max(1, m.state.Terminal.Rows-4) }
+
+func (m *Model) renderHelpModal() string {
+	lines := m.helpContentLines()
+	page := m.helpPageSize()
+	m.helpOffset = min(max(0, m.helpOffset), max(0, len(lines)-page))
+	end := min(len(lines), m.helpOffset+page)
+	body := append([]string(nil), lines[m.helpOffset:end]...)
+	for len(body) < page {
+		body = append(body, "")
+	}
+	text := normalizeLinesToWidth(strings.Join(body, "\n"), m.contentInnerWidth())
+	footer := fmt.Sprintf("%d-%d/%d | j/k PgUp/PgDn: scroll | Esc/?: close", m.helpOffset+1, end, len(lines))
+	return mainContainerStyle.Render(headerStyle.Render("HELP") + "\n" + contentBorderStyle.Render(text) + "\n" + clipAnsiToWidth(statusStyle.Render(footer), m.state.Terminal.Cols-2))
 }
 
 func (m *Model) renderDiffLoadingSpinner() string {

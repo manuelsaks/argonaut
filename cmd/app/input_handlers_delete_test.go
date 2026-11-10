@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -9,6 +10,9 @@ import (
 
 // testKeyMsg creates a KeyMsg for testing that returns the given string
 func testKeyMsg(s string) tea.KeyMsg {
+	if strings.HasPrefix(s, "ctrl+") && len(s) == 6 {
+		return tea.KeyPressMsg{Code: rune(s[5]), Mod: tea.ModCtrl}
+	}
 	// For single characters, create a KeyPressMsg
 	if len(s) == 1 {
 		return tea.KeyPressMsg{Code: rune(s[0]), Text: s}

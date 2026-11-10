@@ -1,5 +1,5 @@
  Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Namespace: all | Project: all | Login: manual                                    
+ View: Resources | Target: all | Scope: all/all | Login: manual                                     
  <y> delete  <c> cascade  <p> policy  <f> force  <esc> cancel                                       
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
  │ Application [my-app] (Healthy, Synced)                                                         │ 

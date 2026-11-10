@@ -99,7 +99,7 @@ func (m *Model) renderListView(availableRows int) string {
 			for i := start; i < end; i++ {
 				label := fmt.Sprintf("%v", visibleItems[i])
 				isCursor := (i == cursor)
-				b.WriteString(m.renderSimpleRow(label, isCursor))
+				b.WriteString(m.renderDimensionRow(label, isCursor))
 				if i < end-1 {
 					b.WriteString("\n")
 				}
@@ -130,80 +130,40 @@ func (m *Model) renderListView(availableRows int) string {
 // renderListHeader - matches ListView header row with responsive widths
 func (m *Model) renderListHeader() string {
 	if m.state.Navigation.View == model.ViewApps {
-		// Responsive widths matching row rendering
-		contentWidth := m.contentInnerWidth()
-		nameWidth, syncWidth, healthWidth := calculateColumnWidths(contentWidth)
-
-		// Get sort indicator for the active column
-		sortIndicator := m.state.UI.Sort.Direction.Indicator()
-
-		// Build header text with sort indicator on active column
-		var nameText, syncText, healthText string
+		w := appColumns(m.contentInnerWidth())
+		name, sync, health := "APP NAME", "SYNC", "HEALTH"
+		indicator := m.state.UI.Sort.Direction.Indicator()
 		switch m.state.UI.Sort.Field {
 		case model.SortFieldName:
-			nameText = sortIndicator + "NAME"
-			syncText = "SYNC"
-			healthText = "HEALTH"
+			name = indicator + name
 		case model.SortFieldSync:
-			nameText = "NAME"
-			syncText = sortIndicator + "SYNC"
-			healthText = "HEALTH"
+			sync = indicator + sync
 		case model.SortFieldHealth:
-			nameText = "NAME"
-			syncText = "SYNC"
-			healthText = sortIndicator + "HEALTH"
-		default:
-			nameText = "NAME"
-			syncText = "SYNC"
-			healthText = "HEALTH"
+			health = indicator + health
 		}
-
-		nameHeader := headerStyle.Render(nameText)
-		// Responsive headers based on column width
-		var syncHeader, healthHeader string
-		if syncWidth >= 5 {
-			syncHeader = headerStyle.Render(syncText)
-		} else {
-			// In narrow mode, show indicator + first letter
-			if m.state.UI.Sort.Field == model.SortFieldSync {
-				syncHeader = headerStyle.Render(sortIndicator + "S")
-			} else {
-				syncHeader = headerStyle.Render("S ")
-			}
+		if w.sync < 5 {
+			sync = "S"
 		}
-		if healthWidth >= 7 {
-			healthHeader = headerStyle.Render(healthText)
-		} else {
-			// In narrow mode, show indicator + first letter
-			if m.state.UI.Sort.Field == model.SortFieldHealth {
-				healthHeader = headerStyle.Render(sortIndicator + "H")
-			} else {
-				healthHeader = headerStyle.Render("H ")
-			}
+		if w.health < 7 {
+			health = "H"
 		}
-
-		nameCell := padRight(clipAnsiToWidth(nameHeader, nameWidth), nameWidth)
-		// Align headers with content: sync and health cells use padLeft (right-aligned)
-		syncCell := padLeft(clipAnsiToWidth(syncHeader, syncWidth), syncWidth)
-		healthCell := padLeft(clipAnsiToWidth(healthHeader, healthWidth), healthWidth)
-
-		header := fmt.Sprintf("%s %s %s", nameCell, syncCell, healthCell)
-		// Use same width calculation as rows to ensure perfect alignment
-		fullRowWidth := nameWidth + syncWidth + healthWidth + 2 // +2 for separators
-		headerWidth := lipgloss.Width(header)
-		if headerWidth < fullRowWidth {
-			header = padRight(header, fullRowWidth)
-		} else if headerWidth > fullRowWidth {
-			header = clipAnsiToWidth(header, fullRowWidth)
+		return headerStyle.Render(appColumnRow(w, name, "OWNER", sync, health, "DESTINATION / NAMESPACE"))
+	}
+	if m.state.Navigation.View == model.ViewClusters {
+		if !m.destinationLoaded || m.destinationError != "" || m.destinationLoading {
+			return headerStyle.Render(clipAnsiToWidth(m.destinationListHeading(), m.contentInnerWidth()))
 		}
-		return header
+		return headerStyle.Render(m.dimensionRow("SERVER NAME", "APPS", "ADDRESS / PROJECT"))
+	}
+	if m.state.Navigation.View == model.ViewApplicationSets {
+		return headerStyle.Render(m.dimensionRow("APPSET NAME", "APPS", "DESTINATION / NAMESPACE"))
 	}
 
 	// Simple header for other views padded to full content width
 	contentWidth := m.contentInnerWidth()
 	heading := "NAME"
 	if m.state.Navigation.View == model.ViewContexts {
-		heading = "ARGO CD CONTEXTS (Enter: switch, a: auto-login, L: login)"
+		heading = "ARGO CD CONTEXTS (Ctrl+A: auto-login, Ctrl+L: SSO login)"
 	}
 	hdr := headerStyle.Render(heading)
 	if lipgloss.Width(hdr) < contentWidth {
@@ -228,58 +188,29 @@ func (m *Model) renderAppRow(app model.App, isCursor bool) string {
 	}
 	active := isCursor || isSelected
 
-	// Prepare texts and widths using same responsive logic as header
-	syncIcon := m.getSyncIcon(app.Sync)
-	healthIcon := m.getHealthIcon(app.Health)
-
-	contentWidth := m.contentInnerWidth() // Match header/content inner width
-	nameWidth, syncWidth, healthWidth := calculateColumnWidths(contentWidth)
-
-	// Generate text based on available width (either full text or icons only)
-	// Colored status strings with icons (as before)
-	syncText := fmt.Sprintf("%s %s", syncIcon, app.Sync)
-	healthText := fmt.Sprintf("%s %s", healthIcon, app.Health)
-
-	// Truncate app name with ellipsis if it's too long
-	truncatedName := truncateWithEllipsis(app.Name, nameWidth)
-
-	var nameCell, syncCell, healthCell string
-	// Build cells with clipping to assigned widths to prevent wrapping
-	nameCell = padRight(truncateWithEllipsis(truncatedName, nameWidth), nameWidth)
-
-	if isCursor || isSelected {
-		// Active row: avoid inner color styles so background highlight spans the whole row
-		if lipgloss.Width(syncText) > syncWidth {
-			syncText = clipAnsiToWidth(syncText, syncWidth)
-		}
-		if lipgloss.Width(healthText) > healthWidth {
-			healthText = clipAnsiToWidth(healthText, healthWidth)
-		}
-		syncCell = padLeft(syncText, syncWidth)
-		healthCell = padLeft(healthText, healthWidth)
-	} else {
-		// Inactive row: apply color styles to sync/health then clip if needed
-		syncStyled := m.getColorForStatus(app.Sync).Render(syncText)
-		healthStyled := m.getColorForStatus(app.Health).Render(healthText)
-		if lipgloss.Width(syncStyled) > syncWidth {
-			syncStyled = clipAnsiToWidth(syncStyled, syncWidth)
-		}
-		if lipgloss.Width(healthStyled) > healthWidth {
-			healthStyled = clipAnsiToWidth(healthStyled, healthWidth)
-		}
-		syncCell = padLeft(syncStyled, syncWidth)
-		healthCell = padLeft(healthStyled, healthWidth)
+	w := appColumns(m.contentInnerWidth())
+	fullRowWidth := m.contentInnerWidth()
+	syncText := fmt.Sprintf("%s %s", m.getSyncIcon(app.Sync), app.Sync)
+	healthText := fmt.Sprintf("%s %s", m.getHealthIcon(app.Health), app.Health)
+	if w.sync < 5 {
+		syncText = m.getSyncIcon(app.Sync)
 	}
-
-	row := fmt.Sprintf("%s %s %s", nameCell, syncCell, healthCell)
-
-	// Ensure row is exactly the content width to avoid wrapping
-	fullRowWidth := nameWidth + syncWidth + healthWidth + 2 // +2 for separators
-	if lipgloss.Width(row) < fullRowWidth {
-		row = padRight(row, fullRowWidth)
-	} else if lipgloss.Width(row) > fullRowWidth {
-		row = clipAnsiToWidth(row, fullRowWidth)
+	if w.health < 7 {
+		healthText = m.getHealthIcon(app.Health)
 	}
+	if !active {
+		syncText = m.getColorForStatus(app.Sync).Render(syncText)
+		healthText = m.getColorForStatus(app.Health).Render(healthText)
+	}
+	name := app.Name
+	// Namespaces identify same-named Applications, not their deployment targets.
+	for _, other := range m.state.Apps {
+		if other.Name == app.Name && other.Key() != app.Key() {
+			name = app.Key()
+			break
+		}
+	}
+	row := appColumnRow(w, name, applicationOwner(app), syncText, healthText, m.applicationLocation(app))
 
 	// Check if this app should flash (refresh feedback). Suppress
 	// flash highlight while a desaturating modal is up — a transient

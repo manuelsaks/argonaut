@@ -1,6 +1,6 @@
  Context: argo.example.com                                         Argonaut dev 
- View: Deployment history | Namespace: all | Project: all | Login: manual       
- <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps            
+ View: Deployment history | Target: all | Scope: all/all | Login: manual        
+ <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps   
  ╭─ Deployment history demo-app ──────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :...  1h ago   by jane.doe   curr… │ 
  │ #29  11223344 fix: suggest and validate :...  21h ago  by automated        │ 

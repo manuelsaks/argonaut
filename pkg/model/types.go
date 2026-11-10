@@ -91,16 +91,18 @@ type SyncStatusDetails struct {
 
 // App represents an ArgoCD application
 type App struct {
-	Name           string         `json:"name"`
-	Sync           string         `json:"sync"`
-	Health         string         `json:"health"`
-	SyncOp         *SyncOpSummary `json:"syncOp,omitempty"`
-	Project        *string        `json:"project,omitempty"`
-	ClusterID      *string        `json:"clusterId,omitempty"`
-	ClusterLabel   *string        `json:"clusterLabel,omitempty"`
-	Namespace      *string        `json:"namespace,omitempty"`
-	AppNamespace   *string        `json:"appNamespace,omitempty"`
-	ApplicationSet *string        `json:"applicationSet,omitempty"`
+	DestinationName   string         `json:"destinationName,omitempty"`
+	DestinationServer string         `json:"destinationServer,omitempty"`
+	Name              string         `json:"name"`
+	Sync              string         `json:"sync"`
+	Health            string         `json:"health"`
+	SyncOp            *SyncOpSummary `json:"syncOp,omitempty"`
+	Project           *string        `json:"project,omitempty"`
+	ClusterID         *string        `json:"clusterId,omitempty"`
+	ClusterLabel      *string        `json:"clusterLabel,omitempty"`
+	Namespace         *string        `json:"namespace,omitempty"`
+	AppNamespace      *string        `json:"appNamespace,omitempty"`
+	ApplicationSet    *string        `json:"applicationSet,omitempty"`
 }
 
 // SortKey returns the values used for semantic ordering of apps.

@@ -1,7 +1,7 @@
-Context: argo.example.com                 <enter/r> resources            <ctrl-d> delete                  Argonaut dev
-Server:  argo.example.com                 <space> select                 <t> terminate                                
-View:    Applications                     <s> sync                       <K> k9s                                      
-Scope:   payments / billing               <d> diff                       </> filter                                   
-Login:   manual                           <R> rollback                   <esc> clear/back                             
-Cluster: prod                                                                                                         
-<0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                       
+Context: argo.example.com                 <enter/r> resources            <ctrl-b> rollback                Argonaut dev
+Server:  argo.example.com                 <space> select                 <ctrl-d> delete                              
+View:    Applications                     <ctrl-s> sync                  <ctrl-t> terminate                           
+Scope:   payments / billing               <d> describe                   <ctrl-k> k9s                                 
+Login:   manual                           <y> YAML                       </> filter                                   
+Target:  prod                             <ctrl-r> refresh               <esc> clear/back                             
+<0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                   

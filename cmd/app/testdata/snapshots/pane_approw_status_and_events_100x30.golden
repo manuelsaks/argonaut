@@ -1,8 +1,9 @@
  Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Namespace: all | Project: all | Login: manual                                    
- <enter/e> events  <h/l> fold/unfold  <space> select  <s> sync  <d> diff  <a> actions               
- <ctrl-d> delete  <R> rollback  <t> terminate  <K> k9s  <u/i> scroll events  <esc> back             
- <0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                    
+ View: Resources | Target: all | Scope: all/all | Login: manual                                     
+ <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync  <d> describe  <y> YAML         
+ <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete  <ctrl-b> rollback  <ctrl-t> terminate         
+ <ctrl-k> k9s  <u/i> scroll events  <esc> back                                                      
+ <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                
  ╭──────────────────────────────────────────────╮╭─ Application demo-app ───────────────── ⟳ 10s ─╮ 
  │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
  │ ├── Deployment [demo/web] (Degraded)         ││ Operation     Sync (dry run, partial)          │ 
@@ -24,6 +25,5 @@
  │                                              ││ EVENTS                                         │ 
  │                                              ││ OperationCompleted                 x1 · 1m ago │ 
  │                                              ││   Sync operation to a1b2c3d failed: one or mor │ 
- │                                              ││   e objects failed to apply                    │ 
  ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
  <tree>                                                            u/i: scroll events • Ready • 1/4 

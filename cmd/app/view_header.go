@@ -19,8 +19,11 @@ func (m *Model) viewHotkeys() []viewHotkey {
 	case model.ModeHelp:
 		return []viewHotkey{{"esc/?", "close help"}, {"ctrl-c", "quit"}}
 	case model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
-		return []viewHotkey{{"L", "SSO login"}, {"c", "contexts"}, {"q", "quit"}}
+		return []viewHotkey{{"ctrl-l", "SSO login"}, {"c", "contexts"}, {"q", "quit"}}
 	case model.ModeDiff:
+		if m.inspection != nil {
+			return []viewHotkey{{"d", "describe + diff"}, {"y", "YAML"}, {"ctrl-r", "reload"}, {"j/k", "scroll"}, {"h/l", "pan"}, {"/", "filter"}, {"esc/q", "back"}}
+		}
 		return []viewHotkey{{"j/k", "scroll"}, {"h/l", "pan"}, {"/", "filter"}, {"esc/q", "close"}}
 	case model.ModeConfirmSync:
 		if m.state.Modals.ConfirmSyncForcePending {
@@ -41,18 +44,24 @@ func (m *Model) viewHotkeys() []viewHotkey {
 		if m.state.Rollback != nil && m.state.Rollback.Mode == "confirm" {
 			return []viewHotkey{{"enter", "confirm"}, {"p", "prune"}, {"w", "watch"}, {"h/l", "choose"}, {"esc", "back"}}
 		}
-		return []viewHotkey{{"enter", "select revision"}, {"d", "diff"}, {"u/i", "scroll details"}, {"esc", "apps"}}
+		return []viewHotkey{{"enter", "select revision"}, {"d", "revision diff"}, {"u/i", "scroll details"}, {"esc", "apps"}}
 	case model.ModeLoading:
-		return []viewHotkey{{"c", "contexts"}, {"L", "SSO login"}, {"ctrl-c", "quit"}}
+		return []viewHotkey{{"c", "contexts"}, {"ctrl-l", "SSO login"}, {"ctrl-c", "quit"}}
 	}
 	if m.state.Navigation.View == model.ViewContexts {
-		return []viewHotkey{{"enter", "switch"}, {"a", "auto-login on/off"}, {"L", "SSO login"}, {"/", "filter"}, {"esc", "apps"}}
+		return []viewHotkey{{"enter", "switch"}, {"ctrl-a", "auto-login on/off"}, {"ctrl-l", "SSO login"}, {"/", "filter"}, {"esc", "apps"}}
 	}
 	if m.state.Navigation.View == model.ViewTree {
-		return []viewHotkey{{"enter/e", "events"}, {"h/l", "fold/unfold"}, {"space", "select"}, {"s", "sync"}, {"d", "diff"}, {"a", "actions"}, {"ctrl-d", "delete"}, {"R", "rollback"}, {"t", "terminate"}, {"K", "k9s"}, {"u/i", "scroll events"}, {"esc", "back"}}
+		return []viewHotkey{{"enter/e", "events"}, {"h/l", "fold/unfold"}, {"space", "select"}, {"ctrl-s", "sync"}, {"d", "describe"}, {"y", "YAML"}, {"ctrl-r", "refresh"}, {"ctrl-a", "actions"}, {"ctrl-d", "delete"}, {"ctrl-b", "rollback"}, {"ctrl-t", "terminate"}, {"ctrl-k", "k9s"}, {"u/i", "scroll events"}, {"esc", "back"}}
 	}
 	if m.state.Navigation.View == model.ViewApps {
-		return []viewHotkey{{"enter/r", "resources"}, {"space", "select"}, {"s", "sync"}, {"d", "diff"}, {"R", "rollback"}, {"ctrl-d", "delete"}, {"t", "terminate"}, {"K", "k9s"}, {"/", "filter"}, {"esc", "clear/back"}}
+		return []viewHotkey{{"enter/r", "resources"}, {"space", "select"}, {"ctrl-s", "sync"}, {"d", "describe"}, {"y", "YAML"}, {"ctrl-r", "refresh"}, {"ctrl-b", "rollback"}, {"ctrl-d", "delete"}, {"ctrl-t", "terminate"}, {"ctrl-k", "k9s"}, {"/", "filter"}, {"esc", "clear/back"}}
+	}
+	if m.state.Navigation.View == model.ViewApplicationSets {
+		return []viewHotkey{{"enter", "generated apps"}, {"d", "describe"}, {"y", "YAML"}, {"/", "filter"}, {"esc", "back"}}
+	}
+	if m.state.Navigation.View == model.ViewClusters {
+		return []viewHotkey{{"enter", "server apps"}, {"ctrl-r", "reload servers"}, {"/", "filter name/address"}, {"esc", "back"}}
 	}
 	return []viewHotkey{{"enter", "open"}, {"/", "filter"}, {"esc", "back"}, {"j/k", "select"}}
 }
@@ -60,6 +69,9 @@ func (m *Model) viewHotkeys() []viewHotkey {
 func (m *Model) headerViewName() string {
 	switch m.state.Mode {
 	case model.ModeDiff:
+		if m.state.Diff != nil && m.state.Diff.InspectionKind != "" {
+			return m.state.Diff.InspectionKind
+		}
 		return "Diff"
 	case model.ModeRollback:
 		return "Deployment history"
@@ -81,7 +93,7 @@ func (m *Model) headerViewName() string {
 	case model.ViewContexts:
 		return "Argo CD contexts"
 	case model.ViewClusters:
-		return "Clusters"
+		return "Destination servers"
 	case model.ViewNamespaces:
 		return "Namespaces"
 	case model.ViewProjects:
@@ -127,8 +139,8 @@ func (m *Model) renderK9sHeader() string {
 	if m.currentUsername != "" {
 		meta[4] += " (" + m.currentUsername + ")"
 	}
-	if cluster := scopeToText(m.state.Selections.ScopeClusters); cluster != "—" {
-		meta = append(meta, "Cluster: "+cluster)
+	if len(m.state.Selections.ScopeClusters) > 0 {
+		meta = append(meta, "Target:  "+m.destinationScopeLabel())
 	}
 	keyStyle := lipgloss.NewStyle().Foreground(cyanBright).Bold(true)
 	title := keyStyle.Render("Context: ") + ctx
@@ -171,7 +183,7 @@ func (m *Model) renderK9sHeader() string {
 			title = joinWithRightAlignment(clipAnsiToWidth(title, width-brandWidth), brand, width)
 		}
 		rows = append(rows, clipAnsiToWidth(title, width))
-		rows = append(rows, clipAnsiToWidth(fmt.Sprintf("View: %s | Namespace: %s | Project: %s | Login: %s", m.headerViewName(), ns, project, login), width))
+		rows = append(rows, clipAnsiToWidth(fmt.Sprintf("View: %s | Target: %s | Scope: %s/%s | Login: %s", m.headerViewName(), m.destinationScopeLabel(), ns, project, login), width))
 		line := ""
 		for _, action := range actions {
 			cell := renderHotkey(action)
@@ -193,7 +205,7 @@ func (m *Model) renderK9sHeader() string {
 		}
 	}
 	if m.state.Mode == model.ModeNormal {
-		nav := []viewHotkey{{"0/c", "ctx"}, {"1", "apps"}, {"2", "cls"}, {"3", "ns"}, {"4", "proj"}, {"5", "sets"}, {":", "command"}, {"?", "help"}}
+		nav := []viewHotkey{{"0/c", "ctx"}, {"1", "apps"}, {"2", "servers"}, {"3", "ns"}, {"4", "proj"}, {"5", "sets"}, {":", "command"}, {"?", "help"}}
 		line := ""
 		for _, k := range nav {
 			if line != "" {

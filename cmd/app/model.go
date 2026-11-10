@@ -30,6 +30,13 @@ import (
 
 // Model represents the main Bubbletea model containing all application state
 type Model struct {
+	inspection         *resourceInspection
+	inspectionSeq      int
+	helpOffset         int
+	destinationSeq     int
+	destinationLoaded  bool
+	destinationLoading bool
+	destinationError   string
 	// Core application state
 	state *model.AppState
 
@@ -352,6 +359,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Mode messages
 	case model.SetModeMsg:
+		if m.inspection != nil && (m.state.Mode == model.ModeDiff || m.state.Mode == model.ModeSearch) {
+			return m, nil
+		}
 		oldMode := m.state.Mode
 		cblog.With("component", "model").Info("SetModeMsg received",
 			"old_mode", oldMode,
@@ -400,7 +410,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Data messages
 	case model.SetAppsMsg:
 		m.state.Apps = msg.Apps
-		m.state.Index = model.BuildAppIndex(m.state.Apps)
+		m.rebuildAppIndex()
 		return m, nil
 
 	case model.SetServerMsg:
@@ -514,7 +524,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			"watchChan_nil", m.watchChan == nil,
 			"resourceVersion", msg.ResourceVersion)
 		m.state.Apps = msg.Apps
-		m.state.Index = model.BuildAppIndex(m.state.Apps)
+		m.rebuildAppIndex()
 		// Store resource version for watch coordination
 		if msg.ResourceVersion != "" {
 			m.lastResourceVersion = msg.ResourceVersion
@@ -539,11 +549,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(
 				func() tea.Msg { return model.SetModeMsg{Mode: targetMode} },
 				m.startWatchingApplications(),
+				m.loadDestinationServers(),
 			)
 		}
 		// Watch is already running — the batch handler maintains the chain.
 		// Do NOT call consumeWatchEvents() here to avoid duplicate consumers.
-		return m, func() tea.Msg { return model.SetModeMsg{Mode: targetMode} }
+		return m, tea.Batch(func() tea.Msg { return model.SetModeMsg{Mode: targetMode} }, m.loadDestinationServers())
 
 	case model.AppsBatchUpdateMsg:
 		// Gate by switch epoch — discard entire batch from a previous context
@@ -581,7 +592,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
-		m.state.Index = model.BuildAppIndex(m.state.Apps)
+		m.rebuildAppIndex()
 		// Adjust selection bounds after deletes
 		if deletesApplied > 0 {
 			visibleItems := m.getVisibleItemsForCurrentView()
@@ -864,6 +875,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case textPagerMsg:
+		if m.inspection != nil {
+			return m, nil
+		}
 		if msg.SwitchEpoch != m.switchEpoch {
 			return m, nil
 		}
@@ -1001,7 +1015,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.statusService.Set(fmt.Sprintf("Application %s deleted successfully", msg.AppName))
 
 		m.applyBatchAppDelete(model.AppKey(msg.AppName, msg.AppNamespace))
-		m.state.Index = model.BuildAppIndex(m.state.Apps)
+		m.rebuildAppIndex()
 
 		// Clear modal state and return to normal mode
 		m.state.Mode = model.ModeNormal
@@ -1572,7 +1586,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case model.ContextSwitchResultMsg:
 		return m.handleContextSwitchResult(msg)
 
+	case resourceInspectionMsg:
+		return m.handleResourceInspection(msg)
+	case destinationServersMsg:
+		return m.handleDestinationServers(msg)
 	case model.QuitMsg:
+		m.cancelResourceInspection()
 		m.cancelContextRelogin()
 		return m, tea.Quit
 

@@ -36,7 +36,7 @@ func TestHandleResourceSync_ChildApplicationTargetsChildApp(t *testing.T) {
 	}})
 	m.treeView.SetSelectedIndex(1)
 
-	updated, cmd := m.handleKeyMsg(testKeyMsg("s"))
+	updated, cmd := m.handleKeyMsg(testKeyMsg("ctrl+s"))
 	m = updated.(*Model)
 
 	if cmd != nil {
@@ -68,7 +68,7 @@ func TestHandleResourceSync_SyntheticRootTargetsParentApp(t *testing.T) {
 	m.treeView.UpsertAppTree("parent", &api.ResourceTree{})
 	m.treeView.SetSelectedIndex(0)
 
-	updated, cmd := m.handleKeyMsg(testKeyMsg("s"))
+	updated, cmd := m.handleKeyMsg(testKeyMsg("ctrl+s"))
 	m = updated.(*Model)
 
 	if cmd != nil {

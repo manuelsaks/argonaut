@@ -1,8 +1,9 @@
  Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Namespace: all | Project: all | Login: manual                                    
- <enter/e> events  <h/l> fold/unfold  <space> select  <s> sync  <d> diff  <a> actions               
- <ctrl-d> delete  <R> rollback  <t> terminate  <K> k9s  <u/i> scroll events  <esc> back             
- <0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                    
+ View: Resources | Target: all | Scope: all/all | Login: manual                                     
+ <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync  <d> describe  <y> YAML         
+ <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete  <ctrl-b> rollback  <ctrl-t> terminate         
+ <ctrl-k> k9s  <u/i> scroll events  <esc> back                                                      
+ <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                
  ╭──────────────────────────────────────────────╮╭─ Pod web-6f7d9b-x4k2m ───── ⟳ updated 12s ago ─╮ 
  │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
  │ ├── Deployment [demo/web] (Degraded)         ││ Health        Degraded                         │ 
@@ -18,6 +19,5 @@
  │                                              ││   Back-off restarting failed container web in  │ 
  │                                              ││   pod web-6f7d9b-x4k2m_demo(a1b2c3d)           │ 
  │                                              ││                                                │ 
- │                                              ││ Pulled                           x413 · 2m ago │ 
  ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
  <tree>                                                            u/i: scroll events • Ready • 1/4 

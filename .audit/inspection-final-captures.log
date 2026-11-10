@@ -1,0 +1,221 @@
+=== RUN   TestDestinationAndInspectionLayouts
+    destination_servers_test.go:141: 
+        apps 80x24
+         Context: production                                               Argonaut dev 
+         View: Applications | Target: all | Scope: all/all | Login: manual              
+         <enter/r> resources  <space> select  <ctrl-s> sync  <d> describe  <y> YAML     
+         <ctrl-r> refresh  <ctrl-b> rollback  <ctrl-d> delete  <ctrl-t> terminate       
+         <ctrl-k> k9s  </> filter  <esc> clear/back                                     
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ ▲APP NAME               OWNER              S  H  DESTINATION / NAMESPACE   │ 
+         │ shared                  standalone         V  V  localhost/shared          │ 
+         │ web                     set:argocd/webs... ^  V  site1/apps                │ 
+         │ worker                  set:argocd/webs... V  V  site1/apps                │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                             Ready • 1/3 
+    destination_servers_test.go:141: 
+        clusters 80x24
+         Context: production                                               Argonaut dev 
+         View: Destination servers | Target: all | Scope: all/all | Login: manual       
+         <enter> server apps  <ctrl-r> reload servers  </> filter name/address          
+         <esc> back                                                                     
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ SERVER NAME             APPS  ADDRESS / PROJECT                            │ 
+         │ localhost               1     https://kubernetes.default.svc               │ 
+         │ site1                   2     https://site1.example                        │ 
+         │ site2                   0     https://site2.example                        │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <servers>                                                          Ready • 1/3 
+    destination_servers_test.go:141: 
+        applicationsets 80x24
+         Context: production                                               Argonaut dev 
+         View: ApplicationSets | Target: all | Scope: all/all | Login: manual           
+         <enter> generated apps  <d> describe  <y> YAML  </> filter  <esc> back         
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ APPSET NAME             APPS  DESTINATION / NAMESPACE                      │ 
+         │ argocd/websites         2     site1/apps                                   │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <applicationsets>                                                  Ready • 1/1 
+    destination_servers_test.go:162: 
+        YAML 80x24
+         Context: production                                               Argonaut dev 
+         View: YAML | Target: all | Scope: all/all | Login: manual                      
+         <d> describe + diff  <y> YAML  <ctrl-r> reload  <j/k> scroll  <h/l> pan        
+         </> filter  <esc/q> back                                                       
+         YAML: Application/web                                                          
+         ╭──────────────────────────────────────────────────────────────────────────╮   
+         │ Name:           web                                                      │   
+         │ Namespace:      argocd                                                   │   
+         │                                                                          │   
+         │ Spec:                                                                    │   
+         │   Destination:                                                           │   
+         │     Name: site1                                                          │   
+         │     Namespace: apps                                                      │   
+         │                                                                          │   
+         │ Events:                                                                  │   
+         │   No events.                                                             │   
+         │                                                                          │   
+         │ Diff (live -> desired):                                                  │   
+         │   No changes.                                                            │   
+         ╰──────────────────────────────────────────────────────────────────────────╯   
+         1-13/13  j/k, PgUp/PgDn, h/l, / search, esc/q back                             
+    destination_servers_test.go:162: 
+        Describe 80x24
+         Context: production                                               Argonaut dev 
+         View: Describe | Target: all | Scope: all/all | Login: manual                  
+         <d> describe + diff  <y> YAML  <ctrl-r> reload  <j/k> scroll  <h/l> pan        
+         </> filter  <esc/q> back                                                       
+         Describe: Application/web                                                      
+         ╭──────────────────────────────────────────────────────────────────────────╮   
+         │ Name:           web                                                      │   
+         │ Namespace:      argocd                                                   │   
+         │                                                                          │   
+         │ Spec:                                                                    │   
+         │   Destination:                                                           │   
+         │     Name: site1                                                          │   
+         │     Namespace: apps                                                      │   
+         │                                                                          │   
+         │ Events:                                                                  │   
+         │   No events.                                                             │   
+         │                                                                          │   
+         │ Diff (live -> desired):                                                  │   
+         │   No changes.                                                            │   
+         ╰──────────────────────────────────────────────────────────────────────────╯   
+         1-13/13  j/k, PgUp/PgDn, h/l, / search, esc/q back                             
+    destination_servers_test.go:141: 
+        apps 120x30
+         Context: production                       <enter/r> resources            <ctrl-b> rollback                Argonaut dev 
+         Server:  not connected                    <space> select                 <ctrl-d> delete                               
+         View:    Applications                     <ctrl-s> sync                  <ctrl-t> terminate                            
+         Scope:   all / all                        <d> describe                   <ctrl-k> k9s                                  
+         Login:   manual                           <y> YAML                       </> filter                                    
+                                                   <ctrl-r> refresh               <esc> clear/back                              
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ ▲APP NAME                      OWNER                    SYNC        HEALTH        DESTINATION / NAMESPACE          │ 
+         │ shared                         standalone               V Synced    V Healthy     localhost/shared                 │ 
+         │ web                            set:argocd/websites      ^ OutOfSync V Healthy     site1/apps                       │ 
+         │ worker                         set:argocd/websites      V Synced    V Healthy     site1/apps                       │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                                     Ready • 1/3 
+    destination_servers_test.go:141: 
+        clusters 120x30
+         Context: production                       <enter> server apps            </> filter name/address          Argonaut dev 
+         Server:  not connected                    <ctrl-r> reload servers        <esc> back                                    
+         View:    Destination servers                                                                                           
+         Scope:   all / all                                                                                                     
+         Login:   manual                                                                                                        
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ SERVER NAME                           APPS  ADDRESS / PROJECT                                                      │ 
+         │ localhost                             1     https://kubernetes.default.svc                                         │ 
+         │ site1                                 2     https://site1.example                                                  │ 
+         │ site2                                 0     https://site2.example                                                  │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <servers>                                                                                                  Ready • 1/3 
+    destination_servers_test.go:141: 
+        applicationsets 120x30
+         Context: production                       <enter> generated apps         </> filter                       Argonaut dev 
+         Server:  not connected                    <d> describe                   <esc> back                                    
+         View:    ApplicationSets                  <y> YAML                                                                     
+         Scope:   all / all                                                                                                     
+         Login:   manual                                                                                                        
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ APPSET NAME                           APPS  DESTINATION / NAMESPACE                                                │ 
+         │ argocd/websites                       2     site1/apps                                                             │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <applicationsets>                                                                                          Ready • 1/1 
+--- PASS: TestDestinationAndInspectionLayouts (0.03s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.053s

@@ -824,7 +824,7 @@ func TestRollbackKey_FromAppsView_TargetsCursorApp(t *testing.T) {
 	m.state.Navigation.View = model.ViewApps
 	m.state.Navigation.SelectedIdx = 1
 
-	teaModel, _ := m.handleKeyMsg(testKeyMsg("R"))
+	teaModel, _ := m.handleKeyMsg(testKeyMsg("ctrl+b"))
 	m = teaModel.(*Model)
 
 	if m.state.Rollback == nil {
@@ -850,7 +850,7 @@ func buildMultiSelectedAppsModel() *Model {
 func TestRollbackKey_RefusesWithMultipleAppsSelected(t *testing.T) {
 	m := buildMultiSelectedAppsModel()
 
-	teaModel, _ := m.handleKeyMsg(testKeyMsg("R"))
+	teaModel, _ := m.handleKeyMsg(testKeyMsg("ctrl+b"))
 	m = teaModel.(*Model)
 
 	if m.state.Rollback != nil || m.state.Mode == model.ModeRollback {
@@ -903,7 +903,7 @@ func TestRollbackConfirmModal_WidthHugsContent(t *testing.T) {
 func TestRollbackMultiSelectRefusal_ShowsFooterHint(t *testing.T) {
 	m := buildMultiSelectedAppsModel()
 
-	teaModel, _ := m.handleKeyMsg(testKeyMsg("R"))
+	teaModel, _ := m.handleKeyMsg(testKeyMsg("ctrl+b"))
 	m = teaModel.(*Model)
 
 	footer := stripANSI(m.renderStatusLine())
@@ -920,7 +920,7 @@ func TestRollbackKey_OnHoveredChildApplication_TargetsThatApp(t *testing.T) {
 	}})
 	m.treeView.SetSelectedIndex(1) // hover the child Application row
 
-	teaModel, _ := m.handleKeyMsg(testKeyMsg("R"))
+	teaModel, _ := m.handleKeyMsg(testKeyMsg("ctrl+b"))
 	m = teaModel.(*Model)
 
 	if m.state.Rollback == nil {

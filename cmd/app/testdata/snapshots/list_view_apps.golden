@@ -1,8 +1,8 @@
 ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ ▲NAME                                                                     SYNC          HEALTH │
-│ app-a                                                                 V Synced       V Healthy │
-│ app-b                                                              ^ OutOfSync      ! Degraded │
-│ app-c                                                                ? Unknown   . Progressing │
+│ ▲APP NAME               OWNER              SYNC        HEALTH        DESTINATION / NAMESPACE   │
+│ app-a                   standalone         V Synced    V Healthy     ?/ns-a                    │
+│ app-b                   standalone         ^ OutOfSync ! Degraded    ?/ns-b                    │
+│ app-c                   standalone         ? Unknown   . Progressing ?/ns-c                    │
 │                                                                                                │
 │                                                                                                │
 │                                                                                                │

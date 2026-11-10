@@ -190,15 +190,15 @@ not supported for live switching. You can also switch directly with `:ctx NAME`.
 
 The header shows the active Argo CD context, current view and the shortcuts
 available in that view, in a layout inspired by k9s. Press `0`/`c` for contexts,
-`1` for apps, `2` for clusters, `3` for namespaces, `4` for projects and `5` for
+`1` for apps, `2` for destination servers, `3` for namespaces, `4` for projects and `5` for
 ApplicationSets. `:` opens commands and `?` shows full help. View shortcuts do
 not intercept text input or bypass confirmation dialogs.
 
-For SSO, open contexts and press `a` on a row to toggle **auto-login** for that
+For SSO, open contexts and press `Ctrl+A` on a row to toggle **auto-login** for that
 context. Preferences persist in Argonaut's config. On an authentication failure,
 Argonaut first asks the Argo CD CLI to refresh the session silently. If a new SSO
 login is necessary, it hands the terminal to `argocd relogin`, which can open your
-browser, then reloads credentials and returns to the TUI. Press `L` to log in
+browser, then reloads credentials and returns to the TUI. Press `Ctrl+L` to log in
 manually for the selected context (or the active context outside the picker).
 SSO/MFA can still require confirmation in the browser. Failed or cancelled login
 attempts are throttled; interrupted sync/delete actions are never retried.
@@ -260,6 +260,31 @@ production = false
 
 ### **And much more**  
 <img src="assets/argonaut_help.png" alt="the :help command describes all commands"/>
+
+## Inspecting applications and resources
+
+Press `d` to describe the cursor's Application, ApplicationSet or tree resource,
+and `y` to view its full YAML, including metadata and status. Both use Argo CD's
+API and the built-in scrollable viewer; they do not require kubeconfig, kubectl,
+less or sh. In the viewer, `d`/`y` switch between the same captured object,
+`Ctrl+R` reloads it, `/` filters, `h/l` pan and `Esc` returns. Describe includes
+events and the live-to-desired diff at the bottom. A missing resource shows its
+desired manifest when Argo CD provides one; runtime resources without a desired
+manifest say so. Secret values follow Argo CD's access controls and masking.
+
+Operations in apps and resources use Ctrl: `Ctrl+S` sync, `Ctrl+R` refresh,
+`Ctrl+D` delete, `Ctrl+B` rollback, `Ctrl+T` terminate, `Ctrl+A` resource actions
+(tree), and `Ctrl+K` open k9s. Confirmations still require an explicit choice.
+
+Press `2` or `:servers` to list registered destination servers in the current
+Argo CD context, including servers with no applications. Each row shows its
+name, app count and address/project; Enter opens its apps and `Ctrl+R` reloads
+the registry. Registry access follows Argo CD RBAC. If it is denied, the view
+states the error and retains known destinations rather than claiming a full list.
+Apps show their ApplicationSet owner (or standalone) and destination server /
+namespace. `5` shows ApplicationSets derived from app owners with app counts and
+locations; Enter opens their generated apps. Same-named sets in different
+Application namespaces remain separate. `?` opens scrollable help.
 
 ## Advanced Features
 

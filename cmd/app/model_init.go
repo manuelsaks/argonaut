@@ -151,9 +151,11 @@ func (m *Model) validateDefaultViewScope() {
 		}
 	case "appset":
 		label = "ApplicationSet"
+		key, err := m.applicationSetScopeKey(scope.scopeValue)
 		for _, a := range m.state.Index.ApplicationSets {
-			if a == scope.scopeValue {
+			if err == nil && a == key {
 				exists = true
+				m.state.Selections.ScopeApplicationSets = model.StringSetFromSlice([]string{key})
 				break
 			}
 		}

@@ -181,12 +181,12 @@ func TestCLILoginArgumentsAndEnvironmentAreContextBound(t *testing.T) {
 func TestContextAutoReloginPreferencePersistsPerContext(t *testing.T) {
 	m := authTestModel(t)
 	_, _ = m.openContextPicker()
-	_, _ = m.handleKeyMsg(testKeyMsg("a")) // prod, active row
+	_, _ = m.handleKeyMsg(testKeyMsg("ctrl+a")) // prod, active row
 	if m.config.IsAutoReloginEnabled("prod") {
 		t.Fatal("a should disable the active row")
 	}
 	_, _ = m.handleKeyMsg(testKeyMsg("k")) // dev, inactive row
-	_, _ = m.handleKeyMsg(testKeyMsg("a"))
+	_, _ = m.handleKeyMsg(testKeyMsg("ctrl+a"))
 	if !m.config.IsAutoReloginEnabled("dev") || m.config.IsAutoReloginEnabled("prod") {
 		t.Fatal("preference must apply to the selected row only")
 	}

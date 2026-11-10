@@ -196,6 +196,16 @@ func (m *Model) validateCommand(input string) bool {
 	// If command takes an argument and one is provided, validate it
 	if len(parts) >= 2 {
 		arg := parts[1]
+		var err error
+		switch canonical {
+		case "cluster":
+			arg, err = m.destinationScopeKey(arg)
+		case "appset":
+			arg, err = m.applicationSetScopeKey(arg)
+		}
+		if err != nil {
+			return false
+		}
 		switch canonical {
 		case "cluster":
 			all := m.autocompleteEngine.GetArgumentSuggestions("cluster", "", m.state)
@@ -644,6 +654,11 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 		if arg != "" {
 			switch canonical {
 			case "cluster":
+				if key, err := m.destinationScopeKey(arg); err != nil {
+					return m, m.showFooterNotice(err.Error())
+				} else {
+					arg = key
+				}
 				all := m.autocompleteEngine.GetArgumentSuggestions("cluster", "", m.state)
 				names := make([]string, 0, len(all))
 				for _, s := range all {
@@ -991,7 +1006,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			}
 			m.state.Diff.Loading = true
 			return m, m.startDiffSession(target, targetNamespace)
-		case "cluster", "clusters", "cls":
+		case "server", "servers", "cluster", "clusters", "cls":
 			// Exit deep views and clear lower-level scopes
 			m.clearTreeApp()
 			m.treeLoading = false
@@ -1019,7 +1034,12 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 				m.state.Selections.ScopeClusters = model.StringSetFromSlice([]string{arg})
 				m.state.Selections.ScopeNamespaces = model.NewStringSet()
 				m.state.Selections.ScopeProjects = model.NewStringSet()
-				m = m.safeChangeView(model.ViewNamespaces)
+				if _, registered := m.destinationByKey(arg); registered {
+					m.state.Selections.ScopeApplicationSets = model.NewStringSet()
+					m = m.safeChangeView(model.ViewApps)
+				} else {
+					m = m.safeChangeView(model.ViewNamespaces)
+				}
 			} else {
 				m.state.Selections.ScopeClusters = model.NewStringSet()
 				m.state.Selections.ScopeNamespaces = model.NewStringSet()
@@ -1116,6 +1136,11 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			m.state.Navigation.SelectedIdx = 0
 			m.state.Selections.SelectedApps = model.NewStringSet()
 			if arg != "" {
+				if key, err := m.applicationSetScopeKey(arg); err != nil {
+					return m, m.showFooterNotice(err.Error())
+				} else {
+					arg = key
+				}
 				// Validate ApplicationSet exists
 				all := m.autocompleteEngine.GetArgumentSuggestions("appset", "", m.state)
 				names := make([]string, 0, len(all))
@@ -1144,6 +1169,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			return m, nil
 		case "help":
 			// Show help modal
+			m.helpOffset = 0
 			m.state.Mode = model.ModeHelp
 			return m, nil
 		case "theme":

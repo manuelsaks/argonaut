@@ -544,16 +544,19 @@ func (m *Model) getVisibleItems() []interface{} {
 	idx := m.state.Index
 	// Defensive: build index lazily if apps exist but index hasn't been built
 	if idx == nil && len(m.state.Apps) > 0 {
-		idx = model.BuildAppIndex(m.state.Apps)
-		m.state.Index = idx
+		m.rebuildAppIndex()
+		idx = m.state.Index
 	}
 
 	// 1) Build base list depending on current view, using pre-computed index
 	var base []interface{}
 	switch m.state.Navigation.View {
 	case model.ViewClusters:
-		// Pre-computed sorted unique clusters from ALL apps
-		if idx != nil {
+		if m.destinationLoaded {
+			for _, server := range m.state.DestinationServers {
+				base = append(base, server.Key())
+			}
+		} else if idx != nil {
 			for _, c := range idx.Clusters {
 				base = append(base, c)
 			}
@@ -627,13 +630,20 @@ func (m *Model) getVisibleItems() []interface{} {
 			if app.Project != nil {
 				prj = strings.ToLower(*app.Project)
 			}
-			if strings.Contains(name, f) || strings.Contains(sync, f) || strings.Contains(health, f) || strings.Contains(ns, f) || strings.Contains(prj, f) {
+			if strings.Contains(name, f) || strings.Contains(sync, f) || strings.Contains(health, f) || strings.Contains(ns, f) || strings.Contains(prj, f) || strings.Contains(strings.ToLower(m.applicationLocation(app)), f) || strings.Contains(strings.ToLower(applicationOwner(app)), f) {
 				filtered = append(filtered, it)
 			}
 		}
 	} else {
 		for _, it := range base {
 			s := strings.ToLower(fmt.Sprintf("%v", it))
+			if m.state.Navigation.View == model.ViewClusters {
+				if key, ok := it.(string); ok {
+					if server, found := m.destinationByKey(key); found {
+						s += " " + strings.ToLower(server.Name+" "+server.Server+" "+server.Project)
+					}
+				}
+			}
 			if strings.Contains(s, f) {
 				filtered = append(filtered, it)
 			}

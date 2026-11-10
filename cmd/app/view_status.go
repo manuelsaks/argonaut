@@ -16,6 +16,9 @@ func (m *Model) renderStatusLine() string {
 
 	// Left side: view and filter info (matches MainLayout left Box)
 	leftText := fmt.Sprintf("<%s>", m.state.Navigation.View)
+	if m.state.Navigation.View == model.ViewClusters {
+		leftText = "<servers>"
+	}
 	// Show ApplicationSet scope in the breadcrumb when filtering apps by ApplicationSet
 	if m.state.Navigation.View == model.ViewApps && len(m.state.Selections.ScopeApplicationSets) > 0 {
 		// Get ApplicationSet names sorted for deterministic display

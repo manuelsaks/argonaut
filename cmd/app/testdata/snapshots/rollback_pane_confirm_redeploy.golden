@@ -1,5 +1,5 @@
  Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ View: Deployment history | Target: all | Scope: all/all | Login: manual                            
  <enter> confirm  <p> prune  <w> watch  <h/l> choose  <esc> back                                    
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 

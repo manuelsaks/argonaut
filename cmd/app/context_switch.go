@@ -129,6 +129,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 
 	// 1. Cleanup old goroutines — ORDER MATTERS:
 	m.cancelContextRelogin()
+	m.cancelResourceInspection()
 	//    a. Stop forwarding goroutine FIRST
 	m.cleanupAppWatcher()
 	//    b. Stop tree watchers

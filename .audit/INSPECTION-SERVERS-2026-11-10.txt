@@ -1,0 +1,37 @@
+ARGONAUT - RESOURCE INSPECTION, CTRL ACTIONS, DESTINATION SERVERS
+Date: 2026-11-10
+
+Implemented:
+- d: describe Application / ApplicationSet / selected tree resource through Argo CD API.
+- y: full YAML, preserving metadata, status, arbitrary fields and JSON number precision.
+- Describe includes events followed by live-to-desired diff. Exact owning Application
+  namespace and resource group/kind/namespace/name are preserved. Runtime resources
+  without a desired manifest and absent resources have explicit states.
+- Inspection always uses the built-in viewer; no kubectl, kubeconfig, less or sh.
+  Esc cancels the API request; replies are gated by context, sequence and target.
+- Ctrl+S sync, Ctrl+R refresh, Ctrl+D delete, Ctrl+B rollback, Ctrl+T terminate,
+  Ctrl+A resource actions (tree), Ctrl+K k9s. Contexts use Ctrl+A auto-login,
+  Ctrl+L manual SSO login. Confirmation choices remain explicit.
+- 2 / :servers: registered destination server names, addresses, project and app counts,
+  including servers with zero apps. Enter opens that server's applications.
+  Name/URL/project scopes resolve consistently; ambiguous names are rejected.
+  Registry failures are shown; credential fields are not retained in the display model.
+- Apps show owner and destination server/namespace. 5 shows ApplicationSets derived
+  from Application owners, with counts/locations and namespace-qualified identities.
+- Responsive legends and scrollable help. Empty application lists now load correctly.
+
+Verification:
+PASS: go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+PASS: Windows amd64 build, --version from PowerShell and Git Bash.
+PASS: native Windows PTY TestTerminalWindowsRestoresConsoleModes.
+PASS: Linux amd64 cross-build.
+PASS: actual TUI text captures and size checks at 60x20, 80x24, 100x30, 120x30, 160x40.
+PASS: golden snapshots, diff whitespace check, UI detector.
+
+Windows executable: C:\tmp\argonaut\argonaut.exe
+SHA256: 4A9B782D99AE82857F170745247873453E8FBF8E98B2E075990E3A2DDB74AD65
+Copy: C:\tmp\argonaut\.audit\argonaut-windows.exe
+
+API behavior was tested against local HTTP fixtures; no live company Argo CD or SSO
+session was used. Visibility follows Argo CD RBAC and secret masking. The k9s launch
+shortcut remains an optional integration that uses kubeconfig when explicitly invoked.

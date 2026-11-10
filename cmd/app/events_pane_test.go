@@ -487,14 +487,14 @@ func TestEventsPane_QLeavesTreeViewLikeAlways(t *testing.T) {
 func TestEventsPane_ActionKeysActWithThePaneOpen(t *testing.T) {
 	m := openEventsPane(t, buildEventsPaneTestModel())
 
-	teaModel, cmd := m.handleKeyMsg(testKeyMsg("d")) // diff the selected resource
+	teaModel, cmd := m.handleKeyMsg(testKeyMsg("d")) // describe the selected resource
 	mm := teaModel.(*Model)
 
 	if mm.state.Events == nil {
 		t.Error("expected the pane to stay open")
 	}
-	if mm.state.Diff == nil || !mm.state.Diff.Loading || cmd == nil {
-		t.Errorf("expected d to start the resource diff, got %+v", mm.state.Diff)
+	if mm.state.Diff == nil || mm.state.Diff.InspectionKind != "Describe" || !mm.state.Diff.Loading || cmd == nil {
+		t.Errorf("expected d to start resource describe, got %+v", mm.state.Diff)
 	}
 }
 
@@ -515,7 +515,7 @@ func TestEventsPane_CtrlDOpensDeleteConfirmationOverThePane(t *testing.T) {
 func TestEventsPane_SyncConfirmationOverThePane(t *testing.T) {
 	m := openEventsPane(t, buildEventsPaneTestModel())
 
-	teaModel, _ := m.handleKeyMsg(testKeyMsg("s"))
+	teaModel, _ := m.handleKeyMsg(testKeyMsg("ctrl+s"))
 	mm := teaModel.(*Model)
 
 	if mm.state.Events == nil {

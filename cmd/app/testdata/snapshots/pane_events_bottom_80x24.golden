@@ -1,8 +1,9 @@
  Context: argo.example.com                                         Argonaut dev 
- View: Resources | Namespace: all | Project: all | Login: manual                
- <enter/e> events  <h/l> fold/unfold  <space> select  <s> sync  <d> diff        
- <a> actions  <ctrl-d> delete  <R> rollback  <t> terminate  <K> k9s             
- <u/i> scroll events  <esc> back                                                
+ View: Resources | Target: all | Scope: all/all | Login: manual                 
+ <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync             
+ <d> describe  <y> YAML  <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete    
+ <ctrl-b> rollback  <ctrl-t> terminate  <ctrl-k> k9s  <u/i> scroll events       
+ <esc> back                                                                     
  <0/c> ctx  <1> apps  <:> views  <?> help                                       
  ╭────────────────────────────────────────────────────────────────────────────╮ 
  │ Application [demo-app] (Degraded, Synced)                                  │ 
@@ -19,6 +20,5 @@
  │ Last sync     SyncFailed                                                   │ 
  │   pod spec invalid                                                         │ 
  │                                                                            │ 
- │ EVENTS                                                                     │ 
  ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <tree>                                        u/i: scroll events • Ready • 1/4 

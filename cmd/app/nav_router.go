@@ -129,6 +129,8 @@ func (m *Model) getNavigatorContext() *NavigatorContext {
 			SupportsNavigation: true,
 		}
 
+	case model.ModeHelp:
+		return &NavigatorContext{SupportsNavigation: true, DirectOffset: &m.helpOffset, PageSize: m.helpPageSize}
 	case model.ModeDiff:
 		if m.state.Diff == nil {
 			return &NavigatorContext{SupportsNavigation: false}

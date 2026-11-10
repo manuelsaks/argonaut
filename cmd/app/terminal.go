@@ -22,6 +22,7 @@ func runTUI(m *Model) error {
 		if _, quitting := msg.(tea.QuitMsg); quitting {
 			if model, ok := current.(*Model); ok {
 				model.cancelContextRelogin()
+				model.cancelResourceInspection()
 			}
 			// Stop generating mouse reports before cancelling the input reader.
 			stopTerminalReports(os.Stdout)
@@ -32,6 +33,7 @@ func runTUI(m *Model) error {
 	final, err := p.Run()
 	if current, ok := final.(*Model); ok {
 		current.cancelContextRelogin()
+		current.cancelResourceInspection()
 		current.cleanupAppWatcher()
 		current.cleanupTreeWatchers()
 	}

@@ -125,7 +125,7 @@ func (m *Model) activeOverlay() *overlaySpec {
 		}
 		return spec
 	}
-	if len(m.state.Apps) == 0 && m.state.Mode == model.ModeNormal && m.state.Navigation.View != model.ViewContexts {
+	if len(m.state.Apps) == 0 && m.state.Mode == model.ModeNormal && m.state.Navigation.View != model.ViewContexts && m.state.Navigation.View != model.ViewClusters && m.state.Navigation.View != model.ViewApplicationSets {
 		return &overlaySpec{modal: m.renderNoServerModal(), desaturate: true}
 	}
 	if m.state.Diff != nil && m.state.Diff.Loading {

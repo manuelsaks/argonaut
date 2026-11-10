@@ -39,7 +39,7 @@ func TestTerminate_OpensConfirmationForRunningOperation(t *testing.T) {
 func TestTerminate_TKeyOpensConfirmationInAppsView(t *testing.T) {
 	m := buildTerminateTestModel("Running")
 
-	m.handleKeyMsg(testKeyMsg("t"))
+	m.handleKeyMsg(testKeyMsg("ctrl+t"))
 
 	if m.state.Mode != model.ModeConfirmTerminate {
 		t.Errorf("Expected t to open the terminate confirmation, got mode %q", m.state.Mode)
@@ -54,7 +54,7 @@ func TestTerminate_TKeyTargetsTheTreesAppInTreeView(t *testing.T) {
 	appNamespace := "test-namespace"
 	m.state.UI.TreeApp = &model.TreeAppInfo{Name: "test-app", AppNamespace: &appNamespace}
 
-	m.handleKeyMsg(testKeyMsg("t"))
+	m.handleKeyMsg(testKeyMsg("ctrl+t"))
 
 	if m.state.Mode != model.ModeConfirmTerminate {
 		t.Fatalf("Expected t to open the terminate confirmation, got mode %q", m.state.Mode)
@@ -74,7 +74,7 @@ func TestTerminate_TrustsThePaneOverAStaleAppList(t *testing.T) {
 		Details: &model.SyncStatusDetails{Phase: "Running"},
 	}
 
-	m.handleKeyMsg(testKeyMsg("t"))
+	m.handleKeyMsg(testKeyMsg("ctrl+t"))
 
 	if m.state.Mode != model.ModeConfirmTerminate {
 		t.Fatalf("Expected the pane's Running phase to allow terminating, got mode %q", m.state.Mode)
@@ -95,7 +95,7 @@ func TestTerminate_TargetsThePanesAppNotTheCursor(t *testing.T) {
 		Details: &model.SyncStatusDetails{Phase: "Running"},
 	}
 
-	m.handleKeyMsg(testKeyMsg("t"))
+	m.handleKeyMsg(testKeyMsg("ctrl+t"))
 
 	if st := m.state.Modals.Terminate; st == nil || st.AppName != "zzz-other-app" {
 		t.Errorf("Expected the modal to target the pane's app, got %+v", st)

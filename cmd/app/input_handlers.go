@@ -165,6 +165,15 @@ func (m *Model) handleDrillDown() (tea.Model, tea.Cmd) {
 	if result == nil {
 		return m, nil
 	}
+	if m.state.Navigation.View == model.ViewClusters {
+		if key, ok := selectedItem.(string); ok {
+			if _, registered := m.destinationByKey(key); registered {
+				view := model.ViewApps
+				result.NewView = &view
+				m.state.Selections.ScopeApplicationSets = model.NewStringSet()
+			}
+		}
+	}
 
 	// Apply navigation updates
 	var cmds []tea.Cmd
@@ -245,6 +254,7 @@ func (m *Model) handleEnterCommandMode() (tea.Model, tea.Cmd) {
 
 // handleShowHelp shows the help modal
 func (m *Model) handleShowHelp() (tea.Model, tea.Cmd) {
+	m.helpOffset = 0
 	m.state.Mode = model.ModeHelp
 	return m, nil
 }
@@ -640,11 +650,24 @@ func (m *Model) handleDiffModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 	switch msg.String() {
 	case "q", "esc":
+		m.cancelResourceInspection()
 		m.state.Mode = model.ModeNormal
 		if m.state.Rollback != nil {
 			m.state.Mode = model.ModeRollback
 		}
 		m.state.Diff = nil
+		return m, nil
+	case "d", "y", "ctrl+r":
+		if st := m.inspection; st != nil {
+			kind := st.Kind
+			if msg.String() == "d" {
+				kind = "Describe"
+			}
+			if msg.String() == "y" {
+				kind = "YAML"
+			}
+			return m, m.startResourceInspection(st.Target, kind)
+		}
 		return m, nil
 	case "left", "h":
 		m.state.Diff.HorizontalOffset = max(0, m.state.Diff.HorizontalOffset-8)
@@ -1870,14 +1893,14 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m.openContextPicker()
 		}
 	}
-	if msg.String() == "L" {
+	if msg.String() == "ctrl+l" {
 		switch m.state.Mode {
 		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
 			return m, m.beginContextRelogin(m.selectedArgoContext(), false)
 		}
 	}
 	if m.state.Mode == model.ModeNormal {
-		if m.state.Navigation.View == model.ViewContexts && msg.String() == "a" {
+		if m.state.Navigation.View == model.ViewContexts && msg.String() == "ctrl+a" {
 			return m.toggleContextAutoRelogin()
 		}
 		commands := map[string]string{"1": "apps", "2": "clusters", "3": "namespaces", "4": "projects", "5": "appsets"}
@@ -1991,7 +2014,7 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				st.Offset = max(0, st.Offset-1)
 			}
 			return m, nil
-		case "K":
+		case "ctrl+k":
 			// Open k9s for the selected resource
 			return m.handleOpenK9s()
 		case "q":
@@ -2062,8 +2085,12 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			return m.handleShowEvents()
 		case "d":
-			// Show diff for the selected resource
-			return m.handleResourceDiff()
+			// Describe the selected resource, including its diff.
+			return m.handleInspectSelection("Describe")
+		case "y":
+			return m.handleInspectSelection("YAML")
+		case "ctrl+r":
+			return m.handleRefreshCommand("", false)
 		case " ", "space":
 			// Toggle selection for delete
 			if m.treeView != nil {
@@ -2077,19 +2104,19 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "ctrl+d":
 			// Open delete confirmation for selected resource(s)
 			return m.handleResourceDelete()
-		case "s":
+		case "ctrl+s":
 			// Open sync confirmation for selected resource(s)
 			return m.handleResourceSync()
-		case "a":
+		case "ctrl+a":
 			// Open resource actions modal (Rollouts promote/abort/restart/etc.)
 			return m.handleResourceAction()
 		case ":":
 			// Enter command mode
 			return m.handleEnterCommandMode()
-		case "R":
+		case "ctrl+b":
 			// Roll back the hovered child Application, or the tree's app
 			return m.handleRollback()
-		case "t":
+		case "ctrl+t":
 			// Terminate the tree app's running operation
 			return m.handleTerminateOperation()
 		case "?":
@@ -2121,7 +2148,7 @@ func (m *Model) handleNormalModeGlobalKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) 
 		return m.handleEnterCommandMode()
 	case "?":
 		return m.handleShowHelp()
-	case "s":
+	case "ctrl+s":
 		if m.state.Navigation.View == model.ViewApps {
 			return m.handleSyncModal()
 		}
@@ -2131,24 +2158,28 @@ func (m *Model) handleNormalModeGlobalKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) 
 			return m.handleOpenResourcesForSelection()
 		}
 		return m, nil
-	case "t":
+	case "ctrl+t":
 		// Terminate the running operation of the selected app (apps view)
 		if m.state.Navigation.View == model.ViewApps {
 			return m.handleTerminateOperation()
 		}
 		return m, nil
 	case "d":
-		// Open diff for selected app (apps view)
-		if m.state.Navigation.View == model.ViewApps {
-			return m.handleOpenDiffForSelection()
+		// Describe the selected app, including managed-resource diffs.
+		if m.state.Navigation.View == model.ViewApps || m.state.Navigation.View == model.ViewApplicationSets {
+			return m.handleInspectSelection("Describe")
 		}
 		return m, nil
-	case "K":
+	case "y":
+		return m.handleInspectSelection("YAML")
+	case "ctrl+r":
+		return m.refreshCurrentView()
+	case "ctrl+k":
 		// Open Application CR in k9s (apps view)
 		if m.state.Navigation.View == model.ViewApps {
 			return m.handleOpenAppK9s()
 		}
-	case "R":
+	case "ctrl+b":
 		return m.handleRollback()
 	case "ctrl+d":
 		// Open delete confirmation for selected app (apps view) or resource (tree view)

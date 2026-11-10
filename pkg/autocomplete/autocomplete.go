@@ -31,8 +31,8 @@ func NewAutocompleteEngine() *AutocompleteEngine {
 	commands := []CommandAlias{
 		{
 			Command:     "cluster",
-			Aliases:     []string{"cluster", "clusters", "cls"},
-			Description: "Navigate to clusters view",
+			Aliases:     []string{"cluster", "clusters", "cls", "server", "servers"},
+			Description: "Navigate to destination servers view",
 			TakesArg:    true,
 			ArgType:     "cluster",
 		},
@@ -372,7 +372,13 @@ func (e *AutocompleteEngine) getArgumentSuggestions(command, argPrefix string, s
 func (e *AutocompleteEngine) getClusterSuggestions(prefix string, state *model.AppState) []string {
 	var suggestions []string
 	seen := make(map[string]bool)
-
+	for _, server := range state.DestinationServers {
+		key := server.Key()
+		if strings.HasPrefix(strings.ToLower(key), prefix) || strings.HasPrefix(strings.ToLower(server.Name), prefix) {
+			suggestions = append(suggestions, key)
+			seen[strings.ToLower(key)] = true
+		}
+	}
 	for _, app := range state.Apps {
 		if app.ClusterLabel == nil {
 			continue
@@ -383,7 +389,6 @@ func (e *AutocompleteEngine) getClusterSuggestions(prefix string, state *model.A
 			seen[cluster] = true
 		}
 	}
-
 	sort.Strings(suggestions)
 	return suggestions
 }
@@ -393,16 +398,9 @@ func (e *AutocompleteEngine) getNamespaceSuggestions(prefix string, state *model
 	var suggestions []string
 	seen := make(map[string]bool)
 
-	for _, app := range state.Apps {
-		if app.ClusterLabel == nil || app.Namespace == nil {
+	for _, app := range suggestionApps(state, &model.SelectionState{ScopeClusters: state.Selections.ScopeClusters}) {
+		if app.Namespace == nil {
 			continue
-		}
-
-		// Apply cluster filtering if clusters are selected
-		if len(state.Selections.ScopeClusters) > 0 {
-			if !model.HasInStringSet(state.Selections.ScopeClusters, *app.ClusterLabel) {
-				continue
-			}
 		}
 
 		namespace := strings.ToLower(*app.Namespace)
@@ -421,23 +419,9 @@ func (e *AutocompleteEngine) getProjectSuggestions(prefix string, state *model.A
 	var suggestions []string
 	seen := make(map[string]bool)
 
-	for _, app := range state.Apps {
-		if app.ClusterLabel == nil || app.Namespace == nil || app.Project == nil {
+	for _, app := range suggestionApps(state, &model.SelectionState{ScopeClusters: state.Selections.ScopeClusters, ScopeNamespaces: state.Selections.ScopeNamespaces}) {
+		if app.Namespace == nil || app.Project == nil {
 			continue
-		}
-
-		// Apply cluster filtering
-		if len(state.Selections.ScopeClusters) > 0 {
-			if !model.HasInStringSet(state.Selections.ScopeClusters, *app.ClusterLabel) {
-				continue
-			}
-		}
-
-		// Apply namespace filtering
-		if len(state.Selections.ScopeNamespaces) > 0 {
-			if !model.HasInStringSet(state.Selections.ScopeNamespaces, *app.Namespace) {
-				continue
-			}
 		}
 
 		project := strings.ToLower(*app.Project)
@@ -461,9 +445,10 @@ func (e *AutocompleteEngine) getAppSetSuggestions(prefix string, state *model.Ap
 			continue
 		}
 
-		appset := strings.ToLower(*app.ApplicationSet)
+		key := model.AppKey(*app.ApplicationSet, app.AppNamespace)
+		appset := strings.ToLower(key)
 		if strings.HasPrefix(appset, prefix) && !seen[appset] {
-			suggestions = append(suggestions, *app.ApplicationSet)
+			suggestions = append(suggestions, key)
 			seen[appset] = true
 		}
 	}
@@ -481,25 +466,7 @@ func (e *AutocompleteEngine) getAppSuggestions(prefix string, state *model.AppSt
 		nameCounts[app.Name]++
 	}
 
-	for _, app := range state.Apps {
-		// Apply all current filters
-		if len(state.Selections.ScopeClusters) > 0 {
-			if app.ClusterLabel == nil || !model.HasInStringSet(state.Selections.ScopeClusters, *app.ClusterLabel) {
-				continue
-			}
-		}
-
-		if len(state.Selections.ScopeNamespaces) > 0 {
-			if app.Namespace == nil || !model.HasInStringSet(state.Selections.ScopeNamespaces, *app.Namespace) {
-				continue
-			}
-		}
-
-		if len(state.Selections.ScopeProjects) > 0 {
-			if app.Project == nil || !model.HasInStringSet(state.Selections.ScopeProjects, *app.Project) {
-				continue
-			}
-		}
+	for _, app := range suggestionApps(state, &state.Selections) {
 
 		key := app.Key()
 		if strings.HasPrefix(strings.ToLower(app.Name), prefix) || strings.HasPrefix(strings.ToLower(key), prefix) {
@@ -622,4 +589,12 @@ func (e *AutocompleteEngine) getSecondArgumentSuggestions(command, firstArg, pre
 // GetAllCommands returns all available commands for help/reference
 func (e *AutocompleteEngine) GetAllCommands() []CommandAlias {
 	return e.commands
+}
+
+func suggestionApps(state *model.AppState, selection *model.SelectionState) []model.App {
+	idx := state.Index
+	if idx == nil {
+		idx = model.BuildAppIndex(state.Apps)
+	}
+	return idx.ScopedApps(state.Apps, selection)
 }
