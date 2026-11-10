@@ -11,6 +11,8 @@ import (
 	"github.com/darksworm/argonaut/pkg/model"
 )
 
+const appMetadataTTL = 5 * time.Minute
+
 type applicationSetsState struct {
 	Sequence int
 	Loading  bool

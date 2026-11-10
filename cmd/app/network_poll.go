@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -43,11 +44,20 @@ func (m *Model) handleNetworkPollDue(msg networkPollDueMsg) (tea.Model, tea.Cmd)
 	m.networkPollCancel = cancel
 	m.networkPollLoading = true
 	server := m.state.Server
+	previous := slices.Clone(m.state.Apps)
+	metadataFresh := !m.appMetadataAt.IsZero() && m.now().Sub(m.appMetadataAt) < appMetadataTTL
 	load := func() tea.Msg {
 		defer cancel()
 		requestCtx, requestCancel := appcontext.WithAPITimeout(ctx)
 		defer requestCancel()
-		result, err := api.NewApplicationService(server).ListApplicationsWithMeta(requestCtx)
+		service := api.NewApplicationService(server)
+		var result *api.ListApplicationsResult
+		var err error
+		if metadataFresh {
+			result, err = service.ListApplicationsWithCachedOwners(requestCtx, previous)
+		} else {
+			result, err = service.ListApplicationsWithMeta(requestCtx)
+		}
 		return networkSnapshotMsg{Epoch: msg.Epoch, Sequence: msg.Sequence, Result: result, Error: err}
 	}
 	return m, load
@@ -79,6 +89,9 @@ func (m *Model) handleNetworkSnapshot(msg networkSnapshotMsg) (tea.Model, tea.Cm
 		}
 	}
 	m.state.Apps = msg.Result.Apps
+	if msg.Result.FullMetadata {
+		m.appMetadataAt = m.now()
+	}
 	m.lastResourceVersion = msg.Result.ResourceVersion
 	m.rebuildAppIndex()
 	items := m.getVisibleItems()
@@ -104,6 +117,7 @@ func (m *Model) refreshNetworkSnapshot() tea.Cmd {
 		return nil
 	}
 	m.cleanupAppWatcher()
+	m.appMetadataAt = time.Time{} // Explicit refresh also reloads ownership.
 	_, cmd := m.handleNetworkPollDue(networkPollDueMsg{m.switchEpoch, m.networkPollSeq})
 	return cmd
 }

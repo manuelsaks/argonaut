@@ -331,6 +331,13 @@ Resource trees fetch only the Application's resource-status fields instead of
 its entire spec and deployment history. Actual compression depends on the server
 and proxy configuration.
 
+Argo CD's projected Application list cannot include `ownerReferences`. The first
+load therefore uses one complete list so names and ApplicationSet counts are
+correct immediately. Routine snapshot refreshes use supported compact fields
+and retain ownership for five minutes; a new or recreated Application triggers
+one complete list. `Ctrl+R` also refreshes ownership immediately. No per-app
+requests are needed, and caches stay separate for each context/session.
+
 To keep low-bandwidth mode enabled, add this to your Argonaut `config.toml`
 (Windows: `%APPDATA%\argonaut\config.toml`):
 

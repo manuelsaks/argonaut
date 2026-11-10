@@ -27,10 +27,18 @@ func allContextsTestModel(t *testing.T) *Model {
 			}
 			switch r.URL.Path {
 			case "/api/v1/applications":
-				if !strings.Contains(r.URL.Query().Get("fields"), "items.metadata,") {
-					t.Error("initial list must request the full metadata object")
+				metadata := map[string]any{"name": "web", "namespace": "argocd", "creationTimestamp": "2026-11-10T10:00:00Z", "ownerReferences": []any{map[string]string{"kind": "ApplicationSet", "name": "websites"}}}
+				if fields := r.URL.Query().Get("fields"); fields != "" {
+					// Argo CD's list forwarder matches exact allowlisted paths:
+					// items.metadata and ownerReferences are not supported.
+					delete(metadata, "ownerReferences")
+					for _, field := range []string{"name", "namespace", "creationTimestamp"} {
+						if !strings.Contains(","+fields+",", ",items.metadata."+field+",") {
+							delete(metadata, field)
+						}
+					}
 				}
-				fmt.Fprintf(w, `{"items":[{"metadata":{"name":"web","namespace":"argocd","ownerReferences":[{"kind":"ApplicationSet","name":"websites"}]},"spec":{"destination":{"name":"site1","namespace":"apps"}},"status":{"sync":{"status":"Synced"},"health":{"status":"Healthy"}}}]}`)
+				json.NewEncoder(w).Encode(map[string]any{"items": []any{map[string]any{"metadata": metadata, "spec": map[string]any{"destination": map[string]string{"name": "site1", "namespace": "apps"}}, "status": map[string]any{"sync": map[string]string{"status": "Synced"}, "health": map[string]string{"status": "Healthy"}}}}})
 			case "/api/v1/clusters":
 				w.Write([]byte(`{"items":[{"name":"site1","server":"https://same-cluster.example"}]}`))
 			case "/api/v1/applicationsets":

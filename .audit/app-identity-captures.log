@@ -1,0 +1,77 @@
+=== RUN   TestLowBandwidthKeepsAppNamesAndAppSetCountsAcrossProjectedPolls
+2026/11/10 20:15:48 INFO startLoadingApplications called component=api_integration
+2026/11/10 20:15:48 INFO startLoadingApplications: executing load component=api_integration
+2026/11/10 20:15:48 INFO AppsLoadedMsg received component=model apps_count=2 watchChan_nil=true resourceVersion=rv
+2026/11/10 20:15:48 INFO Starting watch as watchChan is nil component=model
+2026/11/10 20:15:48 INFO Updated 10:00:00 | low bandwidth | refresh 0s component=status
+2026/11/10 20:15:48 INFO Updated 10:00:00 | low bandwidth | refresh 0s component=status
+2026/11/10 20:15:48 INFO Updated 10:05:01 | low bandwidth | refresh 0s component=status
+2026/11/10 20:15:48 INFO Updated 10:05:01 | low bandwidth | refresh 0s component=status
+2026/11/10 20:15:48 INFO Updated 10:05:01 | low bandwidth | refresh 0s component=status
+2026/11/10 20:15:48 INFO Updated 10:05:01 | low bandwidth | refresh 0s component=status
+    app_metadata_test.go:102: 
+        Apps:
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ ▲APP NAME  OWNER           SYNC     HEALTH    DESTINATION / NAMESPACE                                                                  │
+        │ argocd/web appset:websites V Synced V Healthy ?                                                                                        │
+        │ team-b/web appset:websites V Synced V Healthy ?                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+    app_metadata_test.go:104: 
+        AppSets:
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ APPSET NAME     APPS DESTINATION / NAMESPACE                                                                                           │
+        │ argocd/websites 1    ?                                                                                                                 │
+        │ team-b/websites 1    ?                                                                                                                 │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+--- PASS: TestLowBandwidthKeepsAppNamesAndAppSetCountsAcrossProjectedPolls (0.02s)
+=== RUN   TestChangingServerInvalidatesOwnershipSnapshot
+--- PASS: TestChangingServerInvalidatesOwnershipSnapshot (0.00s)
+=== RUN   TestAllContextsPreserveAppSetCountsDuringCompactRefresh
+2026/11/10 20:15:48 INFO all contexts: 0 apps | refresh 1m0s | loading 2 component=status
+2026/11/10 20:15:48 INFO all contexts: 0 apps | refresh 1m0s | loading 2 component=status
+2026/11/10 20:15:48 INFO all contexts: 1 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 1 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 1 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 1 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 1 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 1 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s | loading 2 component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s | loading 2 component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s | loading 1 component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+2026/11/10 20:15:48 INFO all contexts: 2 apps | refresh 1m0s component=status
+    app_metadata_test.go:132: 
+        All-context AppSets:
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ CONTEXT APPSET NAME      APPS DESTINATION / NAMESPACE                                                                                  │
+        │ dev     argocd/empty-set 0                                                                                                             │
+        │ dev     argocd/websites  1    site1/apps                                                                                               │
+        │ prod    argocd/empty-set 0                                                                                                             │
+        │ prod    argocd/websites  1    site1/apps                                                                                               │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        │                                                                                                                                        │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+--- PASS: TestAllContextsPreserveAppSetCountsDuringCompactRefresh (0.01s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.121s

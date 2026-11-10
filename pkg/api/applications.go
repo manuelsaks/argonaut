@@ -33,6 +33,7 @@ type ApplicationSource struct {
 // ApplicationMetadata holds the application CR's object metadata
 type ApplicationMetadata struct {
 	Name              string           `json:"name"`
+	CreationTimestamp string           `json:"creationTimestamp,omitempty"`
 	DeletionTimestamp string           `json:"deletionTimestamp,omitempty"`
 	Namespace         string           `json:"namespace,omitempty"`
 	OwnerReferences   []OwnerReference `json:"ownerReferences,omitempty"`
@@ -186,6 +187,7 @@ type WatchEventResult struct {
 type ListApplicationsResult struct {
 	Apps            []model.App
 	ResourceVersion string
+	FullMetadata    bool
 }
 
 // AppListFields contains the fields needed for the app list view.
@@ -194,7 +196,11 @@ type ListApplicationsResult struct {
 // This matches the approach used by ArgoCD's own web UI.
 var AppListFields = []string{
 	"metadata.resourceVersion",
-	"items.metadata",
+	// The server uses an exact allowlist, not arbitrary JSON paths. The
+	// parent items.metadata and metadata.ownerReferences are not supported.
+	"items.metadata.name",
+	"items.metadata.namespace",
+	"items.metadata.creationTimestamp",
 	"items.spec",
 	"items.status.sync.status",
 	"items.status.health",
@@ -273,10 +279,39 @@ func (s *ApplicationService) ListApplications(ctx context.Context) ([]model.App,
 // ListApplicationsWithMeta retrieves all applications with metadata (resourceVersion)
 // for coordinating with watch streams
 func (s *ApplicationService) ListApplicationsWithMeta(ctx context.Context) (*ListApplicationsResult, error) {
+	// ownerReferences is absent from Argo CD's list-field allowlist. Initial
+	// and explicit refreshes need one unprojected snapshot to identify owners.
+	return s.listApplications(ctx, nil)
+}
+
+// ListApplicationsWithCachedOwners keeps routine polling small. previous must
+// be the complete snapshot of this same server/context/session. New or recreated
+// Applications trigger a single full list, never one request per Application.
+func (s *ApplicationService) ListApplicationsWithCachedOwners(ctx context.Context, previous []model.App) (*ListApplicationsResult, error) {
+	result, err := s.listApplications(ctx, AppListFields)
+	if err != nil {
+		return nil, err
+	}
+	byKey := make(map[string]model.App, len(previous))
+	for _, app := range previous {
+		byKey[model.AppKey(app.Name, app.AppNamespace)] = app
+	}
+	for i := range result.Apps {
+		app := &result.Apps[i]
+		old, exists := byKey[model.AppKey(app.Name, app.AppNamespace)]
+		if !exists || old.CreationTimestamp != app.CreationTimestamp {
+			return s.ListApplicationsWithMeta(ctx)
+		}
+		app.ApplicationSet = old.ApplicationSet
+	}
+	return result, nil
+}
+
+func (s *ApplicationService) listApplications(ctx context.Context, fields []string) (*ListApplicationsResult, error) {
 	// Build URL with field selection
 	endpoint := "/api/v1/applications"
-	if len(AppListFields) > 0 {
-		endpoint += "?fields=" + url.QueryEscape(strings.Join(AppListFields, ","))
+	if len(fields) > 0 {
+		endpoint += "?fields=" + url.QueryEscape(strings.Join(fields, ","))
 	}
 
 	data, err := s.client.Get(ctx, endpoint)
@@ -306,12 +341,14 @@ func (s *ApplicationService) ListApplicationsWithMeta(ctx context.Context) (*Lis
 	resourceVersion := withItems.Metadata.ResourceVersion
 
 	apps := make([]model.App, 0, len(rawItems))
-	for _, raw := range rawItems {
+	for i, raw := range rawItems {
 		// Unmarshal into our typed struct first
 		var argoApp ArgoApplication
 		if err := json.Unmarshal(raw, &argoApp); err != nil {
-			// Skip malformed entry
-			continue
+			return nil, fmt.Errorf("failed to decode application list item %d: %w", i, err)
+		}
+		if argoApp.Metadata.Name == "" {
+			return nil, fmt.Errorf("application list item %d has no metadata.name", i)
 		}
 
 		app := s.ConvertToApp(argoApp)
@@ -351,6 +388,7 @@ func (s *ApplicationService) ListApplicationsWithMeta(ctx context.Context) (*Lis
 	return &ListApplicationsResult{
 		Apps:            apps,
 		ResourceVersion: resourceVersion,
+		FullMetadata:    len(fields) == 0,
 	}, nil
 }
 
@@ -588,6 +626,7 @@ type SyncOptions struct {
 // ConvertToApp converts an ArgoApplication to our model.App
 func (s *ApplicationService) ConvertToApp(argoApp ArgoApplication) model.App {
 	app := model.App{
+		CreationTimestamp: argoApp.Metadata.CreationTimestamp,
 		DestinationName:   argoApp.Spec.Destination.Name,
 		DestinationServer: argoApp.Spec.Destination.Server,
 		Name:              argoApp.Metadata.Name,

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -21,6 +22,7 @@ type allContextsState struct {
 	Sequence             int
 	Servers              map[string]*model.Server
 	Apps                 map[string][]model.App
+	AppMetadataAt        map[string]time.Time
 	Destinations         map[string][]model.DestinationServer
 	DestinationFetchedAt map[string]time.Time
 	DestinationPending   map[string]bool
@@ -36,6 +38,7 @@ type allContextLoadedMsg struct {
 	SwitchEpoch, Sequence int
 	ContextName           string
 	Apps                  []model.App
+	FullMetadata          bool
 	Error                 error
 }
 
@@ -120,6 +123,9 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 	if st.AppSetFetchedAt == nil {
 		st.AppSetFetchedAt = map[string]time.Time{}
 	}
+	if st.AppMetadataAt == nil {
+		st.AppMetadataAt = map[string]time.Time{}
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	st.Cancel = cancel
 	concurrency := 4
@@ -152,12 +158,15 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 		st.Servers[name] = server
 		if previous := previousServers[name]; previous != nil && *previous != *server {
 			delete(st.Apps, name)
+			delete(st.AppMetadataAt, name)
 			delete(st.Destinations, name)
 			delete(st.DestinationFetchedAt, name)
 			delete(st.ApplicationSets, name)
 			delete(st.AppSetFetchedAt, name)
 		}
 		st.Pending[name] = true
+		previousApps := slices.Clone(st.Apps[name])
+		metadataFresh := !force && !st.AppMetadataAt[name].IsZero() && m.now().Sub(st.AppMetadataAt[name]) < appMetadataTTL
 		commands = append(commands, func() tea.Msg {
 			msg := allContextLoadedMsg{SwitchEpoch: epoch, Sequence: sequence, ContextName: name}
 			select {
@@ -169,7 +178,15 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 			defer func() { <-limit }()
 			service := api.NewApplicationService(server)
 			appCtx, appCancel := appcontext.WithAPITimeout(ctx)
-			msg.Apps, msg.Error = service.ListApplications(appCtx)
+			var result *api.ListApplicationsResult
+			if metadataFresh {
+				result, msg.Error = service.ListApplicationsWithCachedOwners(appCtx, previousApps)
+			} else {
+				result, msg.Error = service.ListApplicationsWithMeta(appCtx)
+			}
+			if result != nil {
+				msg.Apps, msg.FullMetadata = result.Apps, result.FullMetadata
+			}
 			appCancel()
 			return msg
 		})
@@ -213,6 +230,7 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 	for name := range st.Apps {
 		if st.Servers[name] == nil {
 			delete(st.Apps, name)
+			delete(st.AppMetadataAt, name)
 			delete(st.Destinations, name)
 			delete(st.DestinationFetchedAt, name)
 			delete(st.ApplicationSets, name)
@@ -248,6 +266,7 @@ func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.
 		// must clear it so a previous identity's data cannot leak into a session.
 		if isAuthenticationError(msg.Error.Error()) {
 			delete(st.Apps, msg.ContextName)
+			delete(st.AppMetadataAt, msg.ContextName)
 			delete(st.Destinations, msg.ContextName)
 			delete(st.DestinationFetchedAt, msg.ContextName)
 			delete(st.ApplicationSets, msg.ContextName)
@@ -267,6 +286,9 @@ func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.
 			msg.Apps[i].ContextName = msg.ContextName
 		}
 		st.Apps[msg.ContextName] = msg.Apps
+		if msg.FullMetadata {
+			st.AppMetadataAt[msg.ContextName] = m.now()
+		}
 	}
 	m.rebuildAllContextItems()
 	m.updateAllContextsStatus()

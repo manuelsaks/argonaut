@@ -92,6 +92,7 @@ type SyncStatusDetails struct {
 
 // App represents an ArgoCD application
 type App struct {
+	CreationTimestamp string         `json:"creationTimestamp,omitempty"`
 	ContextName       string         `json:"contextName,omitempty"`
 	DestinationName   string         `json:"destinationName,omitempty"`
 	DestinationServer string         `json:"destinationServer,omitempty"`

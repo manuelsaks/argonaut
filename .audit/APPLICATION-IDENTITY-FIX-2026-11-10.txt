@@ -1,0 +1,48 @@
+Application names and ApplicationSet counts - 2026-11-10
+
+Confirmed cause
+Argo CD's Application list forwarder uses an exact field allowlist. It does
+not treat items.metadata as a parent selector and does not expose
+metadata.ownerReferences through projected lists. This was verified against
+official v2.12.3, v3.0.0 and v3.2.0 sources. The old request therefore lost
+Application names, metadata namespaces and owning ApplicationSets. Earlier
+fixtures ignored field projection and returned full metadata regardless.
+
+Changes
+- Initial/explicit Application loads request one complete list. This supplies
+  names, metadata namespaces and ownerReferences together, before watch events.
+- Routine polling requests the supported exact metadata leaf fields, keeps
+  known ownership by Application namespace/name, and checks creationTimestamp
+  before reusing it. A new/recreated Application triggers one full batch read.
+- Complete metadata is refreshed every five minutes and on Ctrl+R. Contexts,
+  servers and sessions have separate caches; changing server or credentials
+  invalidates the cached ownership snapshot.
+- Keep this behavior in both a single context and the all-context overview.
+  No per-Application metadata request fan-out was added.
+- Reject list rows without metadata.name instead of rendering blank names and
+  admitting nameless objects into the operation index.
+- Fixtures now emulate Argo CD's actual projected metadata behavior.
+
+Validation
+- PASS: GOTOOLCHAIN=go1.26.10 ARGONAUT_REAL_ARGOCD=C:\tools\argocd.exe
+  go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See app-identity-race.log.
+- PASS: API and UI regressions: same app name in two metadata namespaces,
+  same AppSet across contexts, initial names/counts, projected poll ownership,
+  recreated/new identities, actual owner removal, metadata TTL, manual refresh,
+  server/session invalidation, and rejection of missing identities.
+- PASS: traffic counts show one complete initial batch, one compact routine
+  poll, and complete batches only when required by TTL/identity/manual refresh.
+- PASS: rendered Apps and AppSets show argocd/web and team-b/web with owners,
+  each owning AppSet count 1; all-context counts remain isolated.
+  See app-identity-captures.log.
+- PASS: Windows amd64 build, Git Bash --version, native Windows PTY console
+  restoration test, and Linux amd64 cross-build.
+
+Updated main Windows binary
+C:\tmp\argonaut\argonaut.exe
+SHA256: 41AC33A0F39C7E7A4461C6358A6260D550920930A8D906E638229771D38DAD5A
+
+Official field-selection implementation
+https://github.com/argoproj/argo-cd/blob/v2.12.3/pkg/apiclient/application/forwarder_overwrite.go
+https://github.com/argoproj/argo-cd/blob/v3.2.0/pkg/apiclient/application/forwarder_overwrite.go

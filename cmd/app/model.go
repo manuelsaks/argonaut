@@ -48,6 +48,7 @@ type Model struct {
 	networkPollSeq       int
 	networkPollCancel    context.CancelFunc
 	networkPollLoading   bool
+	appMetadataAt        time.Time // Last complete ownership snapshot for this session.
 	// Core application state
 	state *model.AppState
 
@@ -449,6 +450,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case model.SetServerMsg:
 		m.cleanupAppWatcher()
+		m.appMetadataAt = time.Time{}
 		m.state.Server = msg.Server
 		// Also fetch API version and start watching
 		return m, tea.Batch(m.startWatchingApplications(), m.fetchAPIVersion())
@@ -558,6 +560,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			"watchChan_nil", m.watchChan == nil,
 			"resourceVersion", msg.ResourceVersion)
 		m.state.Apps = msg.Apps
+		m.appMetadataAt = m.now()
 		m.markContextAuthenticated(m.currentContextName)
 		m.rebuildAppIndex()
 		// Store resource version for watch coordination
