@@ -93,6 +93,8 @@ func (m *Model) renderKargoHeader() string {
 	switch {
 	case st.Executing:
 		legend = []viewHotkey{{"ctrl-c", "quit"}}
+	case st.Form != nil:
+		legend = []viewHotkey{{"tab/shift-tab", "field/button"}, {"up/down", "choose"}, {"enter", "activate"}, {"esc", "cancel"}}
 	case st.Confirm:
 		legend = []viewHotkey{{"ctrl-p", "confirm promotion"}, {"j/k", "scroll"}, {"esc", "cancel"}}
 		if st.Draft != nil && st.Draft.RetryOf != "" {
@@ -170,7 +172,7 @@ func kargoStatusStyle(phase string) lipgloss.Style {
 
 func (m *Model) renderKargoView() string {
 	st := m.kargo
-	if m.state.Diff != nil {
+	if m.state.Diff != nil && st.Form == nil {
 		return m.renderInspectionView()
 	}
 	header := m.renderKargoHeader()
@@ -188,7 +190,9 @@ func (m *Model) renderKargoView() string {
 		height--
 	}
 	var lines []string
-	if st.Confirm || st.Executing {
+	if st.Form != nil {
+		lines = m.renderKargoForm(width)
+	} else if st.Confirm || st.Executing {
 		draft := st.Draft
 		if draft != nil {
 			field := func(label, value string) string {
@@ -272,12 +276,32 @@ func (m *Model) renderKargoView() string {
 		}
 	}
 	if st.Confirm || st.Executing {
-		var wrapped []string
-		for _, line := range lines {
-			wrapped = append(wrapped, wrapAnsiToWidth(line, width)...)
+		if st.Form != nil {
+			// Context values may wrap; keep the action buttons visible at all sizes.
+			footerLines := 2
+			if st.Executing {
+				footerLines++
+			}
+			footer := lines[max(0, len(lines)-footerLines):]
+			lines = lines[:max(0, len(lines)-footerLines)]
+			var wrapped []string
+			for _, line := range lines {
+				wrapped = append(wrapped, wrapAnsiToWidth(line, width)...)
+			}
+			available := max(0, height-len(footer))
+			if len(wrapped) > available {
+				// Keep the choice field in view when moving through the form.
+				wrapped = wrapped[len(wrapped)-available:]
+			}
+			lines = append(wrapped, footer...)
+		} else {
+			var wrapped []string
+			for _, line := range lines {
+				wrapped = append(wrapped, wrapAnsiToWidth(line, width)...)
+			}
+			st.ConfirmOffset = min(st.ConfirmOffset, max(0, len(wrapped)-height))
+			lines = wrapped[st.ConfirmOffset:min(len(wrapped), st.ConfirmOffset+height)]
 		}
-		st.ConfirmOffset = min(st.ConfirmOffset, max(0, len(wrapped)-height))
-		lines = wrapped[st.ConfirmOffset:min(len(wrapped), st.ConfirmOffset+height)]
 	}
 	for i := range lines {
 		lines[i] = padRight(clipAnsiToWidth(lines[i], width), width)

@@ -97,6 +97,8 @@ func driveKargo(t *testing.T, m *Model, cmd tea.Cmd) {
 	switch msg := msg.(type) {
 	case kargoLoadedMsg:
 		m.Update(msg)
+	case kargoFormLoadedMsg:
+		m.Update(msg)
 	case kargoPromotedMsg:
 		m.Update(msg)
 	case tea.BatchMsg:
@@ -134,18 +136,15 @@ func TestKargoPromotionRequiresConfirmationAndShowsErrors(t *testing.T) {
 	}
 	selectKargoStage(t, m)
 	kargoKey(t, m, "ctrl+p")
-	if fixture.Promotions.Load() != 0 || m.kargo.Draft.Stage != "prod" || m.kargo.Stage != "prod" {
+	if fixture.Promotions.Load() != 0 || m.kargo.Draft.Stage != "prod" || m.kargo.Form == nil {
 		t.Fatal("promotion created before picking freight")
 	}
 	kargoKey(t, m, "enter")
 	if !m.kargo.Confirm || fixture.Promotions.Load() != 0 {
 		t.Fatal("Enter should show confirmation only")
 	}
-	kargoKey(t, m, "enter")
-	if fixture.Promotions.Load() != 0 {
-		t.Fatal("repeated Enter bypassed Ctrl+P confirmation")
-	}
-	_, cmd := m.handleKeyMsg(testKeyMsg("ctrl+p"))
+	kargoKey(t, m, "tab") // Cancel -> Promote
+	_, cmd := m.handleKeyMsg(testKeyMsg("enter"))
 	if !m.kargo.Executing || cmd == nil {
 		t.Fatal("confirmation did not queue exactly one request")
 	}
@@ -237,26 +236,29 @@ func TestKargoRepliesAndConfirmationsBindToExactTarget(t *testing.T) {
 	m, fixture := newKargoFixture(t)
 	selectKargoStage(t, m)
 	_, cmd := m.handleKeyMsg(testKeyMsg("ctrl+p"))
-	msg := cmd().(kargoLoadedMsg)
+	msg := cmd().(kargoFormLoadedMsg)
 	m.cancelKargoLoad()
 	m.Update(msg)
-	if len(m.kargo.Items) != 0 {
+	if len(m.kargo.Form.Choices) != 0 {
 		t.Fatal("cancelled request changed another view")
 	}
-	for _, variant := range []string{"epoch", "target"} {
+	for _, variant := range []string{"epoch", "target", "view"} {
 		bad := msg
 		bad.Sequence = m.kargo.Sequence
 		if variant == "epoch" {
 			bad.Epoch--
-		} else {
+		} else if variant == "target" {
 			bad.Target.Project = "team-a"
+		} else {
+			m.state.Navigation.View = model.ViewApps
 		}
 		m.Update(bad)
-		if len(m.kargo.Items) != 0 {
+		m.state.Navigation.View = model.ViewKargo
+		if len(m.kargo.Form.Choices) != 0 {
 			t.Fatalf("accepted stale %s", variant)
 		}
 	}
-	driveKargo(t, m, m.loadKargoView(true))
+	driveKargo(t, m, m.loadKargoForm(false))
 	kargoKey(t, m, "enter")
 	m.kargo.Project = "team-a"
 	if m.executeKargoPromotion() != nil || fixture.Promotions.Load() != 0 || m.kargo.Confirm {

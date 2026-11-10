@@ -12,6 +12,9 @@ import (
 // openContextPicker lists Argo CD CLI contexts, independent of kubeconfig.
 // Re-read the file so logins added by the CLI are available without a restart.
 func (m *Model) openContextPicker() (tea.Model, tea.Cmd) {
+	if m.state.Navigation.View != model.ViewContexts {
+		m.saveNavigationState()
+	}
 	configPath := m.argoConfigPath
 	if configPath == "" {
 		configPath = config.GetConfigPath()
@@ -39,7 +42,6 @@ func (m *Model) openContextPicker() (tea.Model, tea.Cmd) {
 	m.clearTreeApp()
 	m.treeLoading = false
 	m.rollbackWatchApp = nil
-	m.state.SavedNavigation = nil
 	m.state.Navigation.SelectedIdx = 0
 	for i, name := range m.state.ContextNames {
 		if name == m.currentContextName {
@@ -65,6 +67,9 @@ func (m *Model) closeContextPicker() (tea.Model, tea.Cmd) {
 	m.contextSwitchSeq++ // Cancel a switch whose result has not arrived yet.
 	if m.contextNeedsLoad {
 		return m, m.showFooterNotice("Select an Argo CD context; Ctrl+L: SSO login")
+	}
+	if restored, cmd := m.restoreNavigation(); restored {
+		return m, cmd
 	}
 	m.state.UI.SearchQuery = ""
 	m.state.UI.ActiveFilter = ""

@@ -60,7 +60,7 @@ func (m *Model) viewHotkeys() []viewHotkey {
 		return []viewHotkey{{"enter/e", "events"}, {"h/l", "fold/unfold"}, {"space", "select"}, {"ctrl-s", "sync"}, {"d", "describe"}, {"y", "YAML"}, {"ctrl-r", "refresh"}, {"ctrl-a", "actions"}, {"ctrl-d", "delete"}, {"ctrl-b", "rollback"}, {"ctrl-t", "terminate"}, {"ctrl-k", "k9s"}, {"u/i", "scroll events"}, {"esc", "back"}}
 	}
 	if m.state.Navigation.View == model.ViewApps {
-		return []viewHotkey{{"enter/r", "resources"}, {"space", "select"}, {"ctrl-s", "sync"}, {"d", "describe"}, {"y", "YAML"}, {"ctrl-r", "refresh"}, {"ctrl-b", "rollback"}, {"ctrl-d", "delete"}, {"ctrl-t", "terminate"}, {"ctrl-k", "k9s"}, {"/", "filter"}, {"esc", "clear/back"}}
+		return []viewHotkey{{"enter/r", "resources"}, {"space", "select"}, {"ctrl-s", "sync"}, {"d", "describe"}, {"y", "YAML"}, {"ctrl-r", "refresh"}, {"ctrl-b", "rollback"}, {"ctrl-d", "delete"}, {"ctrl-t", "terminate"}, {"ctrl-k", "k9s"}, {"/", "filter"}, {"esc", "back"}}
 	}
 	if m.state.Navigation.View == model.ViewApplicationSets {
 		return []viewHotkey{{"enter", "generated apps"}, {"d", "describe"}, {"y", "YAML"}, {"/", "filter"}, {"esc", "back"}}

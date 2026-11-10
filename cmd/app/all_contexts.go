@@ -438,6 +438,9 @@ func (m *Model) enterOverviewApplication(app model.App, selected []model.App) *M
 		}
 	}
 	for _, item := range selected {
+		if !m.state.Selections.SelectedApps[item.Key()] {
+			continue
+		}
 		child.state.Selections.SelectedApps[model.AppKey(item.Name, item.AppNamespace)] = true
 	}
 	return child

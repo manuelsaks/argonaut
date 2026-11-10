@@ -217,6 +217,7 @@ func (m *Model) retargetOpenPane() tea.Cmd {
 // closePane closes the side pane; the tree keeps the input focus it already
 // had — the pane is state, not a mode.
 func (m *Model) closePane() {
+	m.eventsOpenedByKey = false
 	m.state.Events = nil
 }
 

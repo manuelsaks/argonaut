@@ -22,6 +22,7 @@ func (m *Model) cleanupAppWatcher() *Model {
 // another app), so the side pane — a lens over that session — closes with it;
 // auto-open reopens it against whatever tree loads next.
 func (m *Model) cleanupTreeWatchers() *Model {
+	m.eventsOpenedByKey = false
 	m.treeSession++
 	if len(m.treeWatchCleanups) > 0 {
 		for _, c := range m.treeWatchCleanups {

@@ -454,16 +454,15 @@ func TestTreeKeyE_TogglesThePane(t *testing.T) {
 	}
 }
 
-// The pane is part of the view, not a layer over it: esc leaves the tree
-// view exactly as it did before the pane existed, taking the pane with it.
-func TestEventsPane_EscLeavesTreeViewLikeAlways(t *testing.T) {
+// A manually opened pane returns to the exact resource that opened it.
+func TestEventsPane_EscReturnsToTree(t *testing.T) {
 	m := openEventsPane(t, buildEventsPaneTestModel())
 
 	teaModel, _ := m.handleKeyMsg(testKeyMsg("esc"))
 	mm := teaModel.(*Model)
 
-	if mm.state.Navigation.View != model.ViewApps {
-		t.Fatalf("expected esc to leave the tree for the apps view, got %s", mm.state.Navigation.View)
+	if mm.state.Navigation.View != model.ViewTree {
+		t.Fatalf("expected esc to return to the tree, got %s", mm.state.Navigation.View)
 	}
 	if mm.state.Events != nil {
 		t.Error("expected the pane gone with the tree session")

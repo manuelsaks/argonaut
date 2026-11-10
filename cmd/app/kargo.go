@@ -34,6 +34,8 @@ type kargoUIState struct {
 	Detail                                  *kargo.Resource
 	DetailKind                              string
 	Draft                                   *kargoPromotion
+	Form                                    *kargoPromotionForm
+	History                                 []kargoLocation
 	Confirm, Executing                      bool
 	ConfirmOffset                           int
 	Loading                                 bool
@@ -107,6 +109,9 @@ func (m *Model) kargoConnections() []kargo.Connection {
 }
 
 func (m *Model) prepareKargo() {
+	if m.state.Navigation.View != model.ViewKargo {
+		m.saveNavigationState()
+	}
 	m.cancelAllContextRequests()
 	m.cancelContextRelogin()
 	m.cancelResourceInspection()
@@ -129,6 +134,7 @@ func (m *Model) prepareKargo() {
 	}
 	m.kargo.Connection = min(m.kargo.Connection, len(m.kargo.Connections)-1)
 	m.kargo.Detail, m.kargo.DetailKind, m.kargo.Draft, m.kargo.Confirm = nil, "", nil, false
+	m.kargo.Form, m.kargo.History = nil, nil
 	m.state.Navigation.View = model.ViewKargo
 	m.state.Mode = model.ModeNormal
 	m.state.Diff = nil
@@ -150,9 +156,16 @@ func (m *Model) leaveKargo() (tea.Model, tea.Cmd) {
 	m.switchEpoch++
 	m.state.Mode = model.ModeNormal
 	m.state.Diff = nil
+	if restored, cmd := m.restoreNavigation(); restored {
+		if m.allContexts != nil {
+			return m, tea.Batch(cmd, m.loadAllContexts(false))
+		}
+		if m.state.Navigation.View == model.ViewTree {
+			return m, cmd
+		}
+		return m, tea.Batch(cmd, m.startWatchingApplications())
+	}
 	m.state.Navigation.View = model.ViewApps
-	m.state.Navigation.SelectedIdx = 0
-	m.listNav.Reset()
 	if m.allContexts != nil {
 		return m, m.loadAllContexts(false)
 	}
@@ -323,6 +336,9 @@ func (m *Model) handleKargoLoaded(msg kargoLoadedMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) kargoNavigate(kind string) tea.Cmd {
+	if kind != m.kargo.Kind || m.kargo.Detail != nil {
+		m.saveKargoLocation()
+	}
 	m.setKargoView(kind)
 	return m.loadKargoView(false)
 }
@@ -388,7 +404,10 @@ func (m *Model) handleKargoLogin(msg kargoLoginMsg) (tea.Model, tea.Cmd) {
 	}
 	// A write that failed before login is never replayed. New promotion actions
 	// always require a fresh user confirmation after authentication.
-	st.Client, st.Draft, st.Confirm = nil, nil, false
+	if st.Form != nil {
+		m.restoreKargoLocation(st.Form.Origin)
+	}
+	st.Client, st.Draft, st.Confirm, st.Form = nil, nil, false, nil
 	st.Cache = map[kargoTarget]kargoCacheEntry{}
 	return m, m.loadKargoView(true)
 }
@@ -424,8 +443,14 @@ func (m *Model) executeKargoPromotion() tea.Cmd {
 		return nil
 	}
 	target := *st.Draft
+	if target.Stage == "" || target.Freight == "" || st.Loading {
+		return nil
+	}
 	connection := st.Connections[st.Connection]
-	if target.Connection != connection.Name || target.Server != st.Client.Connection.Server || target.Project != st.Project {
+	if target.Connection != connection.Name || target.Server != st.Client.Connection.Server || target.Project != st.Project || st.SessionIdentity != connection.SessionIdentity() {
+		if st.Form != nil {
+			m.cancelKargoForm()
+		}
 		st.Error = "Promotion target changed; select the stage and Freight again"
 		st.Draft, st.Confirm = nil, false
 		return nil
@@ -456,7 +481,11 @@ func (m *Model) handleKargoPromoted(msg kargoPromotedMsg) (tea.Model, tea.Cmd) {
 	if st == nil || m.state.Navigation.View != model.ViewKargo || msg.Epoch != m.switchEpoch || msg.Sequence != st.Sequence || st.Draft == nil || msg.Target != *st.Draft {
 		return m, nil
 	}
-	st.Executing, st.Confirm, st.Cancel, st.Draft = false, false, nil, nil
+	form := st.Form
+	st.Executing, st.Confirm, st.Cancel, st.Draft, st.Form = false, false, nil, nil, nil
+	if form != nil {
+		m.restoreKargoLocation(form.Origin)
+	}
 	st.Cache = map[kargoTarget]kargoCacheEntry{}
 	if msg.Error != nil {
 		st.Error = inspectionPlainText(msg.Error.Error())
@@ -466,6 +495,8 @@ func (m *Model) handleKargoPromoted(msg kargoPromotedMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	}
+	// The result is one detail layer above the exact list/form entry point.
+	m.saveKargoLocation()
 	st.Kind, st.Stage, st.Warehouse, st.Error = "Promotion", msg.Target.Stage, "", ""
 	st.Items = []kargo.Resource{msg.Promotion}
 	m.showKargoDocument(msg.Promotion, "Describe", false)

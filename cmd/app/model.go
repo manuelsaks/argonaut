@@ -147,10 +147,12 @@ type Model struct {
 	treeLoading bool
 
 	// List navigators for all scrollable lists
-	listNav     *listnav.ListNavigator // Main list (apps, clusters, namespaces, projects)
-	treeNav     *listnav.ListNavigator // Tree view
-	themeNav    *listnav.ListNavigator // Theme selection modal
-	rollbackNav *listnav.ListNavigator // Rollback history modal
+	listNav           *listnav.ListNavigator // Main list (apps, clusters, namespaces, projects)
+	navigationFrames  map[int]navigationFrame
+	eventsOpenedByKey bool
+	treeNav           *listnav.ListNavigator // Tree view
+	themeNav          *listnav.ListNavigator // Theme selection modal
+	rollbackNav       *listnav.ListNavigator // Rollback history modal
 
 	// rollbackWatchApp marks a tree session opened by a rollback with watch:
 	// esc there reopens the app's deployment history instead of just leaving
@@ -1392,11 +1394,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if len(names) > 0 {
 					var cmds []tea.Cmd
 					// Clean up any existing tree watchers first
+					m.saveNavigationState()
 					m.cleanupTreeWatchers()
 					// Reset tree view for multi-app session
 					m.treeView = m.newTreeView()
 					m.treeNav.Reset() // Reset scroll position
-					m.state.SaveNavigationState()
 					m.state.Navigation.View = model.ViewTree
 					// Clear single-app tracker
 					m.clearTreeApp()
@@ -1634,6 +1636,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleAllContextLoaded(msg)
 	case kargoLoadedMsg:
 		return m.handleKargoLoaded(msg)
+	case kargoFormLoadedMsg:
+		return m.handleKargoFormLoaded(msg)
 	case kargoLoginMsg:
 		return m.handleKargoLogin(msg)
 	case kargoPromotedMsg:
@@ -1810,9 +1814,6 @@ func equalStrPtr(a, b *string) bool {
 // unless the tree already shows this app, where a duplicate entry would make
 // the first esc "return" to the same view.
 func (m *Model) switchToAppTreeWatch(appName string, appNamespace *string) tea.Cmd {
-	m.cleanupTreeWatchers()
-	m.treeView = m.newTreeView()
-	m.treeNav.Reset()
 	// Use the namespace to avoid ambiguity when multiple apps share a name
 	ns := ""
 	if appNamespace != nil {
@@ -1826,8 +1827,11 @@ func (m *Model) switchToAppTreeWatch(appName string, appNamespace *string) tea.C
 		m.state.UI.TreeApp != nil && m.state.UI.TreeApp.Name == appName &&
 		equalStrPtr(m.state.UI.TreeApp.AppNamespace, appNamespace)
 	if !alreadyOnThisTree {
-		m.state.SaveNavigationState()
+		m.saveNavigationState()
 	}
+	m.cleanupTreeWatchers()
+	m.treeView = m.newTreeView()
+	m.treeNav.Reset()
 	m.state.Navigation.View = model.ViewTree
 	m.setTreeApp(appObj)
 	m.treeLoading = true

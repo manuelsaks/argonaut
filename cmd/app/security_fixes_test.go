@@ -184,8 +184,8 @@ func TestQualifiedCommandsRetainSelectedApplication(t *testing.T) {
 				if m.state.Modals.ConfirmTarget == nil || *m.state.Modals.ConfirmTarget != "shared" || m.state.Modals.ConfirmTargetNamespace == nil || *m.state.Modals.ConfirmTargetNamespace != "team-b" {
 					t.Fatal("explicit sync target replaced by cursor application")
 				}
-			} else if !m.state.Selections.SelectedApps["team-b/shared"] || len(m.state.Selections.SelectedApps) != 1 {
-				t.Fatal("explicit application selection lost namespace")
+			} else if items := m.getVisibleItems(); len(m.state.Selections.SelectedApps) != 0 || items[m.state.Navigation.SelectedIdx].(model.App).Key() != "team-b/shared" {
+				t.Fatal("explicit cursor target lost namespace or created a Space selection")
 			}
 		})
 	}

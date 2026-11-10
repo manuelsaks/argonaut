@@ -158,6 +158,7 @@ func (m *Model) handleDrillDown() (tea.Model, tea.Cmd) {
 
 	selectedItem := visibleItems[m.state.Navigation.SelectedIdx]
 	if m.state.Navigation.View == model.ViewClusters && selectedItem == allServersChoice {
+		m.saveNavigationState()
 		m.state.Selections.ScopeClusters = model.NewStringSet()
 		m.state.Selections.ScopeNamespaces = model.NewStringSet()
 		m.state.Selections.ScopeProjects = model.NewStringSet()
@@ -181,6 +182,7 @@ func (m *Model) handleDrillDown() (tea.Model, tea.Cmd) {
 	if result == nil {
 		return m, nil
 	}
+	m.saveNavigationState()
 	if m.state.Navigation.View == model.ViewClusters {
 		if key, ok := selectedItem.(string); ok {
 			if _, registered := m.destinationByKey(key); registered {
@@ -417,130 +419,53 @@ func (m *Model) openRollback(appName string, appNamespace *string) (tea.Model, t
 // navigation entry from when we drilled in, the apps-view filter is restored
 // so the user lands back in the same filtered context.
 func (m *Model) returnFromTreeToApps() {
-	m = m.safeChangeView(model.ViewApps)
-	m.clearTreeApp()
-	m.state.Navigation.SelectedIdx = 0
-	if n := len(m.state.SavedNavigation); n > 0 {
-		top := m.state.SavedNavigation[n-1]
-		if top.View == model.ViewApps {
-			m.state.UI.SearchQuery = top.SavedSearchQuery
-			m.state.UI.ActiveFilter = top.SavedActiveFilter
-			m.state.SavedNavigation = m.state.SavedNavigation[:n-1]
-		}
+	if restored, _ := m.restoreNavigation(); restored {
+		return
 	}
+	m.safeChangeView(model.ViewApps)
+	m.clearTreeApp()
 }
 
-// handleEscape handles escape key (clear filters, exit modes)
+// Escape closes one layer and restores the actual entry point.
 func (m *Model) handleEscape() (tea.Model, tea.Cmd) {
-	if m.allOverview != nil && m.state.Mode == model.ModeNormal && m.state.Navigation.View == model.ViewApps && m.selection.IsEmpty() {
-		return m.returnToAllOverview()
-	}
-	// Note: Global escape debounce is now handled in handleKeyMsg
-
-	// If there's an active text selection, clear it first
-	if !m.selection.IsEmpty() {
+	if m.selection != nil && !m.selection.IsEmpty() {
 		m.selection.Clear()
-		m.selectionSnapshot = ""
-		m.selectedText = ""
-		return m, nil
+		m.selectionSnapshot, m.selectedText = "", ""
 	}
-
 	switch m.state.Mode {
 	case model.ModeSearch, model.ModeCommand, model.ModeTheme, model.ModeHelp, model.ModeConfirmSync, model.ModeRollback, model.ModeDiff, model.ModeNoDiff:
 		m.state.Mode = model.ModeNormal
 		return m, nil
-	default:
-		curr := m.state.Navigation.View
-		// Edge case: in apps view with an applied filter, first Esc only clears the filter
-		if curr == model.ViewApps && (m.state.UI.ActiveFilter != "" || m.state.UI.SearchQuery != "") {
-			m.state.UI.SearchQuery = ""
-			m.state.UI.ActiveFilter = ""
-			return m, nil
-		}
-
-		// Drill up one level and clear current and prior scope selections
-		// Clear transient UI inputs as we navigate up
-		m.state.UI.SearchQuery = ""
-		m.state.UI.ActiveFilter = ""
-		m.state.UI.Command = ""
-
-		switch curr {
-		case model.ViewContexts:
-			return m.closeContextPicker()
-		case model.ViewTree:
-			if m.treeView != nil {
-				m.treeView.ClearFilter()
-			}
-			// A rollback-watch tree steps back to the deployment history it
-			// came from, with the apps view beneath for the esc after that.
-			if m.rollbackWatchApp != nil {
-				target := m.rollbackWatchApp
-				m.rollbackWatchApp = nil
-				m.returnFromTreeToApps()
-				return m.openRollback(target.Name, target.AppNamespace)
-			}
-			// If we drilled into this tree from a parent tree (app-of-apps), pop the stack and go back.
-			if n := len(m.state.SavedNavigation); n > 0 {
-				top := m.state.SavedNavigation[n-1]
-				if top.View == model.ViewTree && top.TreeApp != nil {
-					m.state.SavedNavigation = m.state.SavedNavigation[:n-1]
-					parentAppName := top.TreeApp.Name
-					parentAppNamespace := ""
-					if top.TreeApp.AppNamespace != nil {
-						parentAppNamespace = *top.TreeApp.AppNamespace
-					}
-					parentApp := m.findAppByNameAndNamespace(parentAppName, parentAppNamespace)
-					if parentApp != nil {
-						m = m.cleanupTreeWatchers()
-						m.treeView = m.newTreeView()
-						m.treeNav.Reset()
-						m.state.Navigation.View = model.ViewTree
-						m.setTreeApp(*parentApp)
-						m.treeLoading = true
-						return m, tea.Batch(m.startLoadingResourceTree(*parentApp), m.startWatchingResourceTree(*parentApp), m.consumeTreeEvent())
-					}
-				}
-			}
-			// Return to apps view from tree/resources view.
-			m.returnFromTreeToApps()
-		case model.ViewApps:
-			// Check if scoped by ApplicationSet (separate hierarchy)
-			if len(m.state.Selections.ScopeApplicationSets) > 0 {
-				m.state.Selections.SelectedApps = model.NewStringSet()
-				m.state.Selections.ScopeApplicationSets = model.NewStringSet()
-				m = m.safeChangeView(model.ViewApplicationSets)
-				m.state.Navigation.SelectedIdx = 0
-				return m, m.ensureApplicationSets()
-			}
-			// Clear current level (selected apps) and prior (projects), go up to Projects
-			m.state.Selections.SelectedApps = model.NewStringSet()
-			m.state.Selections.ScopeProjects = model.NewStringSet()
-			m = m.safeChangeView(model.ViewProjects)
-			m.state.Navigation.SelectedIdx = 0
-		case model.ViewApplicationSets:
-			// At ApplicationSets view, escape just clears the scope (stay in place)
-			m.state.Selections.ScopeApplicationSets = model.NewStringSet()
-			m.state.Navigation.SelectedIdx = 0
-		case model.ViewProjects:
-			// Clear current (projects) and prior (namespaces), go up to Namespaces
-			m.state.Selections.ScopeProjects = model.NewStringSet()
-			m.state.Selections.ScopeNamespaces = model.NewStringSet()
-			m = m.safeChangeView(model.ViewNamespaces)
-			m.state.Navigation.SelectedIdx = 0
-		case model.ViewNamespaces:
-			// Clear current (namespaces) and prior (clusters), go up to Clusters
-			m.state.Selections.ScopeNamespaces = model.NewStringSet()
-			m.state.Selections.ScopeClusters = model.NewStringSet()
-			m = m.safeChangeView(model.ViewClusters)
-			m.state.Navigation.SelectedIdx = 0
-		case model.ViewClusters:
-			// At top level: clear current scope only; stay on Clusters
-			m.state.Selections.ScopeClusters = model.NewStringSet()
-			m.state.Navigation.SelectedIdx = 0
-		}
-		// Phase 4: Check if project scope changed → restart watch with project filter
-		return m, m.maybeRestartWatchForScope()
 	}
+	if m.state.Navigation.View == model.ViewContexts {
+		return m.closeContextPicker()
+	}
+	if m.state.Events != nil && m.eventsOpenedByKey {
+		m.closePane()
+		m.eventsOpenedByKey = false
+		return m, nil
+	}
+	if m.rollbackWatchApp != nil && m.state.Navigation.View == model.ViewTree {
+		target := m.rollbackWatchApp
+		m.rollbackWatchApp = nil
+		m.returnFromTreeToApps()
+		return m.openRollback(target.Name, target.AppNamespace)
+	}
+	// An overview child is an implementation detail, not another navigation level.
+	if m.allOverview != nil {
+		n := len(m.state.SavedNavigation)
+		if m.state.Navigation.View == model.ViewApps || (n == 1 && m.state.SavedNavigation[0].View == model.ViewApps) {
+			return m.returnToAllOverview()
+		}
+	}
+	if restored, cmd := m.restoreNavigation(); restored {
+		return m, cmd
+	}
+	if m.state.Navigation.View == model.ViewTree {
+		m.returnFromTreeToApps()
+	}
+	// With no entry point, stay at the root instead of inventing a parent view.
+	return m, nil
 }
 
 // Mode-specific key handlers
@@ -1914,6 +1839,17 @@ func (m *Model) getVisibleItemsForCurrentView() []interface{} {
 
 // handleKeyMsg centralizes keyboard handling and delegates to mode/view handlers
 func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	updated, cmd := m.handleKeyForView(msg)
+	// Single-context models used by overview actions are not user-visible
+	// navigation levels, including when cancelling their confirmation dialogs.
+	if child, ok := updated.(*Model); ok && msg.String() == "esc" && child.allOverview != nil && child.state.Mode == model.ModeNormal && child.state.Navigation.View == model.ViewApps {
+		parent, back := child.returnToAllOverview()
+		return parent, tea.Batch(cmd, back)
+	}
+	return updated, cmd
+}
+
+func (m *Model) handleKeyForView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.selection != nil && !m.selection.IsEmpty() && (msg.String() == "ctrl+c" || msg.String() == "ctrl+y") {
 		text := m.selectedText
 		if text == "" {
@@ -1977,22 +1913,7 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	if msg.String() == "esc" && m.selection != nil && !m.selection.IsEmpty() {
 		m.selection.Clear()
-		m.selectionSnapshot = ""
-		m.selectedText = ""
-		return m, nil
-	}
-	// Global escape debounce to prevent rapid consecutive escape key presses
-	if msg.String() == "esc" {
-		now := time.Now().UnixMilli()
-		const GLOBAL_ESCAPE_DEBOUNCE_MS = 100 // 100ms debounce
-
-		if now-m.state.Navigation.LastEscPressed < GLOBAL_ESCAPE_DEBOUNCE_MS {
-			// Too soon, ignore this escape
-			return m, nil
-		}
-
-		// Update last escape timestamp
-		m.state.Navigation.LastEscPressed = now
+		m.selectionSnapshot, m.selectedText = "", ""
 	}
 
 	// Centralized navigation interception
@@ -2091,6 +2012,7 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 			m.rollbackWatchApp = nil
 			m.state.SavedNavigation = nil
+			m.navigationFrames = nil
 			m = m.safeChangeView(model.ViewApps)
 			visibleItems := m.getVisibleItemsForCurrentView()
 			m.state.Navigation.SelectedIdx = m.navigationService.ValidateBounds(
@@ -2128,6 +2050,7 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			if ok && kind == "Application" && !m.treeView.IsSelectedSyntheticRoot() {
 				return m.handleNavigateToChildApp(childName, childNamespace)
 			}
+			m.eventsOpenedByKey = true
 			return m.handleShowEvents()
 		case "left", "h", "right", "l":
 			if m.treeView != nil {
@@ -2150,6 +2073,7 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.closePane()
 				return m, nil
 			}
+			m.eventsOpenedByKey = true
 			return m.handleShowEvents()
 		case "d":
 			// Describe the selected resource, including its diff.
@@ -2295,11 +2219,11 @@ func (m *Model) handleOpenResourcesForSelection() (tea.Model, tea.Cmd) {
 	}
 	if len(selected) > 1 {
 		// Clean up any existing tree watchers before starting new ones
+		m.saveNavigationState()
 		m.cleanupTreeWatchers()
 		// Reset tree view to a fresh multi-app instance
 		m.treeView = m.newTreeView()
 		m.treeNav.Reset() // Reset scroll position
-		m.state.SaveNavigationState()
 		m.state.Navigation.View = model.ViewTree
 		// Clear single-app tracker (multi-app tree has no single owner)
 		m.clearTreeApp()
@@ -2329,11 +2253,11 @@ func (m *Model) handleOpenResourcesForSelection() (tea.Model, tea.Cmd) {
 		}
 	}
 	// Clean up any existing tree watchers before starting new one
+	m.saveNavigationState()
 	m.cleanupTreeWatchers()
 	// Reset tree view to a fresh single-app instance
 	m.treeView = m.newTreeView()
 	m.treeNav.Reset() // Reset scroll position
-	m.state.SaveNavigationState()
 	m.state.Navigation.View = model.ViewTree
 	m.setTreeApp(app)
 	m.treeLoading = true
@@ -2352,7 +2276,7 @@ func (m *Model) handleNavigateToChildApp(appName string, appNamespace string) (t
 			return model.StatusChangeMsg{Status: fmt.Sprintf("Application %q not found", appName)}
 		}
 	}
-	m.state.SaveNavigationState()
+	m.saveNavigationState()
 	m = m.cleanupTreeWatchers()
 	m.treeView = m.newTreeView()
 	m.treeNav.Reset()

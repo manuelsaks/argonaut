@@ -32,7 +32,6 @@ func TestKargoRetryFromListAndDescribeRequiresExplicitConfirmation(t *testing.T)
 				if !m.kargo.Confirm || m.kargo.Draft.RetryOf != "promo-1" || m.state.Diff != nil || fixture.Promotions.Load() != 0 {
 					t.Fatal("retry must show the exact target without submitting")
 				}
-				kargoKey(t, m, "enter")
 				kargoKey(t, m, "ctrl+p")
 				if fixture.Promotions.Load() != 0 || !m.kargo.Confirm {
 					t.Fatal("only Ctrl+T may confirm a retry")

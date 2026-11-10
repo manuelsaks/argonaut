@@ -58,6 +58,14 @@ func (m *Model) clampKargoCursor() {
 }
 
 func (m *Model) handleKargoPaste(text string) (tea.Model, tea.Cmd) {
+	if st := m.kargo; st.Form != nil {
+		if st.Form.Focus == 0 && st.Form.Kind != "" && !st.Loading && !st.Executing {
+			st.Form.Query += kargoSingleLine(text)
+			st.Form.Cursor = 0
+			m.chooseKargoFormItem()
+		}
+		return m, nil
+	}
 	switch m.state.Mode {
 	case model.ModeSearch:
 		m.inputComponents.SetSearchValue(m.inputComponents.GetSearchValue() + text)
@@ -83,7 +91,6 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if key == "esc" && m.selection != nil && !m.selection.IsEmpty() {
 		m.selection.Clear()
 		m.selectionSnapshot, m.selectedText = "", ""
-		return m, nil
 	}
 	if st.Executing {
 		if key == "q" {
@@ -182,6 +189,9 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, m.inputComponents.UpdateCommandInput(msg)
 		}
 	}
+	if st.Form != nil {
+		return m.handleKargoFormKey(msg)
+	}
 	if st.Confirm {
 		switch key {
 		case "j", "down":
@@ -207,10 +217,7 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "ctrl+t":
 			return m, m.prepareKargoRetry()
 		case "esc", "q":
-			m.cancelKargoLoad()
-			st.Detail, st.DetailKind = nil, ""
-			m.state.Diff, m.state.Mode = nil, model.ModeNormal
-			return m, m.loadKargoView(false)
+			return m.backKargo()
 		case "d", "y":
 			if st.Detail != nil {
 				kind := "Describe"
@@ -281,6 +288,7 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.startKargoPromotion()
 	case "ctrl+e":
 		if st.Error != "" {
+			m.saveKargoLocation()
 			m.showKargoText("Last error", st.Error)
 		}
 		return m, nil
@@ -311,7 +319,8 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.inputComponents.FocusCommandInput()
 		m.state.Mode = model.ModeCommand
 	case "?":
-		m.showKargoText("Kargo help", "Navigate:\n  0/c: instances, 1: projects, 2: stages, 3: promotions\n  4: warehouses, 5: freight, a: Argo CD\n\nInspect:\n  Enter: open; d: describe; y: full YAML; /: filter\n  Ctrl+E: show the last request error\n\nPromote:\n  Select Stage, Ctrl+P, choose Freight, Enter.\n  Review instance, project, Stage and Freight; Ctrl+P confirms.\n  The result opens with phase, step results and error messages.\n  Ctrl+R: refresh now. Writes are never retried automatically.\n\nSSO:\n  Ctrl+L: Kargo CLI browser SSO.\n  Ctrl+A: toggle auto-login for the current/selected instance.\n\nNetwork:\n  Normal: poll the visible data every 10s.\n  --low-bandwidth: every 2m, cached lists, no background fan-out.\n  [network] refresh_interval=\"0\": manual refresh only.")
+		m.saveKargoLocation()
+		m.showKargoText("Kargo help", "Navigate:\n  0/c: instances, 1: projects, 2: stages, 3: promotions\n  4: warehouses, 5: freight, a: Argo CD\n\nInspect:\n  Enter: open; d: describe; y: full YAML; /: filter\n  Ctrl+E: show the last request error\n\nPromote:\n  Select Stage or Freight and press Ctrl+P.\n  Choose with arrows; type to filter; Tab / Shift+Tab moves focus.\n  Review instance, project, Stage and Freight.\n  Tab to Cancel / Promote, then Enter; Esc cancels.\n  Ctrl+P also submits the reviewed promotion.\n  The result opens with phase, step results and error messages.\n  Ctrl+R: refresh now. Writes are never retried automatically.\n\nSSO:\n  Ctrl+L: Kargo CLI browser SSO.\n  Ctrl+A: toggle auto-login for the current/selected instance.\n\nNetwork:\n  Normal: poll the visible data every 10s.\n  --low-bandwidth: every 2m, cached lists, no background fan-out.\n  [network] refresh_interval=\"0\": manual refresh only.")
 	case "j", "down":
 		st.Cursor++
 	case "k", "up":
@@ -325,20 +334,7 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "G", "end":
 		st.Cursor = len(m.kargoRows()) - 1
 	case "esc":
-		if st.Filter != "" {
-			st.Filter = ""
-			st.Cursor = 0
-			return m, nil
-		}
-		if st.Draft != nil {
-			st.Draft = nil
-			st.Confirm = false
-			return m, m.kargoNavigate("Stage")
-		}
-		if st.Kind == "Project" || st.Kind == "Connection" {
-			return m.leaveKargo()
-		}
-		return m, m.kargoNavigate("Project")
+		return m.backKargo()
 	case "enter", "d", "y":
 		rows := m.kargoRows()
 		if st.Cursor < 0 || st.Cursor >= len(rows) {
@@ -346,24 +342,30 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		row := rows[st.Cursor]
 		if st.Kind == "Connection" {
+			m.saveKargoLocation()
 			m.selectKargoConnection(row.ConnectionIndex)
-			return m, m.kargoNavigate("Project")
+			m.setKargoView("Project")
+			return m, m.loadKargoView(false)
 		}
 		if key == "enter" {
 			switch st.Kind {
 			case "Project":
+				m.saveKargoLocation()
 				st.Project = row.Resource.Name
-				return m, m.kargoNavigate("Stage")
+				m.setKargoView("Stage")
+				return m, m.loadKargoView(false)
 			case "Stage":
 				if st.Draft != nil && st.Draft.Freight != "" {
 					st.Draft.Stage = row.Resource.Name
 					st.Confirm = true
 					return m, nil
 				}
+				m.saveKargoLocation()
 				m.setKargoView("Promotion")
 				st.Stage = row.Resource.Name
 				return m, m.loadKargoView(false)
 			case "Warehouse":
+				m.saveKargoLocation()
 				m.setKargoView("Freight")
 				st.Warehouse = row.Resource.Name
 				return m, m.loadKargoView(false)
@@ -380,6 +382,7 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if key == "y" {
 			kind = "YAML"
 		}
+		m.saveKargoLocation()
 		m.cancelKargoLoad()
 		m.showKargoDocument(row.Resource, kind, false)
 		if st.Client != nil && st.Client.UsesConnect() {
@@ -398,6 +401,7 @@ func (m *Model) selectKargoConnection(index int) {
 	st.Items, st.Detail, st.Draft = nil, nil, nil
 	st.Stage, st.Warehouse, st.Filter, st.Error, st.DetailKind = "", "", "", "", ""
 	st.Confirm, st.Executing, st.Cursor = false, false, 0
+	st.Form = nil
 	st.Cache = map[kargoTarget]kargoCacheEntry{}
 	st.SessionIdentity = ""
 	if st.Kind == "Connection" {
@@ -409,42 +413,27 @@ func (m *Model) selectKargoConnection(index int) {
 func (m *Model) startKargoPromotion() tea.Cmd {
 	st := m.kargo
 	rows := m.kargoRows()
-	if len(rows) == 0 || st.Client == nil {
-		st.Error = "Select a Stage or Freight after loading the project"
-		return nil
+	if st.Cursor < 0 || st.Cursor >= len(rows) || st.Client == nil {
+		return m.showFooterNotice("Select a Stage or Freight after loading the project")
 	}
 	resource := rows[st.Cursor].Resource
-	if st.Draft != nil && ((resource.Kind == "Stage" && st.Draft.Freight != "") || (resource.Kind == "Freight" && st.Draft.Stage != "")) {
-		if resource.Kind == "Stage" {
-			st.Draft.Stage = resource.Name
-		} else {
-			st.Draft.Freight = resource.Name
-		}
-		m.cancelKargoLoad()
-		st.Confirm = true
-		return nil
-	}
 	if resource.Kind != "Stage" && resource.Kind != "Freight" {
-		st.Error = "Select a Stage and press Ctrl+P to choose Freight"
-		return nil
+		return m.showFooterNotice("Select a Stage or Freight and press Ctrl+P")
 	}
+	origin := m.kargoLocation()
+	m.cancelKargoLoad()
 	connection := st.Connections[st.Connection]
-	draft := &kargoPromotion{Connection: connection.Name, Server: st.Client.Connection.Server, Project: st.Project}
-	if resource.Kind == "Stage" {
-		draft.Stage = resource.Name
-	} else {
-		draft.Freight = resource.Name
-	}
+	st.Draft = &kargoPromotion{Connection: connection.Name, Server: st.Client.Connection.Server, Project: st.Project}
 	kind := "Freight"
-	if draft.Freight != "" {
+	if resource.Kind == "Stage" {
+		st.Draft.Stage = resource.Name
+	} else {
+		st.Draft.Freight = resource.Name
 		kind = "Stage"
 	}
-	st.Draft = draft
-	m.setKargoView(kind)
-	if draft.Stage != "" {
-		st.Stage = draft.Stage
-	}
-	return m.loadKargoView(true)
+	st.Form = &kargoPromotionForm{Origin: origin, Kind: kind}
+	st.Confirm, st.ConfirmOffset, st.Error = true, 0, ""
+	return m.loadKargoForm(false)
 }
 
 // Kargo's own Retry action submits the same Freight to the same Stage as a
@@ -483,8 +472,10 @@ func (m *Model) prepareKargoRetry() tea.Cmd {
 	if resource.Project != st.Project || stage == "" || freight == "" {
 		return m.showFooterNotice("Promotion has no unambiguous project, Stage or Freight; refresh first")
 	}
+	origin := m.kargoLocation()
 	m.cancelKargoLoad()
 	connection := st.Connections[st.Connection]
+	st.Form = &kargoPromotionForm{Origin: origin, Focus: 1}
 	st.Draft = &kargoPromotion{Connection: connection.Name, Server: st.Client.Connection.Server, Project: st.Project, Stage: stage, Freight: freight, RetryOf: resource.Name}
 	st.Confirm, st.ConfirmOffset, st.Error = true, 0, ""
 	st.Detail, st.DetailKind = nil, ""

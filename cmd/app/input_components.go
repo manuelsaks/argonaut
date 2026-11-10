@@ -675,6 +675,10 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			}
 		}
 
+		switch canonical {
+		case "cluster", "clusters", "namespace", "namespaces", "project", "projects", "app", "apps", "appset", "appsets":
+			m.saveNavigationState()
+		}
 		m.inputComponents.BlurInputs()
 		m.state.Mode = model.ModeNormal
 		m.state.UI.Command = ""
@@ -693,8 +697,10 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 		if items := m.getVisibleItems(); m.state.Navigation.SelectedIdx < len(items) {
 			selectedItem = items[m.state.Navigation.SelectedIdx]
 		}
-		m.state.UI.ActiveFilter = ""
-		m.state.UI.SearchQuery = ""
+		if canonical != "resources" && canonical != "res" && canonical != "r" {
+			m.state.UI.ActiveFilter = ""
+			m.state.UI.SearchQuery = ""
+		}
 		if selectedItem != nil {
 			for i, item := range m.getVisibleItems() {
 				if reflect.DeepEqual(item, selectedItem) {
@@ -881,11 +887,11 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 
 				if len(names) > 1 {
 					// Clean up any existing tree watchers before starting new ones
+					m.saveNavigationState()
 					m.cleanupTreeWatchers()
 					// Multiple apps selected - open multi tree view with live updates
 					m.treeView = m.newTreeView()
 					m.treeNav.Reset() // Reset scroll position
-					m.state.SaveNavigationState()
 					m.state.Navigation.View = model.ViewTree
 					m.clearTreeApp()
 					m.treeLoading = true
@@ -924,10 +930,6 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			if target == "" {
 				return m, func() tea.Msg { return model.StatusChangeMsg{Status: "No app selected for resources"} }
 			}
-			// Single app: open tree view with watch (reset tree view)
-			m.treeView = m.newTreeView()
-			m.treeNav.Reset() // Reset scroll position
-			m.state.SaveNavigationState()
 			// selectedApp may already be set by the cursor-position path above.
 			// Fall back to name-only lookup when target came from a text argument or checkbox.
 			if selectedApp == nil {
@@ -939,7 +941,10 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 				}
 			}
 			// Clean up any existing tree watchers before starting new one
+			m.saveNavigationState()
 			m.cleanupTreeWatchers()
+			m.treeView = m.newTreeView()
+			m.treeNav.Reset()
 			m.state.Navigation.View = model.ViewTree
 			m.setTreeApp(*selectedApp)
 			m.treeLoading = true
@@ -1106,10 +1111,12 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 				if app == nil {
 					return m, m.showFooterNotice("Application missing or ambiguous; select namespace/name")
 				}
-				m.state.Selections.SelectedApps = model.StringSetFromSlice([]string{app.Key()})
+				// Moving the cursor is not a Space selection.
+				m.state.Selections.SelectedApps = model.NewStringSet()
 				idx := -1
-				for i, a := range m.state.Apps {
-					if a.Key() == app.Key() {
+				for i, item := range m.getVisibleItemsForCurrentView() {
+					a, ok := item.(model.App)
+					if ok && a.Key() == app.Key() {
 						idx = i
 						break
 					}

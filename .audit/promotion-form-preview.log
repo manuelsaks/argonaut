@@ -1,0 +1,75 @@
+=== RUN   TestKargoFormFilterAndEmptyChoiceCannotSubmit
+    kargo_navigation_test.go:90: Form 60x20:
+         Kargo | Instance: cli | Project: team-b                   
+         View: Stage | SSO manual | low bandwidth | manual refresh 
+         <tab/shift-tab> field/button  <up/down> choose            
+         <enter> activate  <esc> cancel                            
+         ╭──────────────────────────────────────────────────────╮  
+         │ PROMOTE FREIGHT                                      │  
+         │ Instance: cli                                        │  
+         │ Server: http://127.0.0.1:4136                        │  
+         │ Project: team-b                                      │  
+         │ Stage: prod                                          │  
+         │ Freight: freight-a                                   │  
+         │ > Choose Freight / filter:                           │  
+         │ > (1/1) freight-a  sleepy-owl  registry.example/web  │  
+         │ | v2                                                 │  
+         │                                                      │  
+         │ [ Cancel ]    [ Promote ]                            │  
+         ╰──────────────────────────────────────────────────────╯  
+         1 items | updated 21:00:25                                
+    kargo_navigation_test.go:90: Form 80x24:
+         Kargo | Instance: cli | Project: team-b                                        
+         View: Stage | SSO manual | low bandwidth | manual refresh                      
+         Server: http://127.0.0.1:4136                                                  
+         <tab/shift-tab> field/button  <up/down> choose  <enter> activate  <esc> cancel 
+         ╭──────────────────────────────────────────────────────────────────────────╮   
+         │ PROMOTE FREIGHT                                                          │   
+         │ Instance: cli                                                            │   
+         │ Server: http://127.0.0.1:4136                                            │   
+         │ Project: team-b                                                          │   
+         │ Stage: prod                                                              │   
+         │ Freight: freight-a                                                       │   
+         │ > Choose Freight / filter:                                               │   
+         │ > (1/1) freight-a  sleepy-owl  registry.example/web | v2                 │   
+         │                                                                          │   
+         │ [ Cancel ]    [ Promote ]                                                │   
+         │                                                                          │   
+         │                                                                          │   
+         │                                                                          │   
+         │                                                                          │   
+         │                                                                          │   
+         ╰──────────────────────────────────────────────────────────────────────────╯   
+         1 items | updated 21:00:25                                                     
+    kargo_navigation_test.go:90: Form 120x30:
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Stage | SSO manual | low bandwidth | manual refresh                                                            
+         Server: http://127.0.0.1:4136                                                                                        
+         <tab/shift-tab> field/button  <up/down> choose  <enter> activate  <esc> cancel                                       
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ PROMOTE FREIGHT                                                                                                  │ 
+         │ Instance: cli                                                                                                    │ 
+         │ Server: http://127.0.0.1:4136                                                                                    │ 
+         │ Project: team-b                                                                                                  │ 
+         │ Stage: prod                                                                                                      │ 
+         │ Freight: freight-a                                                                                               │ 
+         │ > Choose Freight / filter:                                                                                       │ 
+         │ > (1/1) freight-a  sleepy-owl  registry.example/web | v2                                                         │ 
+         │                                                                                                                  │ 
+         │ [ Cancel ]    [ Promote ]                                                                                        │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 21:00:25                                                                                           
+--- PASS: TestKargoFormFilterAndEmptyChoiceCannotSubmit (0.01s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.053s

@@ -1,0 +1,45 @@
+Navigation and Kargo promotion form fixes - 2026-11-10
+
+Changes
+- Esc restores the actual entry point rather than a hardcoded view hierarchy.
+  Each Argo frame saves scopes, filters, explicit Space selections, stable
+  application identity, cursor and scroll. Parent resource trees retain their
+  expanded nodes and resource cursor. Context picker and Kargo preserve their
+  Argo entry points. Manually opened events return to the original resource.
+- Removed the global Escape debounce and the extra selection-clearing back
+  step. All-context action models return straight to their overview, including
+  cancellation of an operation dialog, without an intermediate context list.
+- Enter and :app move/open the cursor target without creating checkbox
+  selections. Only explicitly checked overview applications are copied into
+  action models. Application identity includes context and metadata namespace.
+- Kargo records the actual Project/Stage/Promotion/Warehouse/Freight/instance
+  entry points, their filters and cursor targets, including detail pagers.
+- Ctrl+P opens a colored promotion form with fixed instance/project and source
+  Stage or Freight. Arrows choose the other field; typing/paste filters locally.
+  Tab / Shift+Tab moves through the choice, Cancel and Promote; Enter activates
+  the focused button. Ctrl+P remains available as a submission shortcut.
+- Retry uses Cancel/Retry buttons and preserves its list or describe/YAML
+  origin. Cancelling or returning from a result restores the original object.
+- The form loads only the missing scoped list, reuses its short-lived cache,
+  and never automatically replays writes. Responses are gated by active view,
+  epoch, request sequence, exact target and session identity. Changed targets,
+  empty choices and repeated submission while executing cannot issue a POST.
+
+Validation
+- PASS: GOTOOLCHAIN=go1.26.10 ARGONAUT_REAL_ARGOCD=C:\tools\argocd.exe
+  go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See navigation-race.log.
+- PASS: final focused race tests for Kargo, nested navigation, all-context
+  entry/exit, context picker, explicit events and cursor restoration after a
+  list reorder. See navigation-final.log.
+- PASS: form cancellation, Tab/Shift+Tab buttons, retry origin, empty choices,
+  changed/stale targets, exact project routing and one POST on double submit.
+  API operation tests use local HTTP fixtures, not production promotions.
+- PASS: form layouts at 60x20, 80x24 and 120x30; action buttons stay visible.
+  See promotion-form-preview.log.
+- PASS: Windows amd64 build, Linux amd64 cross-build, Git Bash --version and
+  TestTerminalWindowsRestoresConsoleModes under a real Windows PTY.
+
+Updated main Windows binary
+C:\tmp\argonaut\argonaut.exe
+SHA256: EEE9018E88AB4A86BC00F685BDB6567AEEE68B2BAC423A96E68CDE0112DBAC01
