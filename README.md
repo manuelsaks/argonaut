@@ -267,8 +267,13 @@ Press `d` to describe the cursor's Application, ApplicationSet or tree resource,
 and `y` to view its full YAML, including metadata and status. Both use Argo CD's
 API and the built-in scrollable viewer; they do not require kubeconfig, kubectl,
 less or sh. In the viewer, `d`/`y` switch between the same captured object,
-`Ctrl+R` reloads it, `/` filters, `h/l` pan and `Esc` returns. Describe includes
-events and the live-to-desired diff at the bottom. A missing resource shows its
+`Ctrl+R` reloads it, `/` finds text, `h/l` pan and `Esc` returns. Describe omits
+empty fields and verbose historical annotations. Its live-to-desired
+diff appears in a separate colored pane on the right in wide terminals; Tab
+switches pane focus (or switches panes in narrow terminals). YAML keys, values,
+status and diff additions/removals are colored. Use / to find without removing
+surrounding document lines, and n/N for the next/previous match. A missing resource
+shows its
 desired manifest when Argo CD provides one; runtime resources without a desired
 manifest say so. Secret values follow Argo CD's access controls and masking.
 
@@ -278,13 +283,28 @@ Operations in apps and resources use Ctrl: `Ctrl+S` sync, `Ctrl+R` refresh,
 
 Press `2` or `:servers` to list registered destination servers in the current
 Argo CD context, including servers with no applications. Each row shows its
-name, app count and address/project; Enter opens its apps and `Ctrl+R` reloads
+name, app count and address/project. The `all` row shows apps on all destination
+servers; Enter opens a server's apps and `Ctrl+R` reloads
 the registry. Registry access follows Argo CD RBAC. If it is denied, the view
 states the error and retains known destinations rather than claiming a full list.
 Apps show their ApplicationSet owner (or standalone) and destination server /
 namespace. `5` shows ApplicationSets derived from app owners with app counts and
 locations; Enter opens their generated apps. Same-named sets in different
 Application namespaces remain separate. `?` opens scrollable help.
+
+The context picker (`c`) also has an `all` option, available directly as
+`:ctx all`. It aggregates Applications, ApplicationSets and destination servers
+from saved Argo CD API contexts, with a CONTEXT column and context-qualified
+identities (`context::namespace/name`). It refreshes every 20 seconds; Ctrl+R
+reloads immediately. Failed or unsupported contexts are reported independently.
+Core and port-forward contexts are excluded. YAML/describe use the selected
+row's Argo CD server; actions and resource trees enter that context before
+confirmation. Esc from its apps view returns to the overview. Batch operations
+use selections from one context.
+
+Mouse selections remain highlighted after release and are copied automatically.
+The selected screen stays stable during watch updates. Ctrl+C or Ctrl+Y copies
+again; Esc clears the selection. Windows uses its native Unicode clipboard.
 
 ## Advanced Features
 

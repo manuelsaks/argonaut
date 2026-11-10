@@ -156,7 +156,7 @@ func TestGetCommandAutocomplete_ArgumentCompletion(t *testing.T) {
 	t.Logf("GetCommandAutocomplete result for ':cluster ': %v", suggestions)
 
 	// Should suggest all clusters
-	expectedClusters := []string{":cluster analytics", ":cluster prod", ":cluster staging"}
+	expectedClusters := []string{":cluster all", ":cluster analytics", ":cluster prod", ":cluster staging"}
 	if !reflect.DeepEqual(suggestions, expectedClusters) {
 		t.Errorf("Expected %v, got %v", expectedClusters, suggestions)
 	}

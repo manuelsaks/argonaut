@@ -130,7 +130,7 @@ func (m *Model) renderListView(availableRows int) string {
 // renderListHeader - matches ListView header row with responsive widths
 func (m *Model) renderListHeader() string {
 	if m.state.Navigation.View == model.ViewApps {
-		w := appColumns(m.contentInnerWidth())
+		w := m.appListColumns()
 		name, sync, health := "APP NAME", "SYNC", "HEALTH"
 		indicator := m.state.UI.Sort.Direction.Indicator()
 		switch m.state.UI.Sort.Field {
@@ -147,7 +147,11 @@ func (m *Model) renderListHeader() string {
 		if w.health < 7 {
 			health = "H"
 		}
-		return headerStyle.Render(appColumnRow(w, name, "OWNER", sync, health, "DESTINATION / NAMESPACE"))
+		row := appColumnRow(w, name, "OWNER", sync, health, "DESTINATION / NAMESPACE")
+		if w.context > 0 {
+			row = tableCell("CONTEXT", w.context) + " " + row
+		}
+		return headerStyle.Render(row)
 	}
 	if m.state.Navigation.View == model.ViewClusters {
 		if !m.destinationLoaded || m.destinationError != "" || m.destinationLoading {
@@ -188,7 +192,7 @@ func (m *Model) renderAppRow(app model.App, isCursor bool) string {
 	}
 	active := isCursor || isSelected
 
-	w := appColumns(m.contentInnerWidth())
+	w := m.appListColumns()
 	fullRowWidth := m.contentInnerWidth()
 	syncText := fmt.Sprintf("%s %s", m.getSyncIcon(app.Sync), app.Sync)
 	healthText := fmt.Sprintf("%s %s", m.getHealthIcon(app.Health), app.Health)
@@ -206,11 +210,18 @@ func (m *Model) renderAppRow(app model.App, isCursor bool) string {
 	// Namespaces identify same-named Applications, not their deployment targets.
 	for _, other := range m.state.Apps {
 		if other.Name == app.Name && other.Key() != app.Key() {
-			name = app.Key()
+			name = model.AppKey(app.Name, app.AppNamespace)
 			break
 		}
 	}
-	row := appColumnRow(w, name, applicationOwner(app), syncText, healthText, m.applicationLocation(app))
+	owner := applicationOwner(app)
+	if !active && app.ApplicationSet != nil {
+		owner = lipgloss.NewStyle().Foreground(magentaBright).Render(owner)
+	}
+	row := appColumnRow(w, name, owner, syncText, healthText, m.applicationLocation(app))
+	if w.context > 0 {
+		row = tableCell(app.ContextName, w.context) + " " + row
+	}
 
 	// Check if this app should flash (refresh feedback). Suppress
 	// flash highlight while a desaturating modal is up — a transient
@@ -246,8 +257,18 @@ func (m *Model) renderSimpleRow(label string, isCursor bool) string {
 	case model.ViewProjects:
 		isSelected = m.state.Selections.HasProject(label)
 	case model.ViewContexts:
+		if label == allContextsChoice {
+			label = "all  (all Argo CD contexts)"
+			if m.allContexts != nil {
+				label = "* " + label + " (active)"
+			}
+			if isCursor {
+				return selectedStyle.Render(tableCell(label, m.contentInnerWidth()))
+			}
+			return lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render(tableCell(label, m.contentInnerWidth()))
+		}
 		contextName := label
-		if label == m.currentContextName {
+		if label == m.currentContextName && m.allContexts == nil {
 			label = "* " + label + " (active)"
 		} else {
 			label = "  " + label

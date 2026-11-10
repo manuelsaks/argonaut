@@ -76,7 +76,7 @@ func BuildAppIndex(apps []App) *AppIndex {
 
 		// ApplicationSet
 		if app.ApplicationSet != nil && *app.ApplicationSet != "" {
-			as := AppKey(*app.ApplicationSet, app.AppNamespace)
+			as := app.ApplicationSetKey()
 			appsetSet[as] = true
 			idx.ByApplicationSet[as] = append(idx.ByApplicationSet[as], i)
 		}

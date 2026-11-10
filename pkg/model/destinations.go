@@ -2,6 +2,7 @@ package model
 
 // DestinationServer contains only display metadata, never cluster credentials.
 type DestinationServer struct {
+	ContextName     string `json:"contextName,omitempty"`
 	Name            string `json:"name"`
 	Server          string `json:"server"`
 	Project         string `json:"project,omitempty"`
@@ -12,9 +13,9 @@ type DestinationServer struct {
 
 func (s DestinationServer) Key() string {
 	if s.Project != "" {
-		return s.Project + "@" + s.Server
+		return ContextKey(s.ContextName, s.Project+"@"+s.Server)
 	}
-	return s.Server
+	return ContextKey(s.ContextName, s.Server)
 }
 
 // ResolveDestination refuses ambiguous names instead of assigning an app to a
@@ -23,6 +24,9 @@ func ResolveDestination(app App, servers []DestinationServer) (DestinationServer
 	var found DestinationServer
 	count := 0
 	for _, server := range servers {
+		if app.ContextName != server.ContextName {
+			continue
+		}
 		if server.Project != "" && (app.Project == nil || server.Project != *app.Project) {
 			continue
 		}

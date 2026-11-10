@@ -371,6 +371,9 @@ func (e *AutocompleteEngine) getArgumentSuggestions(command, argPrefix string, s
 // getClusterSuggestions returns cluster name suggestions
 func (e *AutocompleteEngine) getClusterSuggestions(prefix string, state *model.AppState) []string {
 	var suggestions []string
+	if strings.HasPrefix("all", prefix) {
+		suggestions = append(suggestions, "all")
+	}
 	seen := make(map[string]bool)
 	for _, server := range state.DestinationServers {
 		key := server.Key()
@@ -445,9 +448,9 @@ func (e *AutocompleteEngine) getAppSetSuggestions(prefix string, state *model.Ap
 			continue
 		}
 
-		key := model.AppKey(*app.ApplicationSet, app.AppNamespace)
+		key := app.ApplicationSetKey()
 		appset := strings.ToLower(key)
-		if strings.HasPrefix(appset, prefix) && !seen[appset] {
+		if (strings.HasPrefix(appset, prefix) || strings.HasPrefix(strings.ToLower(*app.ApplicationSet), prefix) || strings.HasPrefix(strings.ToLower(model.AppKey(*app.ApplicationSet, app.AppNamespace)), prefix)) && !seen[appset] {
 			suggestions = append(suggestions, key)
 			seen[appset] = true
 		}
@@ -469,8 +472,8 @@ func (e *AutocompleteEngine) getAppSuggestions(prefix string, state *model.AppSt
 	for _, app := range suggestionApps(state, &state.Selections) {
 
 		key := app.Key()
-		if strings.HasPrefix(strings.ToLower(app.Name), prefix) || strings.HasPrefix(strings.ToLower(key), prefix) {
-			if nameCounts[app.Name] > 1 || strings.Contains(prefix, "/") {
+		if strings.HasPrefix(strings.ToLower(app.Name), prefix) || strings.HasPrefix(strings.ToLower(key), prefix) || strings.HasPrefix(strings.ToLower(model.AppKey(app.Name, app.AppNamespace)), prefix) {
+			if app.ContextName != "" || nameCounts[app.Name] > 1 || strings.Contains(prefix, "/") {
 				suggestions = append(suggestions, key)
 			} else {
 				suggestions = append(suggestions, app.Name)
@@ -504,6 +507,9 @@ func (e *AutocompleteEngine) getArgocdContextSuggestions(prefix string, state *m
 	var suggestions []string
 	prefix = strings.ToLower(prefix)
 
+	if strings.HasPrefix("all", prefix) {
+		suggestions = append(suggestions, "all")
+	}
 	for _, name := range state.ContextNames {
 		if strings.HasPrefix(strings.ToLower(name), prefix) {
 			suggestions = append(suggestions, name)

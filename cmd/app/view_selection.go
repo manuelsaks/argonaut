@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // ANSI escape sequence pattern
@@ -23,6 +24,7 @@ func splitIntoLines(content string) []string {
 // storeRenderedContent extracts plain text lines from rendered content
 // and stores them for text selection extraction.
 func (m *Model) storeRenderedContent(content string) {
+	m.lastRenderedContent = content
 	plainContent := stripANSI(content)
 	m.lastRenderedLines = splitIntoLines(plainContent)
 }
@@ -44,7 +46,7 @@ func (m *Model) applySelectionHighlight(content string) string {
 
 		// Get plain text to calculate proper positions
 		plainLine := stripANSI(line)
-		plainRunes := []rune(plainLine)
+		lineWidth := lipgloss.Width(plainLine)
 
 		// Determine selection bounds for this line
 		var colStart, colEnd int
@@ -56,15 +58,15 @@ func (m *Model) applySelectionHighlight(content string) string {
 		if row == endRow {
 			colEnd = endCol
 		} else {
-			colEnd = len(plainRunes)
+			colEnd = lineWidth
 		}
 
 		// Clamp to line length
-		if colStart > len(plainRunes) {
-			colStart = len(plainRunes)
+		if colStart > lineWidth {
+			colStart = lineWidth
 		}
-		if colEnd > len(plainRunes) {
-			colEnd = len(plainRunes)
+		if colEnd > lineWidth {
+			colEnd = lineWidth
 		}
 		if colStart >= colEnd {
 			continue
@@ -75,9 +77,9 @@ func (m *Model) applySelectionHighlight(content string) string {
 		// This is a simplified approach that works with plain text.
 		// For fully styled content, we'd need more complex ANSI parsing.
 
-		before := string(plainRunes[:colStart])
-		selected := string(plainRunes[colStart:colEnd])
-		after := string(plainRunes[colEnd:])
+		before := ansi.Cut(line, 0, colStart)
+		selected := ansi.Cut(line, colStart, colEnd)
+		after := ansi.Cut(line, colEnd, lineWidth)
 
 		// Apply highlight to selected portion
 		highlighted := selectionStyle.Render(selected)

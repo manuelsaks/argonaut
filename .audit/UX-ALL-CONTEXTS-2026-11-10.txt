@@ -1,0 +1,46 @@
+ARGONAUT UX FIXES AND ALL CONTEXTS
+Date: 2026-11-10
+
+1. Describe preserves acronyms (URL, UID), renders compact lists, omits empty
+   fields and the historical last-applied annotation. YAML keeps the complete object.
+2. Added colors for YAML/describe keys, values and statuses; diff additions/removals
+   use green/red. Long document lines pan horizontally instead of wrapping.
+3. Search Enter commits a list filter and synchronizes the navigator immediately.
+   Reader search retains surrounding lines, highlights matches and supports n/N.
+   Clipboard paste into search follows the same path.
+4. Contexts (c) now include all; :ctx all opens an aggregate view with CONTEXT.
+   Apps, ApplicationSets and registered servers retain context-qualified identities.
+   Requests are limited to four concurrent contexts and refresh every 20 seconds.
+   Individual errors and unsupported core/port-forward contexts are reported.
+   Autorelogin targets the failed context; cancelled SSO does not hide other results.
+   Resource trees and operations enter the selected app's context before confirmation.
+   Esc from that context's apps returns to the overview. Batch selections for an
+   operation must belong to one context. No kubeconfig is used for these features.
+5. Describe has a separate right-hand diff pane in wide terminals (100+ columns).
+   Tab changes focus; narrow terminals use Tab to switch the visible pane.
+6. Mouse selections persist after release and freeze the selected screen against
+   watch refreshes. Automatic copy on release; Ctrl+C/Ctrl+Y copies again; Esc clears.
+   Fixed Windows clipboard support with the existing native Unicode clipboard library.
+   Clipboard I/O runs asynchronously. Tests mock writes and do not replace user data.
+7. Initial app requests now fetch the complete metadata object so AppSet owners
+   are present before watch updates. OWNER uses appset:NAME and has more space.
+8. Servers have an explicit all row, which clears destination scopes.
+
+Additional isolation: successful watch-start messages now carry the context epoch,
+so a late stream cannot attach after switching contexts even if sequence IDs match.
+
+Verification:
+PASS: go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+PASS: Windows build; --version from PowerShell and Git Bash.
+PASS: native Windows PTY console-mode restoration test.
+PASS: Linux amd64 cross-build.
+PASS: UI size checks and captures at 60x20, 80x24, 100x30, 120x30 and 160x40.
+PASS: golden snapshot, UI detector and whitespace checks.
+
+Executable: C:\tmp\argonaut\argonaut.exe
+SHA256: 50BEBF288443779CC82A6396BD6A6E61DB7F4AF2A53E83679E1ABF00D4839026
+Copy: C:\tmp\argonaut\.audit\argonaut-windows.exe
+
+API verification used local fixtures for two instances containing the same app and
+namespace. No live company Argo CD or SSO account was used. Git Bash smoke checks
+verified launching the executable; interactive console-mode checks used a Windows PTY.

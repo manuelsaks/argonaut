@@ -83,13 +83,27 @@ func describeInspectionObject(object map[string]any, desired bool, events []mode
 		out.WriteString("State:          Desired manifest (resource is missing from the cluster)\n")
 	}
 	for _, key := range []string{"labels", "annotations", "ownerReferences", "finalizers"} {
-		if value := metadata[key]; value != nil {
+		if value := metadata[key]; !emptyDescribeValue(value) {
+			if key == "annotations" {
+				if annotations, ok := value.(map[string]any); ok {
+					concise := map[string]any{}
+					for k, v := range annotations {
+						if k != "kubectl.kubernetes.io/last-applied-configuration" && !emptyDescribeValue(v) {
+							concise[k] = v
+						}
+					}
+					if len(concise) == 0 {
+						continue
+					}
+					value = concise
+				}
+			}
 			fmt.Fprintf(&out, "\n%s:\n", describeLabel(key))
 			describeValue(&out, value, 2)
 		}
 	}
 	for _, key := range sortedObjectKeys(object) {
-		if key == "apiVersion" || key == "kind" || key == "metadata" {
+		if key == "apiVersion" || key == "kind" || key == "metadata" || emptyDescribeValue(object[key]) {
 			continue
 		}
 		fmt.Fprintf(&out, "\n%s:\n", describeLabel(key))
@@ -128,11 +142,13 @@ func sortedObjectKeys(object map[string]any) []string {
 
 func describeLabel(key string) string {
 	var out strings.Builder
-	for i, r := range key {
+	runes := []rune(key)
+	for i, r := range runes {
+		if i > 0 && unicode.IsUpper(r) && (unicode.IsLower(runes[i-1]) || (i+1 < len(runes) && unicode.IsLower(runes[i+1]) && unicode.IsUpper(runes[i-1]))) {
+			out.WriteByte(' ')
+		}
 		if i == 0 {
 			r = unicode.ToUpper(r)
-		} else if unicode.IsUpper(r) {
-			out.WriteByte(' ')
 		}
 		out.WriteRune(r)
 	}
@@ -147,6 +163,9 @@ func describeValue(out *strings.Builder, value any, indent int) {
 			out.WriteString(padding + "<none>\n")
 		}
 		for _, key := range sortedObjectKeys(value) {
+			if key == "kubectl.kubernetes.io/last-applied-configuration" || emptyDescribeValue(value[key]) {
+				continue
+			}
 			fmt.Fprintf(out, "%s%s:", padding, describeLabel(key))
 			switch value[key].(type) {
 			case map[string]any, []any:
@@ -161,10 +180,40 @@ func describeValue(out *strings.Builder, value any, indent int) {
 			out.WriteString(padding + "<none>\n")
 		}
 		for _, item := range value {
-			out.WriteString(padding + "-\n")
-			describeValue(out, item, indent+2)
+			if emptyDescribeValue(item) {
+				continue
+			}
+			var line strings.Builder
+			describeValue(&line, item, indent+2)
+			text := strings.TrimSuffix(line.String(), "\n")
+			text = strings.TrimPrefix(text, strings.Repeat(" ", indent+2))
+			out.WriteString(padding + "- " + text + "\n")
 		}
 	default:
 		fmt.Fprintf(out, "%s%v\n", padding, value)
 	}
+}
+
+func emptyDescribeValue(value any) bool {
+	switch value := value.(type) {
+	case nil:
+		return true
+	case string:
+		return value == ""
+	case map[string]any:
+		for _, v := range value {
+			if !emptyDescribeValue(v) {
+				return false
+			}
+		}
+		return true
+	case []any:
+		for _, v := range value {
+			if !emptyDescribeValue(v) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
 }

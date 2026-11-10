@@ -1,0 +1,363 @@
+=== RUN   TestDescribeCompactFormattingPreservesAcronymsAndValues
+--- PASS: TestDescribeCompactFormattingPreservesAcronymsAndValues (0.00s)
+=== RUN   TestSearchEnterImmediatelyEnablesNavigationAndActions
+2026/11/10 16:18:15 INFO Setting sync target component=sync targetApp=pay-api selectedIdx=0 correctedIdx=false
+--- PASS: TestSearchEnterImmediatelyEnablesNavigationAndActions (0.00s)
+=== RUN   TestMouseSelectionPersistsAndFreezesCopiedText
+--- PASS: TestMouseSelectionPersistsAndFreezesCopiedText (0.00s)
+=== RUN   TestInspectionColorsAndSearchKeepTheDocument
+--- PASS: TestInspectionColorsAndSearchKeepTheDocument (0.00s)
+=== RUN   TestUXLayoutsAllContextsAndSplitDescribe
+2026/11/10 16:18:15 INFO all contexts: 0 apps | loading 2 component=status
+2026/11/10 16:18:15 INFO all contexts: 0 apps | loading 2 component=status
+2026/11/10 16:18:15 INFO all contexts: 1 apps | loading 1 component=status
+2026/11/10 16:18:15 INFO all contexts: 1 apps | loading 1 component=status
+2026/11/10 16:18:15 INFO all contexts: 2 apps component=status
+2026/11/10 16:18:15 INFO all contexts: 2 apps component=status
+    ux_regressions_test.go:144: 
+        apps 80x24
+         Context: all                                                      Argonaut dev 
+         View: Applications | Target: all | Scope: all/all | Login: per context         
+         <enter/r> resources  <space> select  <ctrl-s> sync  <d> describe  <y> YAML     
+         <ctrl-r> refresh  <ctrl-b> rollback  <ctrl-d> delete  <ctrl-t> terminate       
+         <ctrl-k> k9s  </> filter  <esc> clear/back                                     
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ CONTEXT      ▲APP NAME        OWNER              S  H  DESTINATION / NA... │ 
+         │ dev          argocd/web       appset:websites    V  V  site1/apps          │ 
+         │ prod         argocd/web       appset:websites    V  V  site1/apps          │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                             Ready • 1/2 
+    ux_regressions_test.go:144: 
+        clusters 80x24
+         Context: all                                                      Argonaut dev 
+         View: Destination servers | Target: all | Scope: all/all | Login: per context  
+         <enter> server apps  <ctrl-r> reload servers  </> filter name/address          
+         <esc> back                                                                     
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ CONTEXT      SERVER NAME        APPS  ADDRESS / PROJECT                    │ 
+         │ all  (all destination servers)                                             │ 
+         │ dev          site1              1     https://same-cluster.example         │ 
+         │ prod         site1              1     https://same-cluster.example         │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <servers>                                                          Ready • 1/3 
+    ux_regressions_test.go:144: 
+        applicationsets 80x24
+         Context: all                                                      Argonaut dev 
+         View: ApplicationSets | Target: all | Scope: all/all | Login: per context      
+         <enter> generated apps  <d> describe  <y> YAML  </> filter  <esc> back         
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ CONTEXT      APPSET NAME        APPS  DESTINATION / NAMESPACE              │ 
+         │ dev          argocd/websites    1     site1/apps                           │ 
+         │ prod         argocd/websites    1     site1/apps                           │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <applicationsets>                                                  Ready • 1/2 
+    ux_regressions_test.go:144: 
+        contexts 80x24
+         Context: all                                                      Argonaut dev 
+         View: Argo CD contexts | Target: all | Scope: all/all | Login: per context     
+         <enter> switch  <ctrl-a> auto-login on/off  <ctrl-l> SSO login  </> filter     
+         <esc> apps                                                                     
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ ARGO CD CONTEXTS (Ctrl+A: auto-login, Ctrl+L: SSO login)                   │ 
+         │   dev  [auto-login: OFF]                                                   │ 
+         │   prod  [auto-login: OFF]                                                  │ 
+         │ * all  (all Argo CD contexts) (active)                                     │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <contexts>                                                         Ready • 1/3 
+    ux_regressions_test.go:159: 
+        describe focus=false 80x24
+         Context: all                                                      Argonaut dev 
+         View: Describe | Target: all | Scope: all/all | Login: per context             
+         <d> describe  <y> YAML  <tab> describe/diff  <ctrl-r> reload  <j/k> scroll     
+         <h/l> pan  </> find  <esc/q> back                                              
+         prod / Describe: Application/web                                               
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ DESCRIBE                                                                   │ 
+         │ Name: web                                                                  │ 
+         │ Namespace: argocd                                                          │ 
+         │                                                                            │ 
+         │ Spec:                                                                      │ 
+         │   Repo URL: https://example.test/really/long/path/that/should/pan/without/ │ 
+         │   Containers:                                                              │ 
+         │     - Name: web                                                            │ 
+         │       Image: registry.example/web:v1                                       │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         Tab: describe/diff  1/8  j/k: scroll  h/l: pan  /: find  n/N: next/prev  Esc:  
+    ux_regressions_test.go:159: 
+        describe focus=true 80x24
+         Context: all                                                      Argonaut dev 
+         View: Describe | Target: all | Scope: all/all | Login: per context             
+         <d> describe  <y> YAML  <tab> describe/diff  <ctrl-r> reload  <j/k> scroll     
+         <h/l> pan  </> find  <esc/q> back                                              
+         prod / Describe: Application/web                                               
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ DIFF                                                                       │ 
+         │ --- live                                                                   │ 
+         │ +++ desired                                                                │ 
+         │ @@ -1 +1 @@                                                                │ 
+         │ - image: web:v1                                                            │ 
+         │ + image: web:v2                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         Tab: describe/diff  1/5  j/k: scroll  h/l: pan  /: find  n/N: next/prev  Esc:  
+    ux_regressions_test.go:144: 
+        apps 120x30
+         Context: all                              <enter/r> resources            <ctrl-b> rollback                Argonaut dev 
+         Server:  all Argo CD instances            <space> select                 <ctrl-d> delete                               
+         View:    Applications                     <ctrl-s> sync                  <ctrl-t> terminate                            
+         Scope:   all / all                        <d> describe                   <ctrl-k> k9s                                  
+         Login:   per context                      <y> YAML                       </> filter                                    
+                                                   <ctrl-r> refresh               <esc> clear/back                              
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ CONTEXT             ▲APP NAME             OWNER                  SYNC        HEALTH        DESTINATION / NAMESPACE │ 
+         │ dev                 argocd/web            appset:websites        V Synced    V Healthy     site1/apps              │ 
+         │ prod                argocd/web            appset:websites        V Synced    V Healthy     site1/apps              │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                                     Ready • 1/2 
+    ux_regressions_test.go:144: 
+        clusters 120x30
+         Context: all                              <enter> server apps            </> filter name/address          Argonaut dev 
+         Server:  all Argo CD instances            <ctrl-r> reload servers        <esc> back                                    
+         View:    Destination servers                                                                                           
+         Scope:   all / all                                                                                                     
+         Login:   per context                                                                                                   
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ CONTEXT             SERVER NAME                    APPS  ADDRESS / PROJECT                                         │ 
+         │ all  (all destination servers)                                                                                     │ 
+         │ dev                 site1                          1     https://same-cluster.example                              │ 
+         │ prod                site1                          1     https://same-cluster.example                              │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <servers>                                                                                                  Ready • 1/3 
+    ux_regressions_test.go:144: 
+        applicationsets 120x30
+         Context: all                              <enter> generated apps         </> filter                       Argonaut dev 
+         Server:  all Argo CD instances            <d> describe                   <esc> back                                    
+         View:    ApplicationSets                  <y> YAML                                                                     
+         Scope:   all / all                                                                                                     
+         Login:   per context                                                                                                   
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ CONTEXT             APPSET NAME                    APPS  DESTINATION / NAMESPACE                                   │ 
+         │ dev                 argocd/websites                1     site1/apps                                                │ 
+         │ prod                argocd/websites                1     site1/apps                                                │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <applicationsets>                                                                                          Ready • 1/2 
+    ux_regressions_test.go:144: 
+        contexts 120x30
+         Context: all                              <enter> switch                 </> filter                       Argonaut dev 
+         Server:  all Argo CD instances            <ctrl-a> auto-login on/off     <esc> apps                                    
+         View:    Argo CD contexts                 <ctrl-l> SSO login                                                           
+         Scope:   all / all                                                                                                     
+         Login:   per context                                                                                                   
+         <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                    
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ ARGO CD CONTEXTS (Ctrl+A: auto-login, Ctrl+L: SSO login)                                                           │ 
+         │   dev  [auto-login: OFF]                                                                                           │ 
+         │   prod  [auto-login: OFF]                                                                                          │ 
+         │ * all  (all Argo CD contexts) (active)                                                                             │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <contexts>                                                                                                 Ready • 1/3 
+    ux_regressions_test.go:159: 
+        describe focus=false 120x30
+         Context: all                              <d> describe                   <j/k> scroll                     Argonaut dev 
+         Server:  all Argo CD instances            <y> YAML                       <h/l> pan                                     
+         View:    Describe                         <tab> describe/diff            </> find                                      
+         Scope:   all / all                        <ctrl-r> reload                <esc/q> back                                  
+         Login:   per context                                                                                                   
+         prod / Describe: Application/web                                                                                       
+         ╭────────────────────────────────────────────────────────╮ ╭─────────────────────────────────────────────────────────╮ 
+         │ DESCRIBE                                               │ │ DIFF: LIVE -> DESIRED                                   │ 
+         │ Name: web                                              │ │ --- live                                                │ 
+         │ Namespace: argocd                                      │ │ +++ desired                                             │ 
+         │                                                        │ │ @@ -1 +1 @@                                             │ 
+         │ Spec:                                                  │ │ - image: web:v1                                         │ 
+         │   Repo URL: https://example.test/really/long/path/that │ │ + image: web:v2                                         │ 
+         │   Containers:                                          │ │                                                         │ 
+         │     - Name: web                                        │ │                                                         │ 
+         │       Image: registry.example/web:v1                   │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         ╰────────────────────────────────────────────────────────╯ ╰─────────────────────────────────────────────────────────╯ 
+         Tab: describe/diff  1/8  j/k: scroll  h/l: pan  /: find  n/N: next/prev  Esc: back                                     
+    ux_regressions_test.go:159: 
+        describe focus=true 120x30
+         Context: all                              <d> describe                   <j/k> scroll                     Argonaut dev 
+         Server:  all Argo CD instances            <y> YAML                       <h/l> pan                                     
+         View:    Describe                         <tab> describe/diff            </> find                                      
+         Scope:   all / all                        <ctrl-r> reload                <esc/q> back                                  
+         Login:   per context                                                                                                   
+         prod / Describe: Application/web                                                                                       
+         ╭────────────────────────────────────────────────────────╮ ╭─────────────────────────────────────────────────────────╮ 
+         │ DESCRIBE                                               │ │ DIFF: LIVE -> DESIRED                                   │ 
+         │ Name: web                                              │ │ --- live                                                │ 
+         │ Namespace: argocd                                      │ │ +++ desired                                             │ 
+         │                                                        │ │ @@ -1 +1 @@                                             │ 
+         │ Spec:                                                  │ │ - image: web:v1                                         │ 
+         │   Repo URL: https://example.test/really/long/path/that │ │ + image: web:v2                                         │ 
+         │   Containers:                                          │ │                                                         │ 
+         │     - Name: web                                        │ │                                                         │ 
+         │       Image: registry.example/web:v1                   │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         │                                                        │ │                                                         │ 
+         ╰────────────────────────────────────────────────────────╯ ╰─────────────────────────────────────────────────────────╯ 
+         Tab: describe/diff  1/5  j/k: scroll  h/l: pan  /: find  n/N: next/prev  Esc: back                                     
+--- PASS: TestUXLayoutsAllContextsAndSplitDescribe (0.07s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.152s

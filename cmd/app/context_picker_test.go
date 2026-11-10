@@ -134,6 +134,10 @@ func TestContextPickerFilteredEnterAndTokenRefresh(t *testing.T) {
 		t.Fatalf("search should filter to prod: %v", items)
 	}
 	_, cmd := m.handleKeyMsg(testKeyMsg("enter"))
+	if cmd != nil || m.state.Mode != model.ModeNormal {
+		t.Fatal("Enter must finish filtering immediately")
+	}
+	_, cmd = m.handleKeyMsg(testKeyMsg("enter"))
 	if cmd == nil {
 		t.Fatal("Enter on filtered context should switch")
 	}

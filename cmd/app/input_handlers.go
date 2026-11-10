@@ -12,6 +12,7 @@ import (
 	"github.com/darksworm/argonaut/pkg/kubeconfig"
 	"github.com/darksworm/argonaut/pkg/model"
 	"github.com/darksworm/argonaut/pkg/theme"
+	"github.com/darksworm/argonaut/pkg/tui/clipboard"
 	"github.com/darksworm/argonaut/pkg/tui/treeview"
 )
 
@@ -137,6 +138,9 @@ func (m *Model) handleDrillDown() (tea.Model, tea.Cmd) {
 		visibleItems := m.getVisibleItemsForCurrentView()
 		if len(visibleItems) > 0 && m.state.Navigation.SelectedIdx < len(visibleItems) {
 			ctxName := fmt.Sprintf("%v", visibleItems[m.state.Navigation.SelectedIdx])
+			if ctxName == allContextsChoice {
+				return m.openAllContexts()
+			}
 			return m, m.performContextSwitch(ctxName)
 		}
 		return m, nil
@@ -153,6 +157,18 @@ func (m *Model) handleDrillDown() (tea.Model, tea.Cmd) {
 	}
 
 	selectedItem := visibleItems[m.state.Navigation.SelectedIdx]
+	if m.state.Navigation.View == model.ViewClusters && selectedItem == allServersChoice {
+		m.state.Selections.ScopeClusters = model.NewStringSet()
+		m.state.Selections.ScopeNamespaces = model.NewStringSet()
+		m.state.Selections.ScopeProjects = model.NewStringSet()
+		m.state.Selections.ScopeApplicationSets = model.NewStringSet()
+		m.state.Selections.SelectedApps = model.NewStringSet()
+		m.state.UI.ActiveFilter = ""
+		m.state.UI.SearchQuery = ""
+		m.state.Navigation.SelectedIdx = 0
+		m = m.safeChangeView(model.ViewApps)
+		return m, nil
+	}
 
 	// Use navigation service to handle drill-down logic
 	result := m.navigationService.DrillDown(
@@ -416,11 +432,16 @@ func (m *Model) returnFromTreeToApps() {
 
 // handleEscape handles escape key (clear filters, exit modes)
 func (m *Model) handleEscape() (tea.Model, tea.Cmd) {
+	if m.allOverview != nil && m.state.Mode == model.ModeNormal && m.state.Navigation.View == model.ViewApps && m.selection.IsEmpty() {
+		return m.returnToAllOverview()
+	}
 	// Note: Global escape debounce is now handled in handleKeyMsg
 
 	// If there's an active text selection, clear it first
 	if !m.selection.IsEmpty() {
 		m.selection.Clear()
+		m.selectionSnapshot = ""
+		m.selectedText = ""
 		return m, nil
 	}
 
@@ -649,6 +670,18 @@ func (m *Model) handleDiffModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	switch msg.String() {
+	case "tab":
+		if len(m.state.Diff.SideContent) > 0 {
+			m.state.Diff.FocusDiff = !m.state.Diff.FocusDiff
+			m.state.Diff.Offset, m.state.Diff.OtherOffset = m.state.Diff.OtherOffset, m.state.Diff.Offset
+			m.state.Diff.MatchIndex = -1
+		}
+		return m, nil
+	case "n", "N":
+		if m.inspection != nil {
+			m.findInspectionMatch(msg.String() == "N")
+		}
+		return m, nil
 	case "q", "esc":
 		m.cancelResourceInspection()
 		m.state.Mode = model.ModeNormal
@@ -1881,6 +1914,18 @@ func (m *Model) getVisibleItemsForCurrentView() []interface{} {
 
 // handleKeyMsg centralizes keyboard handling and delegates to mode/view handlers
 func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.selection != nil && !m.selection.IsEmpty() && (msg.String() == "ctrl+c" || msg.String() == "ctrl+y") {
+		text := m.selectedText
+		if text == "" {
+			text = m.selection.ExtractText(m.lastRenderedLines)
+		}
+		return m, clipboard.CopyCmd(text)
+	}
+	if m.selection != nil && !m.selection.IsEmpty() && msg.String() != "esc" {
+		m.selection.Clear()
+		m.selectionSnapshot = ""
+		m.selectedText = ""
+	}
 	// Global kill: always quit on Ctrl+C
 	if msg.String() == "ctrl+c" {
 		return m, func() tea.Msg { return model.QuitMsg{} }
@@ -1914,6 +1959,12 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if msg.String() == "esc" && m.selection != nil && !m.selection.IsEmpty() {
+		m.selection.Clear()
+		m.selectionSnapshot = ""
+		m.selectedText = ""
+		return m, nil
+	}
 	// Global escape debounce to prevent rapid consecutive escape key presses
 	if msg.String() == "esc" {
 		now := time.Now().UnixMilli()
@@ -2135,6 +2186,9 @@ func (m *Model) handleTreeViewKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // handleNormalModeGlobalKeys handles the list views' global hotkeys.
 // Navigation keys (up/k, down/j, pgup, pgdown, g, G) are handled by the centralized router.
 func (m *Model) handleNormalModeGlobalKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if updated, cmd, handled := m.handleOverviewAction(msg); handled {
+		return updated, cmd
+	}
 	switch msg.String() {
 	case "ctrl+c":
 		return m, func() tea.Msg { return model.QuitMsg{} }
@@ -2293,6 +2347,38 @@ func (m *Model) handleNavigateToChildApp(appName string, appNamespace string) (t
 }
 
 func (m *Model) findAppByNameAndNamespace(name string, namespace string) *model.App {
+	if ctx, _ := model.SplitContextKey(name); ctx != "" {
+		for i := range m.state.Apps {
+			if m.state.Apps[i].Key() == name {
+				return &m.state.Apps[i]
+			}
+		}
+		return nil
+	}
+	if m.allContexts != nil {
+		localName, localNamespace := model.SplitAppKey(name)
+		if localNamespace != "" {
+			if namespace != "" && namespace != localNamespace {
+				return nil
+			}
+			namespace = localNamespace
+		}
+		var found *model.App
+		for i := range m.state.Apps {
+			app := &m.state.Apps[i]
+			if !strings.EqualFold(app.Name, localName) {
+				continue
+			}
+			if namespace != "" && (app.AppNamespace == nil || *app.AppNamespace != namespace) {
+				continue
+			}
+			if found != nil {
+				return nil
+			}
+			found = app
+		}
+		return found
+	}
 	if parsedName, parsedNamespace := model.SplitAppKey(name); parsedNamespace != "" {
 		if namespace != "" && namespace != parsedNamespace {
 			return nil

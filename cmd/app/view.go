@@ -318,6 +318,9 @@ func (m *Model) View() tea.View {
 		}
 	}
 
+	if m.selection != nil && !m.selection.IsEmpty() && m.selectionSnapshot != "" {
+		content = m.selectionSnapshot
+	}
 	// Store plain text content for text selection extraction
 	m.storeRenderedContent(content)
 
@@ -552,6 +555,7 @@ func (m *Model) getVisibleItems() []interface{} {
 	var base []interface{}
 	switch m.state.Navigation.View {
 	case model.ViewClusters:
+		base = append(base, allServersChoice)
 		if m.destinationLoaded {
 			for _, server := range m.state.DestinationServers {
 				base = append(base, server.Key())
@@ -602,6 +606,7 @@ func (m *Model) getVisibleItems() []interface{} {
 		for _, name := range m.state.ContextNames {
 			base = append(base, name)
 		}
+		base = append(base, allContextsChoice)
 	default:
 		// No-op
 	}
@@ -630,7 +635,7 @@ func (m *Model) getVisibleItems() []interface{} {
 			if app.Project != nil {
 				prj = strings.ToLower(*app.Project)
 			}
-			if strings.Contains(name, f) || strings.Contains(sync, f) || strings.Contains(health, f) || strings.Contains(ns, f) || strings.Contains(prj, f) || strings.Contains(strings.ToLower(m.applicationLocation(app)), f) || strings.Contains(strings.ToLower(applicationOwner(app)), f) {
+			if strings.Contains(name, f) || strings.Contains(strings.ToLower(app.ContextName), f) || strings.Contains(sync, f) || strings.Contains(health, f) || strings.Contains(ns, f) || strings.Contains(prj, f) || strings.Contains(strings.ToLower(m.applicationLocation(app)), f) || strings.Contains(strings.ToLower(applicationOwner(app)), f) {
 				filtered = append(filtered, it)
 			}
 		}
@@ -818,6 +823,9 @@ func (m *Model) renderConfirmSyncModal() string {
 
 // renderDiffView - simple pager for diff content
 func (m *Model) renderDiffView() string {
+	if m.inspection != nil && m.state.Diff != nil {
+		return m.renderInspectionView()
+	}
 	if m.state.Diff == nil {
 		return contentBorderStyle.Render("No diff loaded")
 	}
@@ -926,30 +934,9 @@ func truncateWithEllipsis(text string, maxWidth int) string {
 		return ""
 	}
 	if maxWidth <= 3 {
-		// Too narrow even for ellipsis
-		return text[:min(len(text), maxWidth)]
+		return ansi.Truncate(text, maxWidth, "")
 	}
-
-	// Use lipgloss.Width to handle ANSI sequences properly
-	if lipgloss.Width(text) <= maxWidth {
-		return text
-	}
-
-	// Need to truncate - reserve 3 characters for "..."
-	targetWidth := maxWidth - 3
-	if targetWidth <= 0 {
-		return "..."
-	}
-
-	// Truncate character by character until we fit
-	for i := len(text); i > 0; i-- {
-		truncated := text[:i]
-		if lipgloss.Width(truncated) <= targetWidth {
-			return truncated + "..."
-		}
-	}
-
-	return "..."
+	return ansi.Truncate(text, maxWidth, "...")
 }
 
 // readLogContent reads the actual log file content

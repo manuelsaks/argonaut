@@ -39,7 +39,10 @@ func (m *Model) openContextPicker() (tea.Model, tea.Cmd) {
 			break
 		}
 	}
-	m.listNav.SetItemCount(len(m.state.ContextNames))
+	if m.allContexts != nil {
+		m.state.Navigation.SelectedIdx = len(m.state.ContextNames)
+	}
+	m.listNav.SetItemCount(len(m.getVisibleItems()))
 	m.listNav.SetViewportHeight(m.listViewportHeight())
 	m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
 	return m, nil
@@ -65,10 +68,11 @@ func (m *Model) performContextSwitch(contextName string) tea.Cmd {
 		configPath = config.GetConfigPath()
 	}
 	currentCtx := m.currentContextName
+	fromOverview := m.allContexts != nil
 	return func() tea.Msg {
 		result := model.ContextSwitchResultMsg{ContextName: contextName, SwitchEpoch: epoch, RequestID: seq}
 		// Same-context no-op
-		if contextName == currentCtx {
+		if contextName == currentCtx && !fromOverview {
 			return result
 		}
 
@@ -114,7 +118,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 		m.statusService.Error(message)
 		return m, m.showFooterNotice(message)
 	}
-	if msg.ContextName == m.currentContextName && !msg.Reload {
+	if msg.ContextName == m.currentContextName && !msg.Reload && m.allContexts == nil {
 		m.statusService.Set("Already on context: " + msg.ContextName)
 		if m.state.Navigation.View == model.ViewContexts {
 			return m.closeContextPicker()
@@ -128,6 +132,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 		"server", msg.Server.BaseURL)
 
 	// 1. Cleanup old goroutines — ORDER MATTERS:
+	m.cancelAllContextRequests()
 	m.cancelContextRelogin()
 	m.cancelResourceInspection()
 	//    a. Stop forwarding goroutine FIRST
@@ -151,6 +156,9 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 	newM.state.ContextNames = msg.ContextNames // From result (no 2nd config read)
 	newM.switchEpoch = m.switchEpoch + 1       // Increment epoch
 	newM.reloginAttempts = m.reloginAttempts   // Throttle failed login loops across context switches.
+	if msg.Reload && msg.ContextName == m.currentContextName {
+		newM.allOverview = m.allOverview
+	}
 
 	// 5. Start fresh load cycle
 	return newM, tea.Batch(

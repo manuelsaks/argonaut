@@ -245,6 +245,10 @@ type ErrorState struct {
 
 // DiffState holds state for the diff pager view
 type DiffState struct {
+	MatchIndex       int      `json:"matchIndex,omitempty"`
+	SideContent      []string `json:"sideContent,omitempty"`
+	FocusDiff        bool     `json:"focusDiff,omitempty"`
+	OtherOffset      int      `json:"otherOffset,omitempty"`
 	InspectionKind   string   `json:"inspectionKind,omitempty"`
 	Title            string   `json:"title"`
 	Content          []string `json:"content"`

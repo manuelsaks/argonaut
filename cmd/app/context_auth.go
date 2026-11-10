@@ -44,8 +44,15 @@ func (m *Model) selectedArgoContext() string {
 		items := m.getVisibleItems()
 		i := m.state.Navigation.SelectedIdx
 		if i >= 0 && i < len(items) {
-			return items[i].(string)
+			name := items[i].(string)
+			if name == allContextsChoice {
+				return ""
+			}
+			return name
 		}
+		return ""
+	}
+	if m.allContexts != nil {
 		return ""
 	}
 	return m.currentContextName
@@ -129,7 +136,10 @@ func argoCDCommand(ctx context.Context, executable, configPath, contextName stri
 }
 
 func (m *Model) maybeAutoRelogin() (tea.Cmd, bool) {
-	name := m.currentContextName
+	return m.maybeAutoReloginForContext(m.currentContextName)
+}
+
+func (m *Model) maybeAutoReloginForContext(name string) (tea.Cmd, bool) {
 	if name == "" || !m.config.IsAutoReloginEnabled(name) {
 		return nil, false
 	}
@@ -256,10 +266,18 @@ func (m *Model) handleContextRelogin(msg contextReloginMsg) (tea.Model, tea.Cmd)
 		msg.Error = fmt.Errorf("CLI did not return context credentials")
 	}
 	if msg.Error != nil {
-		if m.state.Navigation.View != model.ViewContexts {
+		if m.allContexts == nil && m.state.Navigation.View != model.ViewContexts {
 			m.state.Mode = model.ModeAuthRequired
 		}
 		return m, m.showFooterNotice("Login failed: " + msg.Error.Error())
+	}
+	if m.allContexts != nil {
+		reload := m.reloadAllContexts()
+		var inspection tea.Cmd
+		if st := m.inspection; st != nil && st.Target.ContextName == msg.ContextName {
+			inspection = m.startResourceInspection(st.Target, st.Kind)
+		}
+		return m, tea.Batch(m.showFooterNotice("Logged in: "+msg.ContextName), reload, inspection)
 	}
 	// Logging into an inactive row refreshes its CLI credentials without
 	// changing the currently selected server in this TUI.

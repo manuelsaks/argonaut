@@ -83,8 +83,8 @@ func TestDescribeContainsObjectEventsAndExactResourceDiff(t *testing.T) {
 		t.Fatal(msg.Error)
 	}
 	m.Update(msg)
-	text := strings.Join(m.state.Diff.Content, "\n")
-	for _, want := range []string{"Name:", "web-1", "Containers:", "Running", "Events:", "Started", "Diff (live -> desired):", "-    image: example:v1", "+    image: example:v2"} {
+	text := strings.Join(m.state.Diff.Content, "\n") + "\n" + strings.Join(m.state.Diff.SideContent, "\n")
+	for _, want := range []string{"Name:", "web-1", "Containers:", "Running", "Events:", "Started", "-    image: example:v1", "+    image: example:v2"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("describe missing %q:\n%s", want, text)
 		}
@@ -92,8 +92,8 @@ func TestDescribeContainsObjectEventsAndExactResourceDiff(t *testing.T) {
 	if strings.Contains(text, "wrong-namespace") || strings.Contains(text, "leaked") {
 		t.Fatal("diff mixed resource identities")
 	}
-	if strings.Index(text, "Diff (") < strings.Index(text, "Events:") {
-		t.Fatal("diff must be below describe")
+	if len(m.state.Diff.SideContent) == 0 {
+		t.Fatal("diff must have its own panel")
 	}
 	m.treeView.SetSelectedIndex(0)
 	_, _ = m.handleKeyMsg(testKeyMsg("y"))

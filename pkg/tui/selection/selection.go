@@ -1,6 +1,8 @@
 // Package selection provides mouse-based text selection for TUI applications.
 package selection
 
+import "github.com/charmbracelet/x/ansi"
+
 // Position represents a screen coordinate (0-based).
 type Position struct {
 	Row int
@@ -118,7 +120,7 @@ func (s *Selection) ExtractText(lines []string) string {
 			break
 		}
 		line := lines[row]
-		lineRunes := []rune(line)
+		lineWidth := ansi.StringWidth(line)
 
 		var colStart, colEnd int
 
@@ -131,19 +133,19 @@ func (s *Selection) ExtractText(lines []string) string {
 		if row == endRow {
 			colEnd = endCol
 		} else {
-			colEnd = len(lineRunes)
+			colEnd = lineWidth
 		}
 
 		// Clamp to line length
-		if colStart > len(lineRunes) {
-			colStart = len(lineRunes)
+		if colStart > lineWidth {
+			colStart = lineWidth
 		}
-		if colEnd > len(lineRunes) {
-			colEnd = len(lineRunes)
+		if colEnd > lineWidth {
+			colEnd = lineWidth
 		}
 
 		if colStart < colEnd {
-			result = append(result, string(lineRunes[colStart:colEnd])...)
+			result = append(result, ansi.Cut(line, colStart, colEnd)...)
 		}
 
 		// Add newline between lines (but not after the last line)

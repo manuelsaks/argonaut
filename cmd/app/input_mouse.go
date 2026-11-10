@@ -11,6 +11,10 @@ import (
 // handleMouseClickMsg processes mouse click (press) events for text selection.
 func (m *Model) handleMouseClickMsg(msg tea.MouseClickMsg) (tea.Model, tea.Cmd) {
 	if msg.Button == tea.MouseLeft {
+		if m.selectionSnapshot == "" {
+			m.selectionSnapshot = m.lastRenderedContent
+		}
+		m.selectedText = ""
 		// Start a new selection, clearing any previous one
 		m.selection.SetStart(selection.Position{Row: msg.Y, Col: msg.X})
 		// Force a full repaint: if the terminal has drifted from the
@@ -53,8 +57,7 @@ func (m *Model) finalizeSelection() (tea.Model, tea.Cmd) {
 		// Extract selected text and copy to clipboard
 		text := m.selection.ExtractText(m.lastRenderedLines)
 
-		// Clear selection
-		m.selection.Clear()
+		m.selectedText = text
 
 		if text != "" {
 			// Return command to copy to clipboard and show status
@@ -66,6 +69,8 @@ func (m *Model) finalizeSelection() (tea.Model, tea.Cmd) {
 	}
 	// Clear selection
 	m.selection.Clear()
+	m.selectionSnapshot = ""
+	m.selectedText = ""
 	return m, nil
 }
 

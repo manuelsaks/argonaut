@@ -17,6 +17,7 @@ import (
 )
 
 type inspectionTarget struct {
+	ContextName                                string
 	AppName, AppNamespace                      string
 	Group, Version, Kind, Namespace, Name, UID string
 	Application                                bool
@@ -50,7 +51,9 @@ func (m *Model) inspectionTargetForSelection() (inspectionTarget, error) {
 		if !ok {
 			return target, fmt.Errorf("select an ApplicationSet first")
 		}
-		target.Name, target.Namespace = model.SplitAppKey(key)
+		contextName, localKey := model.SplitContextKey(key)
+		target.ContextName = contextName
+		target.Name, target.Namespace = model.SplitAppKey(localKey)
 		target.Group, target.Version, target.Kind = "argoproj.io", "v1alpha1", "ApplicationSet"
 		target.ApplicationSet = true
 	case model.ViewApps:
@@ -64,6 +67,7 @@ func (m *Model) inspectionTargetForSelection() (inspectionTarget, error) {
 			return target, fmt.Errorf("select an application first")
 		}
 		target.AppName = app.Name
+		target.ContextName = app.ContextName
 		if app.AppNamespace != nil {
 			target.AppNamespace = *app.AppNamespace
 		}
@@ -123,7 +127,13 @@ func (m *Model) startResourceInspection(target inspectionTarget, kind string) te
 	ctx, cancel := context.WithCancel(context.Background())
 	m.inspection = &resourceInspection{Target: target, Kind: kind, Sequence: seq, Cancel: cancel}
 	server := m.state.Server
+	if target.ContextName != "" && m.allContexts != nil {
+		server = m.allContexts.Servers[target.ContextName]
+	}
 	title := fmt.Sprintf("%s: %s/%s", kind, target.Kind, target.Name)
+	if target.ContextName != "" {
+		title = target.ContextName + " / " + title
+	}
 	if target.Namespace != "" {
 		title += " (" + target.Namespace + ")"
 	}
@@ -234,13 +244,26 @@ func (m *Model) handleResourceInspection(msg resourceInspectionMsg) (tea.Model, 
 	if msg.Error != nil {
 		m.state.Diff.Content = []string{"Unable to load " + st.Kind + ":", "", inspectionPlainText(msg.Error.Error()), "", "Esc: return"}
 		if requiresRelogin(msg.Error) {
-			if cmd, handled := m.maybeAutoRelogin(); handled {
+			contextName := st.Target.ContextName
+			if contextName == "" {
+				contextName = m.currentContextName
+			}
+			if cmd, handled := m.maybeAutoReloginForContext(contextName); handled {
 				return m, cmd
 			}
 		}
 		return m, nil
 	}
 	m.state.Diff.Content = strings.Split(strings.TrimSuffix(inspectionPlainText(msg.Text), "\n"), "\n")
+	if st.Kind == "Describe" {
+		for i, line := range m.state.Diff.Content {
+			if line == "Diff (live -> desired):" {
+				m.state.Diff.SideContent = m.state.Diff.Content[i+1:]
+				m.state.Diff.Content = m.state.Diff.Content[:i]
+				break
+			}
+		}
+	}
 	return m, nil
 }
 

@@ -3,16 +3,19 @@ package clipboard
 
 import (
 	"encoding/base64"
+	"fmt"
 	"os/exec"
 	"runtime"
 	"strings"
 	"sync"
 
 	tea "charm.land/bubbletea/v2"
+	nativeclipboard "github.com/atotto/clipboard"
 	cblog "github.com/charmbracelet/log"
 )
 
 var (
+	writeNativeClipboard = nativeclipboard.WriteAll
 	// customCopyCmd is the configured clipboard copy command (set from config)
 	customCopyCmd string
 	customCopyMu  sync.RWMutex
@@ -61,30 +64,28 @@ type CopyMsg struct {
 // When OSC 52 is used, Success will be true even though the terminal may not have
 // processed it (unsupported terminal, security restrictions, etc.).
 func CopyCmd(text string) tea.Cmd {
-	if text == "" {
-		return func() tea.Msg {
+	return func() tea.Msg {
+		if text == "" {
 			return CopyMsg{Success: false}
 		}
-	}
 
-	// Try native clipboard first (more reliable)
-	if err := copyNative(text); err == nil {
-		cblog.Info("Copied to clipboard via native method", "len", len(text))
-		return func() tea.Msg {
+		// Try native clipboard first (more reliable)
+		if err := copyNative(text); err == nil {
+			cblog.Info("Copied to clipboard via native method", "len", len(text))
 			return CopyMsg{Success: true, Text: text, Method: "native"}
 		}
-	}
 
-	// Fall back to OSC 52 - actually send the escape sequence
-	cblog.Info("Native clipboard failed, trying OSC 52")
-	encoded := base64.StdEncoding.EncodeToString([]byte(text))
-	sequence := "\x1b]52;c;" + encoded + "\x07"
-	return tea.Batch(
-		tea.Printf("%s", sequence),
-		func() tea.Msg {
-			return CopyMsg{Success: true, Text: text, Method: "osc52"}
-		},
-	)
+		// Fall back to OSC 52 - actually send the escape sequence
+		cblog.Info("Native clipboard failed, trying OSC 52")
+		encoded := base64.StdEncoding.EncodeToString([]byte(text))
+		sequence := "\x1b]52;c;" + encoded + "\x07"
+		return tea.Batch(
+			tea.Printf("%s", sequence),
+			func() tea.Msg {
+				return CopyMsg{Success: true, Text: text, Method: "osc52"}
+			},
+		)()
+	}
 }
 
 // CopyWithOSC52 returns just the OSC 52 sequence command (for terminals that support it).
@@ -117,6 +118,11 @@ func copyNative(text string) error {
 	var cmd *exec.Cmd
 
 	switch runtime.GOOS {
+	case "windows":
+		if strings.ContainsRune(text, 0) {
+			return fmt.Errorf("clipboard text contains a NUL character")
+		}
+		return writeNativeClipboard(text)
 	case "darwin":
 		cmd = exec.Command("pbcopy")
 	case "linux":

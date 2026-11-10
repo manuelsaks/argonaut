@@ -83,6 +83,9 @@ func (m *Model) destinationByKey(key string) (model.DestinationServer, bool) {
 }
 
 func (m *Model) destinationScopeKey(input string) (string, error) {
+	if input == allServersChoice {
+		return input, nil
+	}
 	if _, ok := m.destinationByKey(input); ok {
 		return input, nil
 	}
@@ -107,11 +110,12 @@ func (m *Model) applicationSetScopeKey(input string) (string, error) {
 	}
 	var matches []string
 	for _, key := range m.state.Index.ApplicationSets {
-		name, _ := model.SplitAppKey(key)
+		_, localKey := model.SplitContextKey(key)
+		name, _ := model.SplitAppKey(localKey)
 		if strings.EqualFold(key, input) {
 			return key, nil
 		}
-		if strings.EqualFold(name, input) {
+		if strings.EqualFold(name, input) || strings.EqualFold(localKey, input) {
 			matches = append(matches, key)
 		}
 	}
@@ -151,10 +155,13 @@ func applicationOwner(app model.App) string {
 	if app.ApplicationSet == nil || *app.ApplicationSet == "" {
 		return "standalone"
 	}
-	return "set:" + model.AppKey(*app.ApplicationSet, app.AppNamespace)
+	return "appset:" + *app.ApplicationSet
 }
 
 func (m *Model) refreshCurrentView() (tea.Model, tea.Cmd) {
+	if m.allContexts != nil {
+		return m, m.reloadAllContexts()
+	}
 	if m.state.Navigation.View == model.ViewClusters {
 		return m, m.loadDestinationServers()
 	}

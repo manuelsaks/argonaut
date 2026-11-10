@@ -32,7 +32,7 @@ func TestDestinationServersRegistryAndDrillDown(t *testing.T) {
 	m := destinationTestModel()
 	m.state.Navigation.View = model.ViewClusters
 	items := m.getVisibleItems()
-	if len(items) != 3 {
+	if len(items) != 4 {
 		t.Fatal("server without applications is missing")
 	}
 	text := stripANSI(m.renderListView(10))
@@ -75,7 +75,7 @@ func TestDestinationNameFilterAndEmptyContext(t *testing.T) {
 	m.state.Apps = nil
 	m.state.UI.ActiveFilter = ""
 	m.rebuildAppIndex()
-	if m.activeOverlay() != nil || len(m.getVisibleItems()) != 3 {
+	if m.activeOverlay() != nil || len(m.getVisibleItems()) != 4 {
 		t.Fatal("empty apps must not hide registered servers")
 	}
 }

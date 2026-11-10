@@ -433,6 +433,10 @@ func (m *Model) handleEnhancedSearchModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd
 			cmd := m.inputComponents.UpdateSearchInput(msg)
 			m.state.Diff.SearchQuery = m.inputComponents.GetSearchValue()
 			m.state.Diff.Offset = 0
+			if m.inspection != nil {
+				m.state.Diff.MatchIndex = -1
+				m.findInspectionMatch(false)
+			}
 			return m, cmd
 		}
 	}
@@ -449,6 +453,8 @@ func (m *Model) handleEnhancedSearchModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd
 			m.state.Navigation.SelectedIdx,
 			len(m.getVisibleItems()),
 		)
+		m.listNav.SetItemCount(len(m.getVisibleItems()))
+		m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
 		return m, cmd
 	case "ctrl+c":
 		// Treat Ctrl+C as closing the input (do not quit app)
@@ -483,56 +489,25 @@ func (m *Model) handleEnhancedSearchModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd
 		}
 		return m, nil
 	case "enter":
-		// Apply search filter and exit search mode or drill down for non-app views
 		searchValue := m.inputComponents.GetSearchValue()
-		if m.state.Mode == model.ModeDiff {
-			// Apply filter to diff view
-			if m.state.Diff != nil {
-				m.state.Diff.SearchQuery = searchValue
-				m.state.Diff.Offset = 0
-			}
-			m.inputComponents.BlurInputs()
-			m.state.Mode = model.ModeDiff
-			return m, nil
-		} else if m.state.Navigation.View == model.ViewTree {
-			// Apply filter to tree view and jump to first match
-			m.inputComponents.BlurInputs()
-			m.state.Mode = model.ModeNormal
-			if m.treeView != nil {
-				m.treeView.SetFilter(searchValue)
-				if m.treeView.MatchCount() > 0 {
-					m.treeView.JumpToFirstMatch()
-					m.treeNav.SetCursor(m.treeView.SelectedIndex())
-				}
-			}
-			return m, nil
-		} else if m.state.Navigation.View == model.ViewApps {
-			// Keep filter applied in apps view
-			m.inputComponents.BlurInputs()
-			m.state.Mode = model.ModeNormal
-			m.state.UI.SearchQuery = searchValue
-			m.state.UI.ActiveFilter = searchValue
-			m.state.Navigation.SelectedIdx = 0
-			return m, nil
-		}
-		// For other views, drill down using current filtered results
-		// Do NOT exit search mode until after drill-down so filtering remains active
+		m.inputComponents.BlurInputs()
+		m.state.Mode = model.ModeNormal
 		m.state.UI.SearchQuery = searchValue
-		if m.state.Navigation.View == model.ViewContexts {
-			// Keep the same filtered rows visible while switching, including if
-			// the selected context cannot be resolved and the picker stays open.
+		if m.state.Navigation.View == model.ViewTree && m.treeView != nil {
+			m.treeView.SetFilter(searchValue)
+			if m.treeView.MatchCount() > 0 {
+				m.treeView.JumpToFirstMatch()
+				m.treeNav.SetCursor(m.treeView.SelectedIndex())
+			}
+		} else {
 			m.state.UI.ActiveFilter = searchValue
+			m.state.Navigation.SelectedIdx = m.navigationService.ValidateBounds(m.state.Navigation.SelectedIdx, len(m.getVisibleItems()))
+			m.listNav.Reset()
 			m.listNav.SetItemCount(len(m.getVisibleItems()))
 			m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
 		}
-		// Perform drill-down based on current selection under active search filter
-		newModel, cmd := m.handleDrillDown()
-		if modelPtr, ok := newModel.(*Model); ok {
-			modelPtr.inputComponents.BlurInputs()
-			modelPtr.state.Mode = model.ModeNormal
-			return modelPtr, cmd
-		}
-		return newModel, cmd
+		return m, nil
+
 	default:
 		// Let bubbles textinput handle the key
 		cmd := m.inputComponents.UpdateSearchInput(msg)
@@ -548,6 +523,8 @@ func (m *Model) handleEnhancedSearchModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd
 				m.state.Navigation.SelectedIdx,
 				len(m.getVisibleItems()),
 			)
+			m.listNav.SetItemCount(len(m.getVisibleItems()))
+			m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
 		}
 		return m, cmd
 	}
@@ -651,6 +628,9 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			return false
 		}
 		canonical := m.autocompleteEngine.ResolveAlias(cmd)
+		if updated, cmd, handled := m.handleOverviewCommand(canonical, arg); handled {
+			return updated, cmd
+		}
 		if arg != "" {
 			switch canonical {
 			case "cluster":
@@ -1013,6 +993,14 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			m.state.Selections.SelectedApps = model.NewStringSet()
 			m.state.Navigation.SelectedIdx = 0 // Reset navigation for view change
 			m = m.safeChangeView(model.ViewClusters)
+			if arg == allServersChoice {
+				m.state.Selections.ScopeClusters = model.NewStringSet()
+				m.state.Selections.ScopeNamespaces = model.NewStringSet()
+				m.state.Selections.ScopeProjects = model.NewStringSet()
+				m.state.Selections.ScopeApplicationSets = model.NewStringSet()
+				m = m.safeChangeView(model.ViewApps)
+				return m, nil
+			}
 			if arg != "" {
 				// Validate cluster exists
 				all := m.autocompleteEngine.GetArgumentSuggestions("cluster", "", m.state)
@@ -1187,6 +1175,9 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			m.state.Modals.ChangelogLoading = true
 			return m, m.fetchChangelog()
 		case "context", "contexts", "argocd", "ctx":
+			if arg == "all" {
+				return m.openAllContexts()
+			}
 			if arg != "" {
 				return m, m.performContextSwitch(arg)
 			}

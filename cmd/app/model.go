@@ -30,13 +30,18 @@ import (
 
 // Model represents the main Bubbletea model containing all application state
 type Model struct {
-	inspection         *resourceInspection
-	inspectionSeq      int
-	helpOffset         int
-	destinationSeq     int
-	destinationLoaded  bool
-	destinationLoading bool
-	destinationError   string
+	allContexts         *allContextsState
+	allOverview         *Model
+	lastRenderedContent string
+	selectionSnapshot   string
+	selectedText        string
+	inspection          *resourceInspection
+	inspectionSeq       int
+	helpOffset          int
+	destinationSeq      int
+	destinationLoaded   bool
+	destinationLoading  bool
+	destinationError    string
 	// Core application state
 	state *model.AppState
 
@@ -214,6 +219,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.state.Diff != nil && len(m.state.Diff.Content) > 0 {
 				m.state.Diff.SearchQuery = newValue
 				m.state.Diff.Offset = 0
+				if m.inspection != nil {
+					m.state.Diff.MatchIndex = -1
+					m.findInspectionMatch(false)
+				}
 				return m, nil
 			}
 			m.state.UI.SearchQuery = newValue
@@ -421,7 +430,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case watchStartedMsg:
 		// Ignore stale/late watch start completions and stop their streams.
-		if msg.startSequenceNum != m.watchStartSequence {
+		if msg.switchEpoch != m.switchEpoch || msg.startSequenceNum != m.watchStartSequence {
 			cblog.With("component", "watch").Debug("watchStartedMsg: ignoring stale start",
 				"msg_start_seq", msg.startSequenceNum,
 				"current_start_seq", m.watchStartSequence)
@@ -1586,11 +1595,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case model.ContextSwitchResultMsg:
 		return m.handleContextSwitchResult(msg)
 
+	case allContextLoadedMsg:
+		return m.handleAllContextLoaded(msg)
+	case allContextsRefreshMsg:
+		if m.allContexts != nil && msg.SwitchEpoch == m.switchEpoch && msg.Sequence == m.allContexts.Sequence {
+			return m, m.reloadAllContexts()
+		}
+		return m, nil
 	case resourceInspectionMsg:
 		return m.handleResourceInspection(msg)
 	case destinationServersMsg:
 		return m.handleDestinationServers(msg)
 	case model.QuitMsg:
+		m.cancelAllContextRequests()
 		m.cancelResourceInspection()
 		m.cancelContextRelogin()
 		return m, tea.Quit

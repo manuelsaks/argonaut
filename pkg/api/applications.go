@@ -193,9 +193,7 @@ type ListApplicationsResult struct {
 // This matches the approach used by ArgoCD's own web UI.
 var AppListFields = []string{
 	"metadata.resourceVersion",
-	"items.metadata.name",
-	"items.metadata.namespace",
-	"items.metadata.ownerReferences",
+	"items.metadata",
 	"items.spec",
 	"items.status.sync.status",
 	"items.status.health",

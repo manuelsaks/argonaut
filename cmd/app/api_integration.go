@@ -75,6 +75,7 @@ func (m *Model) startLoadingApplications() tea.Cmd {
 
 // watchStartedMsg indicates the watch stream has started
 type watchStartedMsg struct {
+	switchEpoch      int
 	eventChan        <-chan services.ArgoApiEvent
 	cleanup          func()
 	generation       int
@@ -203,6 +204,7 @@ func (m *Model) startWatchingApplicationsWithConfig(projects []string, generatio
 		// Return message with the event channel so Update can set it properly
 		cblog.With("component", "watch").Info("Watch started successfully, returning watchStartedMsg")
 		return watchStartedMsg{
+			switchEpoch:      epoch,
 			eventChan:        eventChan,
 			cleanup:          cleanup,
 			generation:       capturedGeneration,
@@ -434,6 +436,9 @@ func (m *Model) consumeWatchEvents() tea.Cmd {
 // differs from the user's active ScopeProjects selection. If different, it schedules
 // a debounced watch restart (500ms) to avoid thrashing during rapid navigation.
 func (m *Model) maybeRestartWatchForScope() tea.Cmd {
+	if m.allContexts != nil {
+		return nil
+	}
 	newProjects := sortedScopeProjects(m.state.Selections.ScopeProjects)
 	if stringSlicesEqual(newProjects, m.watchScopeProjects) {
 		return nil // No change
