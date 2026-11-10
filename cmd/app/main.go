@@ -149,12 +149,14 @@ func main() {
 		showVersion    bool
 		showHelp       bool
 		lowBandwidth   bool
+		kargoFlag      bool
 	)
 	fs := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.BoolVar(&showVersion, "version", false, "Show version information and exit")
 	fs.BoolVar(&showHelp, "help", false, "Show help information and exit")
 	fs.BoolVar(&lowBandwidth, "low-bandwidth", false, "Reduce background traffic for slow connections / VPN (poll every 2m instead of streaming)")
+	fs.BoolVar(&kargoFlag, "kargo", false, "Open Kargo projects using its CLI SSO session (no Argo CD or kubeconfig required)")
 	fs.StringVar(&cfgPathFlag, "argocd-config", "", "Path to ArgoCD CLI config file")
 	// Alias
 	fs.StringVar(&cfgPathFlag, "config", "", "Path to ArgoCD CLI config file (alias)")
@@ -301,6 +303,14 @@ func main() {
 	}
 
 	// Port-forward manager (if used)
+	if kargoFlag {
+		m.prepareKargo()
+		if err := runTUI(m); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	var pfManager *portforward.Manager
 
 	// Try to read the ArgoCD CLI config file

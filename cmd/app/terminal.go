@@ -21,6 +21,7 @@ func runTUI(m *Model) error {
 	p := tea.NewProgram(m, tea.WithFilter(func(current tea.Model, msg tea.Msg) tea.Msg {
 		if _, quitting := msg.(tea.QuitMsg); quitting {
 			if model, ok := current.(*Model); ok {
+				model.cancelKargoRequests()
 				model.cancelAllContextRequests()
 				model.cancelContextRelogin()
 				model.cancelResourceInspection()
@@ -33,6 +34,7 @@ func runTUI(m *Model) error {
 	m.SetProgram(p)
 	final, err := p.Run()
 	if current, ok := final.(*Model); ok {
+		current.cancelKargoRequests()
 		current.cancelAllContextRequests()
 		current.cancelContextRelogin()
 		current.cancelResourceInspection()

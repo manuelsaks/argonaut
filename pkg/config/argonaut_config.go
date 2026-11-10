@@ -28,8 +28,37 @@ type ArgonautConfig struct {
 	Events          EventsConfig      `toml:"events,omitempty"`
 	Auth            AuthConfig        `toml:"auth,omitempty"`
 	Network         NetworkConfig     `toml:"network,omitempty"`
+	Kargo           KargoConfig       `toml:"kargo,omitempty"`
 	DefaultView     string            `toml:"default_view,omitempty"`
 	LastSeenVersion string            `toml:"last_seen_version,omitempty"`
+}
+
+// Kargo stores connection preferences only. SSO credentials stay with its CLI.
+type KargoConfig struct {
+	Command     string                     `toml:"command,omitempty"`
+	Connections map[string]KargoConnection `toml:"connections,omitempty"`
+}
+
+type KargoConnection struct {
+	Command      string `toml:"command,omitempty"`
+	Server       string `toml:"server,omitempty"`
+	ConfigHome   string `toml:"config_home,omitempty"`
+	CallbackPort int    `toml:"callback_port,omitempty"`
+	AutoRelogin  bool   `toml:"auto_relogin,omitempty"`
+}
+
+func (c *ArgonautConfig) GetKargoCommand() string {
+	if c != nil && c.Kargo.Command != "" {
+		return c.Kargo.Command
+	}
+	return "kargo"
+}
+
+func (c *ArgonautConfig) GetKargoRefreshInterval() time.Duration {
+	if c.IsLowBandwidth() || (c != nil && c.Network.RefreshInterval != "") {
+		return c.GetNetworkRefreshInterval()
+	}
+	return 10 * time.Second
 }
 
 // NetworkConfig limits background traffic on slow or metered connections.

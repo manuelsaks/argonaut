@@ -29,6 +29,7 @@ type AutocompleteEngine struct {
 // NewAutocompleteEngine creates a new autocomplete engine with command definitions
 func NewAutocompleteEngine() *AutocompleteEngine {
 	commands := []CommandAlias{
+		{Command: "kargo", Aliases: []string{"kargo", "kg"}, Description: "Browse Kargo stages, promotions, warehouses and freight"},
 		{
 			Command:     "cluster",
 			Aliases:     []string{"cluster", "clusters", "cls", "server", "servers"},

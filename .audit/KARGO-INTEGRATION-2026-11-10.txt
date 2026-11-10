@@ -1,0 +1,54 @@
+Argonaut Kargo integration - 2026-11-10
+
+Implemented:
+- Kargo entry point: --kargo, Argo CD key 6, :kargo / :kg.
+- Projects, Stages, Promotions, Warehouses, Freight and instance selection.
+- Describe / complete YAML, status colors, filtering, promotion steps and errors.
+- Explicit promotion confirmation binds instance, API server, project, Stage
+  and Freight. Each submission sends one write. Lost responses warn to inspect
+  Promotions; writes are never retried or replayed after authentication.
+- Native HTTP client with shared TLS trust/pools, HTTP/2 and gzip. REST v1beta1,
+  REST v1alpha1 and older unary Connect JSON are detected through read operations.
+  Connect contracts checked against the official Kargo v1.7.0 service.proto.
+- Connect raw JSON inspection preserves full Kubernetes objects and numeric
+  precision; project pagination is followed without background project fan-out.
+- --low-bandwidth polls visible data every 2m, normal default 10s. Network interval
+  overrides apply; 0 disables polling. Projects cache for 5m; other lists for the
+  refresh interval. Argo watchers stop while browsing Kargo. YAML/describe open
+  from cached data; older Connect fetches the raw object for full inspection.
+- SSO is delegated to a server-compatible Kargo CLI with --sso, optional callback
+  port, and separate config homes per named connection. Per-instance auto-login
+  toggle; rotating refresh tokens remain in CLI storage. Neither process arguments
+  nor Argonaut preferences contain bearer/refresh tokens. CLI environment overrides
+  for another server/token/kubeconfig are removed. CLI executable can be overridden
+  per connection when instances use different API generations.
+- Credential changes invalidate cache; late replies are gated by epoch, request,
+  target and session identity. Requests cancel on navigation. RBAC 403 never opens
+  SSO or causes background retries. Auth failures never replay a promotion.
+
+Verification:
+PASS: go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+PASS: REST versions and Connect wire fixtures; exact project/Stage/Freight scope,
+      same-named resources in different projects and two separate instances.
+PASS: one POST after confirmation, no duplicate on repeated key, lost-response
+      handling, SSO preference isolation and no write replay after login.
+PASS: cross-origin redirect rejection, API-error token redaction, CLI argument/
+      environment isolation, credential-change cache invalidation, stale reply
+      rejection and cancellation of a slow in-flight read.
+PASS: project pagination and raw-object precision on older Connect API.
+PASS: layouts at 60x20, 80x24, 100x30, 120x30, 160x40, including long confirmation
+      targets and scrolling. Existing golden snapshots updated only for key 6.
+PASS: Windows build, PowerShell and Git Bash --version / --help smoke checks.
+PASS: native Windows PTY console-mode restoration test and standalone Kargo
+      startup/quit smoke without credentials (no company API calls).
+PASS: Linux amd64 cross-build and git diff --check.
+
+Executable: C:\tmp\argonaut\argonaut.exe
+SHA256: 470CD119EA602D2A2367A54C2BA726AC50A493DFAC716A165270443718B08DB2
+Copy: .audit/argonaut-windows.exe
+Logs: .audit/kargo-race.log, .audit/kargo-captures.log
+
+No live company Kargo, Argo CD or SSO account was accessed. Browser authentication
+was checked through official CLI command construction and simulated completion;
+a real organization IdP login still needs verification with the user's server.
+The executable supersedes earlier binary hashes in this directory's reports.

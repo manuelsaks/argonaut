@@ -190,6 +190,9 @@ func (m *Model) Init() tea.Cmd {
 	m.applyThemeToModel()
 
 	// Show initial loading modal immediately if server is configured
+	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
+		return tea.Batch(append(cmds, m.loadKargoView(false))...)
+	}
 	if m.state.Server != nil {
 		cmds = append(cmds, func() tea.Msg { return model.SetInitialLoadingMsg{Loading: true} })
 	}

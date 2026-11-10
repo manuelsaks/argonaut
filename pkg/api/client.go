@@ -99,6 +99,14 @@ func pooledHTTPClient(insecure, stream bool) *http.Client {
 	return client
 }
 
+// NewHTTPClient shares the application's TLS trust and connection pools with
+// another API integration. Credentials must be attached to individual requests.
+func NewHTTPClient(insecure bool) *http.Client {
+	client := pooledHTTPClient(insecure, false)
+	client.CheckRedirect = sameOriginRedirectPolicy(client.CheckRedirect)
+	return client
+}
+
 // NewClient creates an Argo CD API client. Only transports are shared; bearer
 // tokens remain on each Client and are attached separately to every request.
 func NewClient(server *model.Server) *Client {

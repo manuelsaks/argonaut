@@ -3,7 +3,7 @@
  <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync  <d> describe  <y> YAML         
  <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete  <ctrl-b> rollback  <ctrl-t> terminate         
  <ctrl-k> k9s  <u/i> scroll events  <esc> back                                                      
- <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <:> command  <?> help                
+ <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <6> kargo  <:> command  <?> help     
  ╭──────────────────────────────────────────────╮╭─ Pod web-6f7d9b-x4k2m ───── ⟳ updated 12s ago ─╮ 
  │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
  │ ├── Deployment [demo/web] (Degraded)         ││ Health        Degraded                         │ 

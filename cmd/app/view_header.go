@@ -222,7 +222,7 @@ func (m *Model) renderK9sHeader() string {
 		}
 	}
 	if m.state.Mode == model.ModeNormal {
-		nav := []viewHotkey{{"0/c", "ctx"}, {"1", "apps"}, {"2", "servers"}, {"3", "ns"}, {"4", "proj"}, {"5", "sets"}, {":", "command"}, {"?", "help"}}
+		nav := []viewHotkey{{"0/c", "ctx"}, {"1", "apps"}, {"2", "servers"}, {"3", "ns"}, {"4", "proj"}, {"5", "sets"}, {"6", "kargo"}, {":", "command"}, {"?", "help"}}
 		line := ""
 		for _, k := range nav {
 			if line != "" {
@@ -232,7 +232,7 @@ func (m *Model) renderK9sHeader() string {
 		}
 		// On narrow screens retain context/app switching and the help affordance.
 		if lipgloss.Width(line) > width {
-			line = renderHotkey(nav[0]) + "  " + renderHotkey(nav[1]) + "  " + renderHotkey(viewHotkey{":", "views"}) + "  " + renderHotkey(nav[len(nav)-1])
+			line = renderHotkey(nav[0]) + "  " + renderHotkey(nav[1]) + "  " + renderHotkey(viewHotkey{"6", "kargo"}) + "  " + renderHotkey(viewHotkey{":", "views"}) + "  " + renderHotkey(nav[len(nav)-1])
 		}
 		rows = append(rows, clipAnsiToWidth(line, width))
 	}

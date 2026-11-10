@@ -1927,10 +1927,19 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.selectedText = ""
 	}
 	// Global kill: always quit on Ctrl+C
+	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
+		return m.handleKargoKey(msg)
+	}
 	if msg.String() == "ctrl+c" {
 		return m, func() tea.Msg { return model.QuitMsg{} }
 	}
 	// Context selection is also available when the current server cannot be
+	if msg.String() == "6" {
+		switch m.state.Mode {
+		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
+			return m.openKargo()
+		}
+	}
 	// reached or its token expired. Do not intercept text input or confirmations.
 	if msg.String() == "c" {
 		switch m.state.Mode {

@@ -335,6 +335,91 @@ overview (default `"1m"`); single-context views retain live streams. An explicit
 `http_timeouts.request_timeout` always takes precedence. Edit existing TOML
 sections rather than adding duplicate section headers.
 
+### Kargo
+
+Open Kargo with **6** or `:kargo` / `:kg`. You can also start directly in
+Kargo, without an Argo CD session or kubeconfig:
+
+```powershell
+kargo login https://kargo.example.com --sso
+.\argonaut.exe --kargo --low-bandwidth
+```
+
+Kargo CLI must be installed for browser SSO and session renewal. Reads and
+promotions use the Kargo API directly, sharing Argonaut's connection pools,
+HTTP/2, compression and configured TLS trust. REST `v1beta1` / `v1alpha1`
+and the older Connect JSON API are detected automatically. Credentials remain
+in Kargo CLI's configuration;
+Argonaut does not store passwords, bearer tokens or refresh tokens in its config.
+The default `cli` instance reads `$XDG_CONFIG_HOME/kargo/config`, or
+`~/.config/kargo/config` on Windows and Unix when XDG_CONFIG_HOME is unset.
+
+| Key | Kargo action |
+| --- | --- |
+| `0` / `c` | Choose instance |
+| `1` | Projects; Enter chooses a project |
+| `2` | Stages; Enter shows that stage's Promotions |
+| `3` | Promotions: phase, Stage, Freight and errors |
+| `4` | Warehouses: status, latest Freight, subscriptions and errors |
+| `5` | Freight: alias, origin and artifacts |
+| `d` / `y` | Compact describe / full YAML |
+| `Ctrl+P` | Select Stage and Freight, then open promotion confirmation |
+| `Ctrl+R` | Fetch fresh data immediately |
+| `Ctrl+L` | Browser SSO for the current/selected instance |
+| `Ctrl+A` | Enable/disable automatic SSO for that instance |
+| `Ctrl+E` | Open the complete last request error |
+| `/` | Filter; Enter applies it immediately |
+| `a` | Return to Argo CD |
+
+For a first login without a saved server, enter `:login https://kargo.example.com`
+in the Kargo view. `:login` reuses the current server. `:ctx`, `:projects`,
+`:stages`, `:promotions`, `:warehouses`, `:freight`, `:refresh` and
+`:argo` provide command navigation inside Kargo. `?` opens help.
+
+To promote, select a Stage, press Ctrl+P, select Freight and press Enter.
+Review the **instance, server, project, Stage and Freight**; a second Ctrl+P
+submits the request once. The resulting Promotion opens with its phase,
+step execution results and error messages. Its status refreshes until terminal;
+Ctrl+R also refreshes manually. Esc cancels before submission. A lost response
+never causes an automatic retry: check Promotions before submitting again.
+Server RBAC and promotion eligibility checks remain authoritative.
+
+Normal mode polls only the visible data every 10 seconds. Low-bandwidth mode
+uses the global network interval (two minutes by default); `refresh_interval = "0"`
+disables periodic refresh. Project lists are cached in memory for five minutes,
+other lists for the refresh interval. YAML/describe open from the already loaded
+object; older Connect servers fetch a raw JSON object for complete inspection.
+Background requests pause during input/confirmation, Argo CD watchers
+stop while browsing Kargo, and context changes cancel pending reads. No other
+projects or instances are polled in the background. Promotion/status details remain
+available via manual refresh when polling is disabled.
+
+To configure multiple instances, add preferences to Argonaut's config:
+
+```toml
+[kargo]
+command = "kargo"   # Or an absolute path to kargo.exe
+
+[kargo.connections.production]
+server = "https://kargo.prod.example.com"
+auto_relogin = true
+# callback_port = 8085  # Optional: use a redirect port registered with your IdP
+
+[kargo.connections.staging]
+server = "https://kargo.stage.example.com"
+auto_relogin = false
+# config_home = "C:/Users/you/.config"  # Optional: use an existing CLI session
+```
+
+Each named connection gets a separate CLI config home under Argonaut's config
+directory unless `config_home` is explicit. Log in with Ctrl+L for each one.
+Use a CLI release compatible with each server; a connection can override
+`command = "C:/tools/kargo-legacy.exe"` when instances run different API generations.
+SSO renewal uses the official CLI; failed/cancelled browser logins are throttled,
+and a promotion is never replayed after login. Only HTTP 401 triggers automatic
+login; HTTP 403 is shown as an RBAC error and stops background retries.
+See the official [Kargo SSO login documentation](https://docs.kargo.io/user-guide/how-to-guides/logging-in).
+
 Mouse selections remain highlighted after release and are copied automatically.
 The selected screen stays stable during watch updates. Ctrl+C or Ctrl+Y copies
 again; Esc clears the selection. Windows uses its native Unicode clipboard.

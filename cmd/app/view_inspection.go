@@ -52,7 +52,7 @@ func (m *Model) colorInspectionLine(line, kind string) string {
 			value = paint("13", value)
 		case "Healthy", "Synced", "Running", "Succeeded", "Normal":
 			value = paint("10", value)
-		case "Degraded", "Failed", "Error", "Warning", "OutOfSync", "Missing":
+		case "Degraded", "Failed", "Errored", "Aborted", "NotReady", "Error", "Warning", "OutOfSync", "Missing":
 			value = paint("9", value)
 		default:
 			if plain != "" {

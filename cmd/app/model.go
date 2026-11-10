@@ -30,6 +30,7 @@ import (
 
 // Model represents the main Bubbletea model containing all application state
 type Model struct {
+	kargo                *kargoUIState
 	allContexts          *allContextsState
 	allOverview          *Model
 	lastRenderedContent  string
@@ -212,6 +213,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleKeyMsg(msg)
 
 	case tea.PasteMsg:
+		if m.state.Navigation.View == model.ViewKargo {
+			return m.handleKargoPaste(msg.Content)
+		}
 		// Handle clipboard paste events
 
 		// Handle based on current mode
@@ -372,6 +376,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Mode messages
 	case model.SetModeMsg:
+		if m.state.Navigation.View == model.ViewKargo {
+			return m, nil
+		}
 		if m.inspection != nil && (m.state.Mode == model.ModeDiff || m.state.Mode == model.ModeSearch) {
 			return m, nil
 		}
@@ -1620,6 +1627,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case allContextLoadedMsg:
 		return m.handleAllContextLoaded(msg)
+	case kargoLoadedMsg:
+		return m.handleKargoLoaded(msg)
+	case kargoLoginMsg:
+		return m.handleKargoLogin(msg)
+	case kargoPromotedMsg:
+		return m.handleKargoPromoted(msg)
+	case kargoRefreshMsg:
+		if m.kargo != nil && m.state.Navigation.View == model.ViewKargo && msg.Epoch == m.switchEpoch && msg.Sequence == m.kargo.Sequence && msg.Target == m.kargoTarget() {
+			if m.state.Mode == model.ModeSearch || m.state.Mode == model.ModeCommand {
+				return m, m.nextKargoRefresh()
+			}
+			return m, m.loadKargoView(true)
+		}
+		return m, nil
 	case allContextDestinationsMsg:
 		return m.handleAllContextDestinations(msg)
 	case allContextsRefreshMsg:
@@ -1640,6 +1661,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case destinationServersMsg:
 		return m.handleDestinationServers(msg)
 	case model.QuitMsg:
+		m.cancelKargoRequests()
 		m.cancelAllContextRequests()
 		m.cancelResourceInspection()
 		m.cancelContextRelogin()

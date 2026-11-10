@@ -1,0 +1,184 @@
+=== RUN   TestKargoLayoutsAndFullWarehouseDetails
+    kargo_test.go:303: 
+        Kargo Connection
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Connection | SSO manual | low bandwidth | manual refresh                                                       
+         Server: http://127.0.0.1:11630                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  </> filter  <?> help                                
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ INSTANCE                              LOGIN                                 API SERVER                           │ 
+         │ cli                                   manual SSO                            http://127.0.0.1:11630               │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 17:54:32                                                                                           
+    kargo_test.go:303: 
+        Kargo Project
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Project | SSO manual | low bandwidth | manual refresh                                                          
+         Server: http://127.0.0.1:11630                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <d/y> describe/YAML  </> filter  <?> help           
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ NAME                                  STATUS                                DETAILS                              │ 
+         │ team-a                                Available                                                                  │ 
+         │ team-b                                Available                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         2 items | updated 17:54:32                                                                                           
+    kargo_test.go:303: 
+        Kargo Stage
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Stage | SSO manual | low bandwidth | manual refresh                                                            
+         Server: http://127.0.0.1:11630                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <ctrl-p> promote  <d/y> describe/YAML  </> filter   
+         <?> help                                                                                                             
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ STAGE                 STATUS                 FREIGHT                PROMOTION              MESSAGE               │ 
+         │ prod                  Healthy                freight-old                                                         │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 17:54:32                                                                                           
+    kargo_test.go:303: 
+        Kargo Promotion
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Promotion | SSO manual | low bandwidth | manual refresh                                                        
+         Server: http://127.0.0.1:11630                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <d/y> describe/YAML  </> filter  <?> help           
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ PROMOTION             PHASE                  STAGE                  FREIGHT                MESSAGE               │ 
+         │ No resources match this view. Ctrl+R: reload                                                                     │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         0 items | updated 17:54:32                                                                                           
+    kargo_test.go:303: 
+        Kargo Warehouse
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Warehouse | SSO manual | low bandwidth | manual refresh                                                        
+         Server: http://127.0.0.1:11630                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <d/y> describe/YAML  </> filter  <?> help           
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ WAREHOUSE             STATUS                 LATEST FREIGHT         SOURCES                MESSAGE               │ 
+         │ registry              NotReady               freight-old            https://git.exampl...  registry timeout      │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 17:54:32                                                                                           
+    kargo_test.go:303: 
+        Kargo Freight
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Freight | SSO manual | low bandwidth | manual refresh                                                          
+         Server: http://127.0.0.1:11630                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <ctrl-p> promote  <d/y> describe/YAML  </> filter   
+         <?> help                                                                                                             
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ FREIGHT                     ALIAS                       WAREHOUSE                    ARTIFACTS                   │ 
+         │ freight-a                   sleepy-owl                  registry                     registry.example/web | v2   │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 17:54:32                                                                                           
+--- PASS: TestKargoLayoutsAndFullWarehouseDetails (0.04s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.054s

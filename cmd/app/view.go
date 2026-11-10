@@ -271,8 +271,10 @@ func (m *Model) View() tea.View {
 	m.renderCount++
 
 	var content string
-	// Don't show plain "Starting..." - let renderMainLayout handle the loading modal
-	if !m.ready && m.state.Mode != model.ModeNormal {
+	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
+		content = m.renderKargoView()
+		// Don't show plain "Starting..." - let renderMainLayout handle the loading modal
+	} else if !m.ready && m.state.Mode != model.ModeNormal {
 		content = statusStyle.Render("Starting…")
 	} else {
 		// Map React App.tsx switch statement exactly

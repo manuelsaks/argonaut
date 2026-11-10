@@ -10,6 +10,9 @@ import (
 )
 
 func (m *Model) renderBanner() string {
+	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
+		return m.renderKargoHeader()
+	}
 	return m.renderK9sHeader()
 }
 

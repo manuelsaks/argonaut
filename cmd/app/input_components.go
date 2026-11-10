@@ -628,6 +628,9 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 			return false
 		}
 		canonical := m.autocompleteEngine.ResolveAlias(cmd)
+		if canonical == "kargo" {
+			return m.openKargo()
+		}
 		if updated, cmd, handled := m.handleOverviewCommand(canonical, arg); handled {
 			return updated, cmd
 		}
