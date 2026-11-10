@@ -1,0 +1,186 @@
+=== RUN   TestK9sStyleReferenceCaptures
+    recent_resources_test.go:164: argo 60x20:
+         Context: production                                        
+         Resource: Applications | all / all                         
+         <1> appsets   <2> servers   <3> namespaces<4> projects     
+         <:> command  <?> help  <enter/r> resources  <space> select 
+         <ctrl-s> sync  <d> describe  <y> YAML  <ctrl-r> refresh    
+         ╭────────────────────────────────────────────────────────╮ 
+         │ ▲APP NAME OWNER      S  H  DESTINATION / NAMESPACE     │ 
+         │ app-a     standalone V  V  ?/ns-a                      │ 
+         │ app-b     standalone ^  !  ?/ns-b                      │ 
+         │ app-c     standalone ?  .  ?/ns-c                      │ 
+         │                                                        │ 
+         │                                                        │ 
+         │                                                        │ 
+         │                                                        │ 
+         │                                                        │ 
+         │                                                        │ 
+         │                                                        │ 
+         ╰────────────────────────────────────────────────────────╯ 
+         <apps>                                         Ready • 1/3 
+    recent_resources_test.go:174: popup 60x20:
+         Context: cli                                               
+         Resource: Kargo / Stage | team-b                           
+         <1>┌─────────────<Promote from upstream>──────────────┐    
+         <ta│                                                  │ode 
+         <en│                  team-b / prod                   │    
+         ╭──│  Instance:  cli                                  │╮   
+         │ S│  Server:    http://127.0.0.1:6998                ││   
+         │ p│  Mode:      Promote  Promote from upstream       ││   
+         │ t│  Stage:     prod                                 ││   
+         │  │  Freight:   freight-a                            ││   
+         │  │  Alias:     sleepy-owl                           ││   
+         │  │  Choice:    1 / 1 (Up/Down)                      ││   
+         │  │  Upstream:  test                                 ││   
+         │  │  Filter:                                         ││   
+         │  │                                                  ││   
+         │  │        Cancel      Promote from upstream         ││   
+         ╰──│                                                  │╯   
+         2 i└──────────────────────────────────────────────────┘    
+        
+    recent_resources_test.go:164: argo 120x30:
+         Context: production            <1> appsets              <:> command               <ctrl-r> refresh            Argonaut 
+         Server: argocd.example.test    <2> servers              <?> help                  <ctrl-b> rollback           dev      
+         User: sso@example.test         <3> namespaces           <enter/r> resources       <ctrl-d> delete                      
+         Resource: Applications         <4> projects             <space> select            <ctrl-t> terminate                   
+         Scope: all / all                                        <ctrl-s> sync             <ctrl-k> k9s                         
+         Login: manual                                           <d> describe              </> filter                           
+         Network: manual refresh                                 <y> YAML                  <esc> back                           
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ ▲APP NAME OWNER      SYNC        HEALTH        DESTINATION / NAMESPACE                                             │ 
+         │ app-a     standalone V Synced    V Healthy     ?/ns-a                                                              │ 
+         │ app-b     standalone ^ OutOfSync ! Degraded    ?/ns-b                                                              │ 
+         │ app-c     standalone ? Unknown   . Progressing ?/ns-c                                                              │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                                     Ready • 1/3 
+    recent_resources_test.go:174: popup 120x30:
+         Context: cli                   <1> freight/team-b       <tab/shift-tab> focus     <enter> activate            Argonaut 
+         Server: 127.0.0.1:7000         <2> warehouses/team-b    <up/down> choose          <esc> cancel                dev      
+         User: SSO                      <3> projects             <left/right> mode                                              
+         Resource: Kargo / Stage                                                                                                
+         Project: team-b                                                                                                        
+         Login: manual SSO                                                                                                      
+         Network: manual refresh┌───────────────────────<Promote from upstream>────────────────────────┐                        
+         ╭──────────────────────│                                                                      │────────────────────╮   
+         │ STAGE  STATUS   FREIG│                            team-b / prod                             │                    │   
+         │ prod   Unknown       │                                                                      │                    │   
+         │ test   Unknown       │  Instance:  cli                                                      │                    │   
+         │                      │  Server:    http://127.0.0.1:7000                                    │                    │   
+         │                      │  Mode:      Promote  Promote from upstream                           │                    │   
+         │                      │  Stage:     prod                                                     │                    │   
+         │                      │  Freight:   freight-a                                                │                    │   
+         │                      │  Alias:     sleepy-owl                                               │                    │   
+         │                      │  Choice:    1 / 1 (Up/Down)                                          │                    │   
+         │                      │  Upstream:  test                                                     │                    │   
+         │                      │  Filter:                                                             │                    │   
+         │                      │                                                                      │                    │   
+         │                      │                  Cancel      Promote from upstream                   │                    │   
+         │                      │                                                                      │                    │   
+         │                      └──────────────────────────────────────────────────────────────────────┘                    │   
+         │                                                                                                                  │   
+         │                                                                                                                  │   
+         │                                                                                                                  │   
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯   
+         2 items | updated 22:41:18                                                                                             
+        
+    recent_resources_test.go:164: argo 160x40:
+         Context: production                   <1> appsets                <:> command                <d> describe               <ctrl-t> terminate             Argonaut 
+         Server: argocd.example.test           <2> servers                <?> help                   <y> YAML                   <ctrl-k> k9s                   dev      
+         User: sso@example.test                <3> namespaces             <enter/r> resources        <ctrl-r> refresh           </> filter                              
+         Resource: Applications                <4> projects               <space> select             <ctrl-b> rollback          <esc> back                              
+         Scope: all / all                                                 <ctrl-s> sync              <ctrl-d> delete                                                    
+         Login: manual                                                                                                                                                  
+         Network: manual refresh                                                                                                                                        
+                                                                                                                                                                        
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ ▲APP NAME OWNER      SYNC        HEALTH        DESTINATION / NAMESPACE                                                                                     │ 
+         │ app-a     standalone V Synced    V Healthy     ?/ns-a                                                                                                      │ 
+         │ app-b     standalone ^ OutOfSync ! Degraded    ?/ns-b                                                                                                      │ 
+         │ app-c     standalone ? Unknown   . Progressing ?/ns-c                                                                                                      │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         │                                                                                                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                                                                             Ready • 1/3 
+    recent_resources_test.go:174: popup 160x40:
+         Context: cli                          <1> freight/team-b         <tab/shift-tab> focus      <left/right> mode          <esc> cancel                   Argonaut 
+         Server: 127.0.0.1:7002                <2> warehouses/team-b      <up/down> choose           <enter> activate                                          dev      
+         User: SSO                             <3> projects                                                                                                             
+         Resource: Kargo / Stage                                                                                                                                        
+         Project: team-b                                                                                                                                                
+         Login: manual SSO                                                                                                                                              
+         Network: manual refresh / low bandwi                                                                                                                           
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮   
+         │ STAGE  STATUS   FREIGHT  PROMOTION  MESSAGE                                                                                                              │   
+         │ prod   Unknown                                                                                                                                           │   
+         │ test   Unknown                                                                                                                                           │   
+         │                                          ┌───────────────────────<Promote from upstream>────────────────────────┐                                        │   
+         │                                          │                                                                      │                                        │   
+         │                                          │                            team-b / prod                             │                                        │   
+         │                                          │                                                                      │                                        │   
+         │                                          │  Instance:  cli                                                      │                                        │   
+         │                                          │  Server:    http://127.0.0.1:7002                                    │                                        │   
+         │                                          │  Mode:      Promote  Promote from upstream                           │                                        │   
+         │                                          │  Stage:     prod                                                     │                                        │   
+         │                                          │  Freight:   freight-a                                                │                                        │   
+         │                                          │  Alias:     sleepy-owl                                               │                                        │   
+         │                                          │  Choice:    1 / 1 (Up/Down)                                          │                                        │   
+         │                                          │  Upstream:  test                                                     │                                        │   
+         │                                          │  Filter:                                                             │                                        │   
+         │                                          │                                                                      │                                        │   
+         │                                          │                  Cancel      Promote from upstream                   │                                        │   
+         │                                          │                                                                      │                                        │   
+         │                                          └──────────────────────────────────────────────────────────────────────┘                                        │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         │                                                                                                                                                          │   
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯   
+         2 items | updated 22:41:18                                                                                                                                     
+        
+--- PASS: TestK9sStyleReferenceCaptures (0.10s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.134s

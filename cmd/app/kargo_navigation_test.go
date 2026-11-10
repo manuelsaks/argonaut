@@ -17,7 +17,7 @@ func TestKargoBackRestoresEveryEntryPoint(t *testing.T) {
 	if m.kargo.Kind != "Stage" || m.kargo.Project != "team-b" || m.kargoRows()[m.kargo.Cursor].Resource.Name != "prod" {
 		t.Fatal("Promotion did not return directly to its Stage")
 	}
-	kargoKey(t, m, "4")
+	kargoCommand(t, m, "warehouses")
 	kargoKey(t, m, "enter") // warehouse -> freight
 	kargoKey(t, m, "esc")
 	if m.kargo.Kind != "Warehouse" {

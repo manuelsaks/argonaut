@@ -1,5 +1,5 @@
- Context: argo.example.com                                         Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual        
+ Context: argo.example.com                                                      
+ Resource: Deployment history | all / all                                       
  <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps   
  ╭─ Deployment history demo-app ──────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :...  1h ago   by jane.doe   curr… │ 

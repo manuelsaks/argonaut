@@ -1,0 +1,19 @@
+ [93mContext: [m[97mproduction[m                                        
+ [93mResource: [m[97mApplications | all / all[m                         
+ [95m<1>[m [90mappsets[m   [95m<2>[m [90mservers[m   [95m<3>[m [90mnamespaces[m[95m<4>[m [90mprojects[m     
+ [1;96m<:>[m [96mcommand[m  [1;96m<?>[m [96mhelp[m  [1;96m<enter/r>[m [96mresources[m  [1;96m<space>[m [96mselect[m 
+ [1;92m<ctrl-s>[m [92msync[m  [1;96m<d>[m [96mdescribe[m  [1;96m<y>[m [96mYAML[m  [1;96m<ctrl-r>[m [96mrefresh[m    
+ [95m╭────────────────────────────────────────────────────────╮[m 
+ [95m│[m [1;93m▲APP NAME OWNER      S  H  DESTINATION / NAMESPACE    [m [95m│[m 
+ [95m│[m [105mapp-a     standalone V  V  ?/ns-a                     [m [95m│[m 
+ [95m│[m app-b     standalone [91m^[m  [91m![m  ?/ns-b                      [95m│[m 
+ [95m│[m app-c     standalone [90m?[m  [93m.[m  ?/ns-c                      [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m│[m                                                        [95m│[m 
+ [95m╰────────────────────────────────────────────────────────╯[m 
+ [90m<apps>[m                                         [90mReady • 1/3[m 

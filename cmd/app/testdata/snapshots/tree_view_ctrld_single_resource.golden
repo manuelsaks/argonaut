@@ -1,15 +1,15 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Target: all | Scope: all/all | Login: manual                                     
- <y> delete  <c> cascade  <p> policy  <f> force  <esc> cancel                                       
- ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
- │ Application [my-app] (Healthy, Synced)                                                         │ 
- │ ├── Deployment [produ                                                                          │ 
- │ ├── Service [producti ╭────────────────────────────────────────────────╮                       │ 
+ Context: argo.example.co  <y> delete                    <f> force                         Argonaut 
+ Server: argo.example.com  <c> cascade                   <esc> cancel                      dev      
+ User: SSO                 <p> policy                                                               
+ Resource: Resources                                                                                
+ Scope: all / all                                                                                   
+ Login: manual                                                                                      
+ Network: watch          ╭────────────────────────────────────────────────╮                         
+ ╭────────────────────── │                                                │ ──────────────────────╮ 
+ │ Application [my-app]  │    Delete Deployment/production/api-server?    │                       │ 
+ │ ├── Deployment [produ │                                                │                       │ 
+ │ ├── Service [producti │                   Delete (y)                   │                       │ 
  │ └── ConfigMap [produc │                                                │                       │ 
- │                       │    Delete Deployment/production/api-server?    │                       │ 
- │                       │                                                │                       │ 
- │                       │                   Delete (y)                   │                       │ 
- │                       │                                                │                       │ 
  │                       │     c: Cascade On (all resources deleted)      │                       │ 
  │                       │    p: Policy foreground (wait for cleanup)     │                       │ 
  │                       │                  f: Force Off                  │                       │ 

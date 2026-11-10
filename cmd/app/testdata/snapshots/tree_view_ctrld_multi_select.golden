@@ -1,16 +1,16 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Target: all | Scope: all/all | Login: manual                                     
- <y> delete  <c> cascade  <p> policy  <f> force  <esc> cancel                                       
- ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
- │ Application [multi-app] (Healthy, Synced)                                                      │ 
- │ ├── Deployment [stagi                                                                          │ 
- │ ├── Service [staging/ ╭────────────────────────────────────────────────╮                       │ 
+ Context: argo.example.co  <y> delete                    <f> force                         Argonaut 
+ Server: argo.example.com  <c> cascade                   <esc> cancel                      dev      
+ User: SSO                 <p> policy                                                               
+ Resource: Resources                                                                                
+ Scope: all / all                                                                                   
+ Login: manual                                                                                      
+ Network: watch          ╭────────────────────────────────────────────────╮                         
+ ╭────────────────────── │                                                │ ──────────────────────╮ 
+ │ Application [multi-ap │             Delete 3 resource(s)?              │                       │ 
  │ ├── Deployment [stagi │                                                │                       │ 
- │ └── Service [staging/ │             Delete 3 resource(s)?              │                       │ 
- │                       │                                                │                       │ 
- │                       │                   Delete (y)                   │                       │ 
- │                       │                                                │                       │ 
- │                       │     c: Cascade On (all resources deleted)      │                       │ 
+ │ ├── Service [staging/ │                   Delete (y)                   │                       │ 
+ │ ├── Deployment [stagi │                                                │                       │ 
+ │ └── Service [staging/ │     c: Cascade On (all resources deleted)      │                       │ 
  │                       │      p: Policy background (async cleanup)      │                       │ 
  │                       │                  f: Force Off                  │                       │ 
  │                       │                                                │                       │ 

@@ -1,5 +1,5 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
+ Context: argo.example.com                                                                          
+ Resource: Deployment history | all / all                                                           
  <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps                       
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ Loading deployment history…                                                                    │ 
@@ -15,8 +15,8 @@
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
 
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
+ Context: argo.example.com                                                                          
+ Resource: Deployment history | all / all                                                           
  <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps                       
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ connection refused                                                                             │ 
@@ -32,8 +32,8 @@
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
 
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
+ Context: argo.example.com                                                                          
+ Resource: Deployment history | all / all                                                           
  <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps                       
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ No deployment history.                                                                         │ 
@@ -49,8 +49,8 @@
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 0/0 
 
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
+ Context: argo.example.com                                                                          
+ Resource: Deployment history | all / all                                                           
  <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps                       
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
@@ -66,8 +66,8 @@
  ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 3/4 
 
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
+ Context: argo.example.com                                                                          
+ Resource: Deployment history | all / all                                                           
  <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps                       
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 

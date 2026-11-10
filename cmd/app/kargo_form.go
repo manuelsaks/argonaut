@@ -22,6 +22,8 @@ type kargoPromotionForm struct {
 	Choices       []kargo.Resource
 	Sources       map[string]string
 	Cursor, Focus int // choice, Cancel, Promote, promotion mode
+	Caret         *tea.Cursor
+	ManualScroll  bool
 }
 
 type kargoFormLoadedMsg struct {
@@ -126,6 +128,7 @@ func (m *Model) setKargoFormChoices(items []kargo.Resource) {
 
 func (m *Model) chooseKargoFormItem() {
 	f, draft := m.kargo.Form, m.kargo.Draft
+	f.ManualScroll = false
 	items := m.kargoFormChoices()
 	f.Cursor = max(0, min(f.Cursor, len(items)-1))
 	value := ""
@@ -154,6 +157,7 @@ func (m *Model) handleKargoFormKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.cancelKargoForm()
 		return m, m.nextKargoRefresh()
 	case "tab", "shift+tab":
+		f.ManualScroll = false
 		order := []int{0, 1, 2}
 		if f.Kind == "" {
 			order = []int{1, 2}
@@ -172,6 +176,7 @@ func (m *Model) handleKargoFormKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		f.Focus = order[(index+delta)%len(order)]
 	case "enter":
+		f.ManualScroll = false
 		switch f.Focus {
 		case 0:
 			f.Focus = 1
@@ -187,6 +192,12 @@ func (m *Model) handleKargoFormKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if (st.Draft.RetryOf == "" && key == "ctrl+p") || (st.Draft.RetryOf != "" && key == "ctrl+t") {
 			return m, m.executeKargoPromotion()
 		}
+	case "pgup":
+		f.ManualScroll = true
+		m.kargo.ConfirmOffset = max(0, m.kargo.ConfirmOffset-3)
+	case "pgdown":
+		f.ManualScroll = true
+		m.kargo.ConfirmOffset += 3
 	case "ctrl+r":
 		if f.Kind != "" {
 			return m, m.loadKargoForm(true)
@@ -233,72 +244,79 @@ func (m *Model) switchKargoPromotionMode(upstream bool) tea.Cmd {
 	m.cancelKargoLoad()
 	st.Draft.FromUpstream, st.Draft.Freight = upstream, ""
 	st.Form.Query, st.Form.Cursor, st.Form.Choices, st.Form.Sources = "", 0, nil, nil
+	st.Form.ManualScroll = false
 	st.Error = ""
 	return m.loadKargoForm(false)
 }
 
 func (m *Model) renderKargoForm(width int) []string {
 	st, f, draft := m.kargo, m.kargo.Form, m.kargo.Draft
-	label := func(name, value string) string {
-		return lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render(name+": ") + kargoSingleLine(value)
+	field := func(label, value string) string {
+		prefix := lipgloss.NewStyle().Foreground(dimColor).Render(padRight(label+":", 11))
+		value = kargoSingleLine(value)
+		if lipgloss.Width(value) > width-11 {
+			return prefix + "\n" + lipgloss.NewStyle().Foreground(cyanBright).Render(value)
+		}
+		return prefix + lipgloss.NewStyle().Foreground(cyanBright).Render(value)
 	}
-	lines := []string{lipgloss.NewStyle().Foreground(syncedColor).Bold(true).Render("PROMOTE FREIGHT"), label("Instance", draft.Connection), label("Server", draft.Server), label("Project", draft.Project), label("Stage", draft.Stage), label("Freight", draft.Freight)}
+	title := lipgloss.NewStyle().Foreground(syncedColor).Bold(true).Render("PROMOTE FREIGHT")
 	if draft.RetryOf != "" {
-		lines[0] = lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("RETRY PROMOTION")
-		lines = append(lines, label("Previous", draft.RetryOf))
+		title = lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("RETRY PROMOTION")
 	}
+	lines := []string{title, lipgloss.NewStyle().Foreground(cyanBright).Render(draft.Project + " / " + draft.Stage), "", field("Instance", draft.Connection), field("Server", draft.Server)}
 	if f.Kind == "Freight" {
 		normal, upstream := "Promote", "Promote from upstream"
-		active := lipgloss.NewStyle().Foreground(syncedColor).Bold(true)
+		active := lipgloss.NewStyle().Foreground(syncedColor).Underline(true)
+		inactive := lipgloss.NewStyle().Foreground(dimColor)
 		if draft.FromUpstream {
-			upstream = active.Render("[ " + upstream + " ]")
+			normal, upstream = inactive.Render(normal), active.Render(upstream)
 		} else {
-			normal = active.Render("[ " + normal + " ]")
+			normal, upstream = active.Render(normal), inactive.Render(upstream)
 		}
-		mode := "Mode: " + normal + " | " + upstream
-		if f.Focus == 3 {
-			mode = lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render("> " + mode)
-		}
+		mode := lipgloss.NewStyle().Foreground(dimColor).Render(padRight("Mode:", 11)) + normal + "  " + upstream
 		lines = append(lines, mode)
 	}
+	lines = append(lines, field("Stage", draft.Stage), field("Freight", draft.Freight))
+	if draft.RetryOf != "" {
+		lines = append(lines, field("Previous", draft.RetryOf))
+	}
 	if f.Kind != "" {
-		field := "Choose " + f.Kind + " / filter: " + f.Query
-		if f.Focus == 0 {
-			field = lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render("> " + field)
-		}
-		lines = append(lines, field)
 		if st.Loading {
-			lines = append(lines, "Loading choices...")
+			lines = append(lines, lipgloss.NewStyle().Foreground(progressColor).Render("Loading choices..."))
 		} else {
 			choices := m.kargoFormChoices()
 			if len(choices) == 0 {
 				text := "No matching choices"
 				if draft.FromUpstream {
-					text = "No current upstream Freight eligible for this Stage"
+					text = "No eligible current upstream Freight"
 				}
 				lines = append(lines, lipgloss.NewStyle().Foreground(progressColor).Render(text))
-			}
-			// Keep the active option visible even in a short terminal.
-			if len(choices) > 0 {
+			} else {
 				r := choices[f.Cursor]
-				text := fmt.Sprintf("> (%d/%d) %s  %s  %s", f.Cursor+1, len(choices), r.Name, kargoFreightAlias(r), kargoSources(r))
-				lines = append(lines, lipgloss.NewStyle().Foreground(whiteBright).Bold(true).Render(text))
+				if alias := kargoFreightAlias(r); alias != "" {
+					lines = append(lines, field("Alias", alias))
+				}
+				lines = append(lines, field("Choice", fmt.Sprintf("%d / %d  (Up/Down)", f.Cursor+1, len(choices))))
+				if sources := kargoSources(r); sources != "" {
+					lines = append(lines, field("Revision", sources))
+				}
 				if draft.FromUpstream {
-					lines = append(lines, label("Upstream", f.Sources[r.Name]))
+					lines = append(lines, field("Upstream", f.Sources[r.Name]))
 				}
 			}
 		}
+		query := field("Filter", f.Query)
+		lines = append(lines, query)
 	}
 	button := func(text string, focus int, buttonColor color.Color) string {
 		if focus == 2 && (st.Loading || draft.Stage == "" || draft.Freight == "") {
 			buttonColor = dimColor
 		}
-		style := lipgloss.NewStyle().Foreground(buttonColor).Bold(true)
+		style := lipgloss.NewStyle().Foreground(buttonColor).Padding(0, 1)
 		if f.Focus == focus {
-			style = style.Background(buttonColor).Foreground(lipgloss.Color("0"))
-			text = "> " + text + " <"
+			style = style.Background(buttonColor).Foreground(ensureContrastingForeground(buttonColor, whiteBright)).Bold(true)
 		}
-		return style.Render("[ " + text + " ]")
+		return style.Render(text)
 	}
 	action := "Promote"
 	if draft.RetryOf != "" {
@@ -307,9 +325,9 @@ func (m *Model) renderKargoForm(width int) []string {
 	if draft.FromUpstream {
 		action = "Promote from upstream"
 	}
-	lines = append(lines, "", button("Cancel", 1, redColor)+"    "+button(action, 2, syncedColor))
+	lines = append(lines, "", button("Cancel", 1, cyanBright)+"    "+button(action, 2, syncedColor))
 	if st.Executing {
-		lines = append(lines, lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("Submitting once... waiting for the Kargo API response"))
+		lines = append(lines, lipgloss.NewStyle().Foreground(progressColor).Render("Submitting... waiting for Kargo"))
 	}
 	return lines
 }
@@ -332,9 +350,13 @@ func (m *Model) kargoFormBackdrop() string {
 }
 
 func (m *Model) renderKargoPromotionPopup() string {
-	boxWidth := max(1, min(90, m.state.Terminal.Cols-6))
-	innerWidth := max(1, boxWidth-4)
+	f := m.kargo.Form
+	f.Caret = nil
+	boxWidth := max(8, min(72, m.state.Terminal.Cols-8))
+	innerWidth := max(1, boxWidth-6)
 	lines := m.renderKargoForm(innerWidth)
+	// k9s embeds the dialog's name in the frame, keeping the form itself quiet.
+	lines = lines[1:]
 	footerCount := 2
 	if m.kargo.Executing {
 		footerCount = 3
@@ -342,30 +364,75 @@ func (m *Model) renderKargoPromotionPopup() string {
 	footer := lines[max(0, len(lines)-footerCount):]
 	lines = lines[:max(0, len(lines)-footerCount)]
 	var body []string
+	activeRow, caretColumn := -1, 0
+	activeLabel := ""
+	if f.Focus == 0 {
+		activeLabel = "Filter:"
+	}
+	if f.Focus == 3 {
+		activeLabel = "Mode:"
+	}
 	for _, line := range lines {
-		body = append(body, wrapAnsiToWidth(line, innerWidth)...)
+		wrapped := wrapAnsiToWidth(line, innerWidth)
+		body = append(body, wrapped...)
+		if activeLabel != "" && strings.HasPrefix(strings.TrimSpace(inspectionPlainText(line)), activeLabel) {
+			activeRow, caretColumn = len(body)-1, lipgloss.Width(wrapped[len(wrapped)-1])
+		}
 	}
-	help := "Tab focus | Enter activate | Esc cancel"
-	if m.kargo.Form.Focus == 0 && m.kargo.Form.Kind != "" {
-		help = "Up/Down choose | Tab focus | Enter OK | Esc cancel"
+	var summary []string
+	if len(body) > 0 {
+		summary = []string{centerDialogLine(body[0], innerWidth)}
+		body = body[1:]
+		activeRow--
 	}
-	if m.kargo.Form.Focus == 3 {
-		help = "<-/-> mode | Tab focus | Enter OK | Esc cancel"
-	}
-	footer = append(footer, lipgloss.NewStyle().Foreground(dimColor).Render(help))
 	if m.kargo.Error != "" {
-		footer = append(footer, lipgloss.NewStyle().Foreground(redColor).Render(kargoSingleLine(m.kargo.Error)))
+		body = append(body, wrapAnsiToWidth(lipgloss.NewStyle().Foreground(redColor).Render(kargoSingleLine(m.kargo.Error)), innerWidth)...)
 	}
-	available := max(1, m.state.Terminal.Rows-6-len(footer))
-	if len(body) > available {
-		// Preserve the title; the selected option and source remain beside buttons.
-		body = append(body[:1], body[len(body)-max(0, available-1):]...)
+	available := max(1, m.state.Terminal.Rows-8-len(footer)-len(summary))
+	offset := min(m.kargo.ConfirmOffset, max(0, len(body)-available))
+	if !f.ManualScroll && activeRow >= 0 {
+		if activeRow < offset {
+			offset = activeRow
+		}
+		if activeRow >= offset+available {
+			offset = activeRow - available + 1
+		}
 	}
-	lines = append(body, footer...)
+	m.kargo.ConfirmOffset = offset
+	body = body[offset:min(len(body), offset+available)]
+	for i := range footer {
+		footer[i] = centerDialogLine(clipAnsiToWidth(footer[i], innerWidth), innerWidth)
+	}
+	lines = append(append(summary, body...), footer...)
 	for i := range lines {
 		lines[i] = padRight(clipAnsiToWidth(lines[i], innerWidth), innerWidth)
 	}
-	return lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(cyanBright).
-		Background(currentPalette.DarkBG).Foreground(whiteBright).Padding(0, 1).
-		Width(boxWidth).Render(strings.Join(lines, "\n"))
+	rendered := lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(k9sFrameColor).
+		Background(currentPalette.DarkBG).Foreground(whiteBright).Padding(1, 2).Width(boxWidth).Render(strings.Join(lines, "\n"))
+	rows := strings.Split(rendered, "\n")
+	title := "Promote"
+	titleColor := syncedColor
+	if m.kargo.Draft.FromUpstream {
+		title = "Promote from upstream"
+	}
+	if m.kargo.Draft.RetryOf != "" {
+		title, titleColor = "Retry Promotion", progressColor
+	}
+	caption := lipgloss.NewStyle().Foreground(titleColor).Render("<" + title + ">")
+	outerWidth := lipgloss.Width(rendered)
+	if !m.kargo.Executing && !m.kargo.Loading && activeRow >= offset && activeRow < offset+available {
+		x := max(0, (m.state.Terminal.Cols-outerWidth)/2) + 3 + min(caretColumn, innerWidth-1)
+		y := max(0, (m.state.Terminal.Rows-lipgloss.Height(rendered))/2) + 2 + len(summary) + activeRow - offset
+		f.Caret = tea.NewCursor(x, y)
+		f.Caret.Color = syncedColor
+	}
+	caption = clipAnsiToWidth(caption, max(0, outerWidth-2))
+	left := max(0, (outerWidth-2-lipgloss.Width(caption))/2)
+	border := lipgloss.NewStyle().Foreground(k9sFrameColor)
+	rows[0] = border.Render("┌"+strings.Repeat("─", left)) + caption + border.Render(strings.Repeat("─", max(0, outerWidth-2-left-lipgloss.Width(caption)))+"┐")
+	return strings.Join(rows, "\n")
+}
+
+func centerDialogLine(line string, width int) string {
+	return strings.Repeat(" ", max(0, (width-lipgloss.Width(line))/2)) + line
 }

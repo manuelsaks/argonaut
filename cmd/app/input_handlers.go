@@ -1839,12 +1839,31 @@ func (m *Model) getVisibleItemsForCurrentView() []interface{} {
 
 // handleKeyMsg centralizes keyboard handling and delegates to mode/view handlers
 func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.recentResources == nil {
+		m.recentResources = &resourceHistory{}
+	}
+	var before recentResource
+	var remember bool
+	track := isRecentNavigationKey(msg.String())
+	if track {
+		before, remember = m.recentLocation()
+	}
 	updated, cmd := m.handleKeyForView(msg)
 	// Single-context models used by overview actions are not user-visible
 	// navigation levels, including when cancelling their confirmation dialogs.
 	if child, ok := updated.(*Model); ok && msg.String() == "esc" && child.allOverview != nil && child.state.Mode == model.ModeNormal && child.state.Navigation.View == model.ViewApps {
 		parent, back := child.returnToAllOverview()
-		return parent, tea.Batch(cmd, back)
+		updated, cmd = parent, tea.Batch(cmd, back)
+	}
+	if next, ok := updated.(*Model); ok {
+		next.recentResources = m.recentResources
+		if track {
+			after, valid := next.recentLocation()
+			next.removeCurrentRecent()
+			if remember && (!valid || before.Key != after.Key) {
+				next.rememberResource(before)
+			}
+		}
 	}
 	return updated, cmd
 }
@@ -1870,6 +1889,14 @@ func (m *Model) handleKeyForView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.selectedText = ""
 	}
 	// Global kill: always quit on Ctrl+C
+	if key := msg.String(); m.state.Mode == model.ModeNormal && len(key) == 1 && key >= "1" && key <= "4" {
+		if m.kargo == nil || m.state.Navigation.View != model.ViewKargo || (m.kargo.Form == nil && !m.kargo.Confirm && !m.kargo.Executing && !m.kargo.LoginBusy) {
+			if m.reloginInProgress || m.contextNeedsLoad || m.state.Modals.InitialLoading {
+				return m, nil
+			}
+			return m.openRecentResource(int(key[0] - '1'))
+		}
+	}
 	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
 		return m.handleKargoKey(msg)
 	}
@@ -1877,14 +1904,8 @@ func (m *Model) handleKeyForView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, func() tea.Msg { return model.QuitMsg{} }
 	}
 	// Context selection is also available when the current server cannot be
-	if msg.String() == "6" {
-		switch m.state.Mode {
-		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
-			return m.openKargo()
-		}
-	}
 	// reached or its token expired. Do not intercept text input or confirmations.
-	if msg.String() == "c" || msg.String() == "0" {
+	if msg.String() == "c" {
 		switch m.state.Mode {
 		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
 			return m.openContextPicker()
@@ -1899,15 +1920,6 @@ func (m *Model) handleKeyForView(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.state.Mode == model.ModeNormal {
 		if m.state.Navigation.View == model.ViewContexts && msg.String() == "ctrl+a" {
 			return m.toggleContextAutoRelogin()
-		}
-		commands := map[string]string{"1": "apps", "2": "clusters", "3": "namespaces", "4": "projects", "5": "appsets"}
-		if msg.String() == "0" {
-			return m.openContextPicker()
-		}
-		if command, ok := commands[msg.String()]; ok {
-			m.state.Mode = model.ModeCommand
-			m.inputComponents.SetCommandValue(command)
-			return m.handleEnhancedCommandModeKeys(tea.KeyPressMsg{Code: tea.KeyEnter})
 		}
 	}
 

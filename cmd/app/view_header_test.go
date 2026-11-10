@@ -41,21 +41,6 @@ func TestHeaderShowsCurrentViewAndAvailableActions(t *testing.T) {
 }
 
 func TestViewSwitchShortcutsRespectTextInputAndConfirmation(t *testing.T) {
-	for _, tc := range []struct {
-		key  string
-		view model.View
-	}{
-		{"0", model.ViewContexts}, {"1", model.ViewApps}, {"2", model.ViewClusters},
-		{"3", model.ViewNamespaces}, {"4", model.ViewProjects}, {"5", model.ViewApplicationSets},
-	} {
-		t.Run(tc.key, func(t *testing.T) {
-			m := contextPickerTestModel(t)
-			_, _ = m.handleKeyMsg(testKeyMsg(tc.key))
-			if m.state.Navigation.View != tc.view {
-				t.Fatalf("%s opened %s, want %s", tc.key, m.state.Navigation.View, tc.view)
-			}
-		})
-	}
 	m := contextPickerTestModel(t)
 	_, _ = m.handleKeyMsg(testKeyMsg("/"))
 	_, _ = m.handleKeyMsg(testKeyMsg("3"))

@@ -1,10 +1,9 @@
- Context: argo.example.com                                         Argonaut dev 
- View: Resources | Target: all | Scope: all/all | Login: manual                 
- <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync             
- <d> describe  <y> YAML  <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete    
- <ctrl-b> rollback  <ctrl-t> terminate  <ctrl-k> k9s  <u/i> scroll events       
- <esc> back                                                                     
- <0/c> ctx  <1> apps  <6> kargo  <:> views  <?> help                            
+ Context: argo.example.com                                                      
+ Resource: Resources | all / all                                                
+ <:> command  <?> help  <enter/e> events  <h/l> fold/unfold  <space> select     
+ <ctrl-s> sync  <d> describe  <y> YAML  <ctrl-r> refresh  <ctrl-a> actions      
+ <ctrl-d> delete  <ctrl-b> rollback  <ctrl-t> terminate  <ctrl-k> k9s           
+ <u/i> scroll events  <esc> back                                                
  ╭────────────────────────────────────────────────────────────────────────────╮ 
  │ Application [demo-app] (Degraded, Synced)                                  │ 
  │ ├── Deployment [demo/web] (Degraded)                                       │ 
@@ -20,5 +19,6 @@
  │ Last sync     SyncFailed                                                   │ 
  │   pod spec invalid                                                         │ 
  │                                                                            │ 
+ │ EVENTS                                                                     │ 
  ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <tree>                                        u/i: scroll events • Ready • 1/4 

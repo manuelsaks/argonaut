@@ -1,7 +1,7 @@
-Context: argo.example.com                 <enter/r> resources            <ctrl-b> rollback                Argonaut dev
-Server:  argo.example.com                 <space> select                 <ctrl-d> delete                              
-View:    Applications                     <ctrl-s> sync                  <ctrl-t> terminate                           
-Scope:   payments / billing               <d> describe                   <ctrl-k> k9s                                 
-Login:   manual                           <y> YAML                       </> filter                                   
-Target:  prod                             <ctrl-r> refresh               <esc> back                                   
-<0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <6> kargo  <:> command  <?> help                        
+Context: argo.example.com      <:> command              <d> describe             <ctrl-t> terminate           Argonaut
+Server: argo.example.com       <?> help                 <y> YAML                 <ctrl-k> k9s                 dev     
+User: SSO                      <enter/r> resources      <ctrl-r> refresh         </> filter                           
+Resource: Applications         <space> select           <ctrl-b> rollback        <esc> back                           
+Scope: payments / billing @ p  <ctrl-s> sync            <ctrl-d> delete                                               
+Login: manual                                                                                                         
+Network: watch                                                                                                        

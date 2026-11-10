@@ -1,0 +1,29 @@
+[90m [93mContext: [97mcli[m                   [95m<1>[m [90mfreight/team-b[m       [96;1m<tab/shift-tab>[m [96mfocus[m     [96;1m<enter>[m [96mactivate[m            [93mArgonaut[90m [m
+[90m [93mServer: [97m127.0.0.1:7000[m         [95m<2>[m [90mwarehouses/team-b[m    [96;1m<up/down>[m [96mchoose[m          [96;1m<esc>[m [96mcancel[m                [90mdev[m     [90m [m
+[90m [93mUser: [97mSSO[m                      [95m<3>[m [90mprojects[m             [96;1m<left/right>[m [96mmode[m                                             [90m [m
+[90m [93mResource: [97mKargo / Stage[m                                                                                               [90m [m
+[90m [93mProject: [97mteam-b[m                                                                                                       [90m [m
+[90m [93mLogin: [97mmanual SSO[m                                                                                                     [90m [m
+[90m [93mNetwork: [97mmanual refresh[34m┌───────────────────────[92m<Promote from upstream>[34m────────────────────────┐[m                       [90m [m
+[90m ╭──────────────────────[34m│[m                                                                      [34m│[90m────────────────────╮   [m
+[90m │ STAGE  STATUS   FREIG[34m│[m  [97m                          [96mteam-b / prod[m                             [34m│[90m                    │   [m
+[90m │ prod   Unknown       [34m│[m  [97m                                                                  [m  [34m│[90m                    │   [m
+[90m │ test   Unknown       [34m│[m  [90mInstance:  [96mcli[m                                                      [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mServer:    [96mhttp://127.0.0.1:7000[m                                    [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mMode:      Promote[m  [92;4mPromote from upstream[m                           [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mStage:     [96mprod[m                                                     [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mFreight:   [96mfreight-a[m                                                [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mAlias:     [96msleepy-owl[m                                               [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mChoice:    [96m1 / 1 (Up/Down)[m                                          [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mUpstream:  [96mtest[m                                                     [34m│[90m                    │   [m
+[90m │                      [34m│[m  [90mFilter:    [m                                                         [34m│[90m                    │   [m
+[90m │                      [34m│[m  [97m                                                                  [m  [34m│[90m                    │   [m
+[90m │                      [34m│[m  [97m                [96mCancel[m      [92mPromote from upstream[m                   [34m│[90m                    │   [m
+[90m │                      [34m│[m                                                                      [34m│[90m                    │   [m
+[90m │                      [34m└──────────────────────────────────────────────────────────────────────┘[90m                    │   [m
+[90m │                                                                                                                  │   [m
+[90m │                                                                                                                  │   [m
+[90m │                                                                                                                  │   [m
+[90m ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯   [m
+[90m 2 items | updated 22:41:18                                                                                             [m
+

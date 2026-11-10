@@ -76,6 +76,7 @@ func (m *Model) openAllContexts() (tea.Model, tea.Cmd) {
 	next.state.ContextNames = append([]string(nil), m.state.ContextNames...)
 	next.switchEpoch = m.switchEpoch + 1
 	next.reloginAttempts = m.reloginAttempts
+	next.recentResources = m.recentResources
 	next.currentContextName = "all"
 	next.state.Mode = model.ModeNormal
 	next.state.Navigation.View = model.ViewApps
@@ -430,6 +431,7 @@ func (m *Model) enterOverviewApplication(app model.App, selected []model.App) *M
 	child.destinationFetchedAt = m.allContexts.DestinationFetchedAt[app.ContextName]
 	child.rebuildAppIndex()
 	child.allOverview = m
+	child.recentResources = m.recentResources
 	for i, item := range child.getVisibleItems() {
 		if item.(model.App).Key() == model.AppKey(app.Name, app.AppNamespace) {
 			child.state.Navigation.SelectedIdx = i

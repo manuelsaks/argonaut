@@ -1,24 +1,24 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
- <enter> confirm  <p> prune  <w> watch  <h/l> choose  <esc> back                                    
- ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
- │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
- │ #29  11223344 fix:                                                          ated               │ 
- │ #28  deadbeef      ╭──────────────────────────────────────────────────────╮ ated               │ 
- │ #27  55667788      │                                                      │ mith               │ 
- ╰─────────────────── │                  Redeploy demo-app?                  │ ───────────────────╯ 
- ╭─ #30 a1b2c3d4 ──── │                                                      │ ─ deployed 1h ago ─╮ 
- │                    │        a1b2c3d4 (current) → a1b2c3d4 (1h ago)        │                    │ 
- │ DEPLOYMENT         │     fix: suggest and validate :events arguments      │                    │ 
+ Context: argo.example.co  <enter> confirm               <h/l> choose                      Argonaut 
+ Server: argo.example.com  <p> prune                     <esc> back                        dev      
+ User: SSO                 <w> watch                                                                
+ Resource: Deployment his                                                                           
+ Scope: all / all                                                                                   
+ Login: manual                                                                                      
+ Network: watch       ╭──────────────────────────────────────────────────────╮                      
+ ╭─ Deployment histor │                                                      │ ───────────────────╮ 
+ │ #30  a1b2c3d4 fix: │                  Redeploy demo-app?                  │ doe   current      │ 
+ │ #29  11223344 fix: │                                                      │ ated               │ 
+ │ #28  deadbeef      │        a1b2c3d4 (current) → a1b2c3d4 (1h ago)        │ ated               │ 
+ │ #27  55667788      │     fix: suggest and validate :events arguments      │ mith               │ 
+ ╰─────────────────── │                                                      │ ───────────────────╯ 
+ ╭─ #30 a1b2c3d4 ──── │              Redeploy (y)        Cancel              │ ─ deployed 1h ago ─╮ 
+ │                    │                                                      │                    │ 
+ │ DEPLOYMENT         │              p: Prune Off • w: Watch On              │                    │ 
  │ Deployed       1h  │                                                      │                    │ 
- │ Initiated by   jan │              Redeploy (y)        Cancel              │                    │ 
- │ Active for     1h5 │                                                      │                    │ 
- │                    │              p: Prune Off • w: Watch On              │                    │ 
- │ COMMIT         a1b │                                                      │                    │ 
- │ Author         Jan ╰──────────────────────────────────────────────────────╯                    │ 
- │ Date           22h                                                                             │ 
+ │ Initiated by   jan ╰──────────────────────────────────────────────────────╯                    │ 
+ │ Active for     1h5                                                                             │ 
  │                                                                                                │ 
- │ fix: suggest and validate :events arguments                                                    │ 
- │                                                                                                │ 
- ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+ │ COMMIT         a1b2c3d4e5f6                                                                    │ 
+ │ Author         Jane Doe                                                                        │ 
+ ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 1/4 

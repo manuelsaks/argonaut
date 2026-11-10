@@ -56,48 +56,35 @@ func kargoSources(resource kargo.Resource) string {
 
 func (m *Model) renderKargoHeader() string {
 	st := m.kargo
-	width := max(8, m.state.Terminal.Cols-2)
 	connection := st.Connections[st.Connection]
-	connection.Name, connection.Server = kargoSingleLine(connection.Name), kargoSingleLine(connection.Server)
-	project := kargoSingleLine(st.Project)
+	project := st.Project
 	if project == "" {
-		project = "choose a project"
+		project = "all"
 	}
-	network := "refresh: " + m.config.GetKargoRefreshInterval().String()
-	if m.config.GetKargoRefreshInterval() <= 0 {
-		network = "manual refresh"
+	network := "manual refresh"
+	if interval := m.config.GetKargoRefreshInterval(); interval > 0 {
+		network = "poll " + interval.String()
 	}
 	if m.config.IsLowBandwidth() {
-		network = "low bandwidth | " + network
+		network += " / low bandwidth"
 	}
-	login := "SSO manual"
-	loginStyle := lipgloss.NewStyle().Foreground(dimColor)
+	login := "manual SSO"
 	if connection.AutoRelogin {
-		login = "SSO auto"
-		loginStyle = loginStyle.Foreground(syncedColor)
+		login = "auto SSO"
 	}
 	if st.LoginBusy {
-		login = "SSO signing in..."
-		loginStyle = loginStyle.Foreground(progressColor).Bold(true)
+		login = "signing in..."
 	}
 	view := st.Kind
 	if st.Detail != nil {
 		view = st.Detail.Kind + " / " + st.DetailKind
-	}
-	style := lipgloss.NewStyle().Bold(true).Foreground(cyanBright)
-	rows := []string{
-		style.Render("Kargo") + " | Instance: " + connection.Name + " | Project: " + project,
-		"View: " + style.Render(view) + " | " + loginStyle.Render(login) + " | " + network,
-	}
-	if connection.Server != "" && m.state.Terminal.Rows > 22 {
-		rows = append(rows, "Server: "+connection.Server)
 	}
 	var legend []viewHotkey
 	switch {
 	case st.Executing:
 		legend = []viewHotkey{{"ctrl-c", "quit"}}
 	case st.Form != nil:
-		legend = []viewHotkey{{"tab/shift-tab", "field/button"}, {"up/down", "choose"}, {"enter", "activate"}, {"esc", "cancel"}}
+		legend = []viewHotkey{{"tab/shift-tab", "focus"}, {"up/down", "choose"}, {"left/right", "mode"}, {"enter", "activate"}, {"esc", "cancel"}}
 	case st.Confirm:
 		legend = []viewHotkey{{"ctrl-p", "confirm promotion"}, {"j/k", "scroll"}, {"esc", "cancel"}}
 		if st.Draft != nil && st.Draft.RetryOf != "" {
@@ -126,35 +113,8 @@ func (m *Model) renderKargoHeader() string {
 		}
 		legend = append(legend, viewHotkey{"/", "filter"}, viewHotkey{"?", "help"})
 	}
-	line := ""
-	for _, action := range legend {
-		cell := renderHotkey(action)
-		if line != "" && lipgloss.Width(line)+lipgloss.Width(cell)+2 > width {
-			rows = append(rows, line)
-			line = ""
-		}
-		if line != "" {
-			line += "  "
-		}
-		line += cell
-	}
-	if line != "" {
-		rows = append(rows, line)
-	}
-	if m.state.Diff == nil && !st.Confirm && !st.Executing && m.state.Mode == model.ModeNormal {
-		navigation := "<0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD"
-		if width < 105 {
-			navigation = "<0> ctx <1> proj <2> stage <3> promo <4> wh <5> freight <a> Argo"
-		}
-		rows = append(rows, style.Render(navigation))
-	}
-	if m.state.Terminal.Rows <= 22 && len(rows) > 5 {
-		rows = rows[:5]
-	}
-	for i := range rows {
-		rows[i] = clipAnsiToWidth(rows[i], width)
-	}
-	return strings.Join(rows, "\n")
+	meta := []resourceHeaderField{{"Context", connection.Name}, {"Server", hostFromURL(connection.Server)}, {"User", "SSO"}, {"Resource", "Kargo / " + view}, {"Project", project}, {"Login", login}, {"Network", network}}
+	return m.renderResourceHeader(meta, legend)
 }
 
 // Remove remote terminal controls and line breaks before adding local styling.
@@ -182,9 +142,10 @@ func (m *Model) renderKargoView() string {
 		modal := m.renderKargoPromotionPopup()
 		return m.composeOverlay(
 			lipgloss.NewLayer(desaturateANSI(base)),
+			lipgloss.NewLayer(m.renderKargoHeader()).X(1).Y(0).Z(1),
 			lipgloss.NewLayer(modal).
 				X(max(0, (m.state.Terminal.Cols-lipgloss.Width(modal))/2)).
-				Y(max(0, (m.state.Terminal.Rows-lipgloss.Height(modal))/2)).Z(1),
+				Y(max(0, (m.state.Terminal.Rows-lipgloss.Height(modal))/2)).Z(2),
 		)
 	}
 	return m.renderKargoBaseView()

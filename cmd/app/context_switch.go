@@ -189,6 +189,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 	newM.switchEpoch = m.switchEpoch + 1       // Increment epoch
 	newM.reloginAttempts = m.reloginAttempts   // Throttle failed login loops across context switches.
 	newM.reloginProbed = m.reloginProbed
+	newM.recentResources = m.recentResources
 	if msg.Reload && msg.ContextName == m.currentContextName {
 		newM.allOverview = m.allOverview
 	}

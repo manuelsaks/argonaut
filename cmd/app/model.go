@@ -30,6 +30,7 @@ import (
 
 // Model represents the main Bubbletea model containing all application state
 type Model struct {
+	recentResources      *resourceHistory
 	kargo                *kargoUIState
 	allContexts          *allContextsState
 	allOverview          *Model

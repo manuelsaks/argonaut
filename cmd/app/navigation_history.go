@@ -12,8 +12,10 @@ import (
 // Keep presentation state alongside the data-only navigation stack. Each entry
 // owns its cursor, scroll position and (for app-of-apps) expanded resource tree.
 type navigationFrame struct {
-	list, tree listnav.ListNavigator
-	view       *treeview.TreeView
+	list, tree    listnav.ListNavigator
+	view          *treeview.TreeView
+	kargo         *kargoLocation
+	kargoInstance string
 }
 
 func navigationKey(item interface{}) string {
@@ -28,6 +30,11 @@ func (m *Model) saveNavigationState() {
 		m.navigationFrames = make(map[int]navigationFrame)
 	}
 	frame := navigationFrame{view: m.treeView}
+	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
+		loc := m.kargoLocation()
+		frame.kargo = &loc
+		frame.kargoInstance = m.kargo.Connections[m.kargo.Connection].Name
+	}
 	if m.listNav != nil {
 		frame.list = *m.listNav
 	}
@@ -66,6 +73,29 @@ func (m *Model) restoreNavigation() (bool, tea.Cmd) {
 		m.listNav = &frame.list
 		m.treeNav = &frame.tree
 		m.treeView = frame.view
+	}
+	if top.View == model.ViewKargo && frame.kargo != nil {
+		m.cancelAllContextRequests()
+		m.cleanupAppWatcher()
+		m.watchChan = nil
+		index := -1
+		for i, connection := range m.kargo.Connections {
+			if connection.Name == frame.kargoInstance {
+				index = i
+				break
+			}
+		}
+		if index < 0 {
+			m.kargo.Kind, m.kargo.Error = "Connection", "Previous instance is no longer configured"
+			return true, nil
+		}
+		if m.kargo.Connection != index {
+			m.selectKargoConnection(index)
+		}
+		loc := *frame.kargo
+		loc.Connection = index
+		m.restoreKargoLocation(loc)
+		return true, m.loadKargoView(false)
 	}
 	if top.View == model.ViewTree && top.TreeApp != nil {
 		if m.treeView == nil || !hasFrame {

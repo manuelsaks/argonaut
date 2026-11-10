@@ -25,12 +25,12 @@ func (m *Model) helpContentLines() []string {
 	// GENERAL
 	general := strings.Join([]string{
 		mono(":"), " command ", bullet(), " ", mono("/"), " search ", bullet(), " ", mono("?"), " help",
-		"\n", mono("0/c"), " contexts ", bullet(), " ", mono("1"), " apps ", bullet(), " ", mono("2"), " servers ", bullet(), " ", mono("3"), " namespaces ", bullet(), " ", mono("4"), " projects ", bullet(), " ", mono("5"), " appsets",
+		"\n", mono("1-4"), " recent resources (current context)",
 	}, "")
 
 	// NAVIGATION
 	navigation := strings.Join([]string{
-		mono("j/k"), " up/down ", bullet(), " ", keycap("Space"), " select ", bullet(), " ", keycap("Enter"), " drill down ", bullet(), " ", keycap("Esc"), " clear/up",
+		mono("j/k"), " up/down ", bullet(), " ", keycap("Space"), " select ", bullet(), " ", keycap("Enter"), " drill down ", bullet(), " ", keycap("Esc"), " back",
 		"\n",
 		keycap("PgUp"), "/", keycap("PgDn"), " page up/down",
 	}, "")
@@ -39,7 +39,7 @@ func (m *Model) helpContentLines() []string {
 	views := strings.Join([]string{
 		mono(":servers"), "|", mono(":clusters"), " ", bullet(), " ", mono(":ns"), "|", mono(":namespaces"), " ", bullet(), " ", mono(":proj"), "|", mono(":projects"), " ", bullet(), " ", mono(":apps"),
 		"\n",
-		mono(":appsets"), "|", mono(":applicationsets"), " ", bullet(), " ", mono(":theme"), " ", bullet(), " ", mono(":logs"),
+		mono(":appsets"), "|", mono(":applicationsets"), " ", bullet(), " ", mono(":kargo"), " ", bullet(), " ", mono(":theme"), " ", bullet(), " ", mono(":logs"),
 		"\n",
 		mono("c"), " Argo CD contexts ", bullet(), " ", mono(":ctx"), " [name] ",
 		"\n", mono("Ctrl+A"), " auto-login on/off (contexts) ", bullet(), " ", mono("Ctrl+L"), " SSO login",

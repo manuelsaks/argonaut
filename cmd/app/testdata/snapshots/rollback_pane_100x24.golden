@@ -1,6 +1,10 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
- <enter> select revision  <d> revision diff  <u/i> scroll details  <esc> apps                       
+ Context: argo.example.co  <enter> select revision       <u/i> scroll details              Argonaut 
+ Server: argo.example.com  <d> revision diff             <esc> apps                        dev      
+ User: SSO                                                                                          
+ Resource: Deployment his                                                                           
+ Scope: all / all                                                                                   
+ Login: manual                                                                                      
+ Network: watch                                                                                     
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
  │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
@@ -16,9 +20,5 @@
  │ Active for     20h0m                                                                           │ 
  │                                                                                                │ 
  │ COMMIT         1122334455aa                                                                    │ 
- │ Author         Jane Doe                                                                        │ 
- │ Date           22h ago · 2026-08-07 13:58                                                      │ 
- │                                                                                                │ 
- │ fix: suggest and validate :events arguments                                                    │ 
  ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 

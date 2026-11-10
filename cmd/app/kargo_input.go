@@ -294,24 +294,9 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.showKargoText("Last error", st.Error)
 		}
 		return m, nil
-	case "0", "c":
+	case "c":
 		st.Draft = nil
 		return m, m.kargoNavigate("Connection")
-	case "1", "6":
-		st.Draft = nil
-		return m, m.kargoNavigate("Project")
-	case "2":
-		st.Draft = nil
-		return m, m.kargoNavigate("Stage")
-	case "3":
-		st.Draft = nil
-		return m, m.kargoNavigate("Promotion")
-	case "4":
-		st.Draft = nil
-		return m, m.kargoNavigate("Warehouse")
-	case "5":
-		st.Draft = nil
-		return m, m.kargoNavigate("Freight")
 	case "/":
 		m.inputComponents.ClearSearchInput()
 		m.inputComponents.FocusSearchInput()
@@ -322,7 +307,7 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.state.Mode = model.ModeCommand
 	case "?":
 		m.saveKargoLocation()
-		m.showKargoText("Kargo help", "Navigate:\n  0/c: instances, 1: projects, 2: stages, 3: promotions\n  4: warehouses, 5: freight, a: Argo CD\n\nInspect:\n  Enter: open; d: describe; y: full YAML; /: filter\n  Ctrl+E: show the last request error\n\nPromote:\n  Select Stage or Freight and press Ctrl+P to open a popup.\n  Ctrl+U: Promote from upstream (select a target Stage).\n  The Mode field switches Promote / Promote from upstream with Left/Right.\n  Choose with arrows; type to filter; Tab / Shift+Tab moves focus.\n  Review instance, project, Stage and Freight.\n  Tab to Cancel / Promote, then Enter; Esc cancels.\n  Ctrl+P also submits the reviewed promotion.\n  The result opens with phase, step results and error messages.\n  Ctrl+R: refresh now. Writes are never retried automatically.\n\nSSO:\n  Ctrl+L: Kargo CLI browser SSO.\n  Ctrl+A: toggle auto-login for the current/selected instance.\n\nNetwork:\n  Normal: poll the visible data every 10s.\n  --low-bandwidth: every 2m, cached lists, no background fan-out.\n  [network] refresh_interval=\"0\": manual refresh only.")
+		m.showKargoText("Kargo help", "Resource commands:\n  :ctx / :instances, :projects, :stages, :promotions\n  :warehouses, :freight, :argo\n  1-4: recently viewed resource lists in the current context\n  c: instances, a: Argo CD\n\nInspect:\n  Enter: open; d: describe; y: full YAML; /: filter\n  Ctrl+E: show the last request error\n\nPromote:\n  Select Stage or Freight and press Ctrl+P to open a popup.\n  Ctrl+U: Promote from upstream (select a target Stage).\n  The Mode field switches Promote / Promote from upstream with Left/Right.\n  Choose with arrows; type to filter; Tab / Shift+Tab moves focus.\n  Review instance, project, Stage and Freight.\n  Tab to Cancel / Promote, then Enter; Esc cancels.\n  Ctrl+P also submits the reviewed promotion.\n  The result opens with phase, step results and error messages.\n  Ctrl+R: refresh now. Writes are never retried automatically.\n\nSSO:\n  Ctrl+L: Kargo CLI browser SSO.\n  Ctrl+A: toggle auto-login for the current/selected instance.\n\nNetwork:\n  Normal: poll the visible data every 10s.\n  --low-bandwidth: every 2m, cached lists, no background fan-out.\n  [network] refresh_interval=\"0\": manual refresh only.")
 	case "j", "down":
 		st.Cursor++
 	case "k", "up":

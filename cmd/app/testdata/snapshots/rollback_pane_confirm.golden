@@ -1,24 +1,24 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Deployment history | Target: all | Scope: all/all | Login: manual                            
- <enter> confirm  <p> prune  <w> watch  <h/l> choose  <esc> back                                    
- ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
- │ #30  a1b2c3d4 fix:                                                          doe   current      │ 
- │ #29  11223344 fix: ╭──────────────────────────────────────────────────────╮ ated               │ 
- │ #28  deadbeef      │                                                      │ ated               │ 
- │ #27  55667788      │                  Rollback demo-app?                  │ mith               │ 
- ╰─────────────────── │                                                      │ ───────────────────╯ 
- ╭─ #29 11223344 ──── │       a1b2c3d4 (current) → 11223344 (21h ago)        │  deployed 21h ago ─╮ 
- │                    │     fix: suggest and validate :events arguments      │                    │ 
+ Context: argo.example.co  <enter> confirm               <h/l> choose                      Argonaut 
+ Server: argo.example.com  <p> prune                     <esc> back                        dev      
+ User: SSO                 <w> watch                                                                
+ Resource: Deployment his                                                                           
+ Scope: all / all                                                                                   
+ Login: manual        ╭──────────────────────────────────────────────────────╮                      
+ Network: watch       │                                                      │                      
+ ╭─ Deployment histor │                  Rollback demo-app?                  │ ───────────────────╮ 
+ │ #30  a1b2c3d4 fix: │                                                      │ doe   current      │ 
+ │ #29  11223344 fix: │       a1b2c3d4 (current) → 11223344 (21h ago)        │ ated               │ 
+ │ #28  deadbeef      │     fix: suggest and validate :events arguments      │ ated               │ 
+ │ #27  55667788      │                                                      │ mith               │ 
+ ╰─────────────────── │       ⚠ Auto-sync on — will be disabled first        │ ───────────────────╯ 
+ ╭─ #29 11223344 ──── │                                                      │  deployed 21h ago ─╮ 
+ │                    │              Rollback (y)        Cancel              │                    │ 
  │ DEPLOYMENT         │                                                      │                    │ 
- │ Deployed       21h │       ⚠ Auto-sync on — will be disabled first        │                    │ 
+ │ Deployed       21h │              p: Prune Off • w: Watch On              │                    │ 
  │ Time to deploy 14s │                                                      │                    │ 
- │ Initiated by   aut │              Rollback (y)        Cancel              │                    │ 
- │ Active for     20h │                                                      │                    │ 
- │                    │              p: Prune Off • w: Watch On              │                    │ 
- │ COMMIT         112 │                                                      │                    │ 
- │ Author         Jan ╰──────────────────────────────────────────────────────╯                    │ 
- │ Date           22h                                                                             │ 
+ │ Initiated by   aut ╰──────────────────────────────────────────────────────╯                    │ 
+ │ Active for     20h                                                                             │ 
  │                                                                                                │ 
- │ fix: suggest and validate :events arguments                                                    │ 
+ │ COMMIT         1122334455aa                                                                    │ 
  ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 2/4 

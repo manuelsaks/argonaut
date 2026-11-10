@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	"strings"
 
@@ -129,7 +128,6 @@ func renderHotkey(k viewHotkey) string {
 }
 
 func (m *Model) renderK9sHeader() string {
-	width := max(1, m.state.Terminal.Cols-2)
 	ctx := m.currentContextName
 	if ctx == "" {
 		ctx = "no context"
@@ -142,8 +140,7 @@ func (m *Model) renderK9sHeader() string {
 		server = hostFromURL(m.state.Server.BaseURL)
 	}
 	if m.allContexts != nil {
-		ctx = "all"
-		server = "all Argo CD instances"
+		ctx, server = "all", "all Argo CD instances"
 	}
 	ns, project := m.effectiveNamespaceProjectScope()
 	if ns == "—" {
@@ -162,102 +159,21 @@ func (m *Model) renderK9sHeader() string {
 	if m.reloginInProgress {
 		login = "signing in..."
 	}
-	meta := []string{"Context: " + ctx, "Server:  " + server, "View:    " + m.headerViewName(), "Scope:   " + ns + " / " + project, "Login:   " + login}
-	if m.currentUsername != "" {
-		meta[4] += " (" + m.currentUsername + ")"
+	user := m.currentUsername
+	if user == "" {
+		user = "SSO"
 	}
+	network := "watch"
 	if m.config.IsLowBandwidth() {
-		label := "manual refresh"
+		network = "manual refresh"
 		if interval := m.config.GetNetworkRefreshInterval(); interval > 0 {
-			label = "poll " + interval.String()
+			network = "poll " + interval.String()
 		}
-		meta = append(meta, "Network: low bandwidth / "+label)
 	}
+	scope := ns + " / " + project
 	if len(m.state.Selections.ScopeClusters) > 0 {
-		meta = append(meta, "Target:  "+m.destinationScopeLabel())
+		scope += " @ " + m.destinationScopeLabel()
 	}
-	keyStyle := lipgloss.NewStyle().Foreground(cyanBright).Bold(true)
-	title := keyStyle.Render("Context: ") + ctx
-	if m.config.IsLowBandwidth() {
-		title += " [slow link]"
-	}
-	brand := lipgloss.NewStyle().Foreground(magentaBright).Bold(true).Render("Argonaut " + appVersion)
-	actions := m.viewHotkeys()
-	var rows []string
-	if width >= 105 && m.state.Terminal.Rows > 22 {
-		leftWidth := min(42, width/3)
-		brandWidth := lipgloss.Width(brand)
-		legendWidth := width - leftWidth - 3 - brandWidth - 2
-		// K9s-style columns: context on the left, view actions beside it.
-		cells := 2
-		if legendWidth >= 78 {
-			cells = 3
-		}
-		cellWidth := legendWidth / cells
-		columnRows := (len(actions) + cells - 1) / cells
-		for i := 0; i < max(len(meta), columnRows); i++ {
-			left := ""
-			if i < len(meta) {
-				left = meta[i]
-			}
-			line := padRight(truncateWithEllipsis(left, leftWidth), leftWidth) + "   "
-			for col := 0; col < cells; col++ {
-				n := i + col*columnRows
-				cell := ""
-				if i < columnRows && n < len(actions) {
-					cell = renderHotkey(actions[n])
-				}
-				line += padRight(clipAnsiToWidth(cell, cellWidth), cellWidth)
-			}
-			if i == 0 {
-				line = padRight(line, width-brandWidth) + brand
-			}
-			rows = append(rows, clipAnsiToWidth(line, width))
-		}
-	} else {
-		brandWidth := lipgloss.Width(brand) + 2
-		if width > brandWidth+20 {
-			title = joinWithRightAlignment(clipAnsiToWidth(title, width-brandWidth), brand, width)
-		}
-		rows = append(rows, clipAnsiToWidth(title, width))
-		rows = append(rows, clipAnsiToWidth(fmt.Sprintf("View: %s | Target: %s | Scope: %s/%s | Login: %s", m.headerViewName(), m.destinationScopeLabel(), ns, project, login), width))
-		line := ""
-		for _, action := range actions {
-			cell := renderHotkey(action)
-			if line != "" && lipgloss.Width(line)+lipgloss.Width(cell)+2 > width {
-				rows = append(rows, line)
-				line = ""
-			}
-			if line != "" {
-				line += "  "
-			}
-			line += cell
-		}
-		if line != "" {
-			rows = append(rows, clipAnsiToWidth(line, width))
-		}
-		// Keep useful content visible on very small terminals; full help is ?.
-		if m.state.Terminal.Rows <= 22 && len(rows) > 4 {
-			rows = rows[:4]
-		}
-	}
-	if m.state.Mode == model.ModeNormal {
-		nav := []viewHotkey{{"0/c", "ctx"}, {"1", "apps"}, {"2", "servers"}, {"3", "ns"}, {"4", "proj"}, {"5", "sets"}, {"6", "kargo"}, {":", "command"}, {"?", "help"}}
-		line := ""
-		for _, k := range nav {
-			if line != "" {
-				line += "  "
-			}
-			line += renderHotkey(k)
-		}
-		// On narrow screens retain context/app switching and the help affordance.
-		if lipgloss.Width(line) > width {
-			line = renderHotkey(nav[0]) + "  " + renderHotkey(nav[1]) + "  " + renderHotkey(viewHotkey{"6", "kargo"}) + "  " + renderHotkey(viewHotkey{":", "views"}) + "  " + renderHotkey(nav[len(nav)-1])
-		}
-		rows = append(rows, clipAnsiToWidth(line, width))
-	}
-	for i := range rows {
-		rows[i] = padRight(clipAnsiToWidth(rows[i], width), width)
-	}
-	return strings.Join(rows, "\n")
+	meta := []resourceHeaderField{{"Context", ctx}, {"Server", server}, {"User", user}, {"Resource", m.headerViewName()}, {"Scope", scope}, {"Login", login}, {"Network", network}}
+	return m.renderResourceHeader(meta, m.viewHotkeys())
 }

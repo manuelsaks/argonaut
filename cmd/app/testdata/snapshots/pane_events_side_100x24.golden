@@ -1,9 +1,11 @@
- Context: argo.example.com                                                             Argonaut dev 
- View: Resources | Target: all | Scope: all/all | Login: manual                                     
- <enter/e> events  <h/l> fold/unfold  <space> select  <ctrl-s> sync  <d> describe  <y> YAML         
- <ctrl-r> refresh  <ctrl-a> actions  <ctrl-d> delete  <ctrl-b> rollback  <ctrl-t> terminate         
- <ctrl-k> k9s  <u/i> scroll events  <esc> back                                                      
- <0/c> ctx  <1> apps  <2> servers  <3> ns  <4> proj  <5> sets  <6> kargo  <:> command  <?> help     
+ Context: argo.example.co  <:> command                   <ctrl-r> refresh                  Argonaut 
+ Server: argo.example.com  <?> help                      <ctrl-a> actions                  dev      
+ User: SSO                 <enter/e> events              <ctrl-d> delete                            
+ Resource: Resources       <h/l> fold/unfold             <ctrl-b> rollback                          
+ Scope: all / all          <space> select                <ctrl-t> terminate                         
+ Login: manual             <ctrl-s> sync                 <ctrl-k> k9s                               
+ Network: watch            <d> describe                  <u/i> scroll events                        
+                           <y> YAML                      <esc> back                                 
  ╭──────────────────────────────────────────────╮╭─ Pod web-6f7d9b-x4k2m ───── ⟳ updated 12s ago ─╮ 
  │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
  │ ├── Deployment [demo/web] (Degraded)         ││ Health        Degraded                         │ 
@@ -17,7 +19,5 @@
  │                                              ││ EVENTS                                         │ 
  │                                              ││ BackOff                          x412 · 2m ago │ 
  │                                              ││   Back-off restarting failed container web in  │ 
- │                                              ││   pod web-6f7d9b-x4k2m_demo(a1b2c3d)           │ 
- │                                              ││                                                │ 
  ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
  <tree>                                                            u/i: scroll events • Ready • 1/4 

@@ -37,7 +37,7 @@ func TestKargoUpstreamPopupOnlyOffersCurrentEligibleFreight(t *testing.T) {
 		t.Fatal("upstream form fanned out reads or submitted before confirmation")
 	}
 	modal := m.renderKargoPromotionPopup()
-	if lipgloss.Width(modal) >= m.state.Terminal.Cols-2 || !strings.Contains(stripANSI(modal), "Upstream: test") || !strings.Contains(stripANSI(modal), "Promote from upstream") {
+	if lipgloss.Width(modal) >= m.state.Terminal.Cols-2 || !strings.Contains(strings.Join(strings.Fields(stripANSI(modal)), " "), "Upstream: test") || !strings.Contains(stripANSI(modal), "Promote from upstream") {
 		t.Fatal("upstream source or mode missing from bounded popup")
 	}
 	base := stripANSI(m.kargoFormBackdrop())

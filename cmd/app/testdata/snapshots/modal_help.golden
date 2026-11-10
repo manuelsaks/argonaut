@@ -1,13 +1,13 @@
  HELP                                                                                               
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
  │ GENERAL      : command • / search • ? help                                                     │ 
- │              0/c contexts • 1 apps • 2 servers • 3 namespaces • 4 projects • 5 appsets         │ 
+ │              1-4 recent resources (current context)                                            │ 
  │                                                                                                │ 
- │ NAVIGATION   j/k up/down •  Space  select •  Enter  drill down •  Esc  clear/up                │ 
+ │ NAVIGATION   j/k up/down •  Space  select •  Enter  drill down •  Esc  back                    │ 
  │               PgUp / PgDn  page up/down                                                        │ 
  │                                                                                                │ 
  │ VIEWS        :servers|:clusters • :ns|:namespaces • :proj|:projects • :apps                    │ 
- │              :appsets|:applicationsets • :theme • :logs                                        │ 
+ │              :appsets|:applicationsets • :kargo • :theme • :logs                               │ 
  │              c Argo CD contexts • :ctx [name]                                                  │ 
  │              Ctrl+A auto-login on/off (contexts) • Ctrl+L SSO login                            │ 
  │                                                                                                │ 

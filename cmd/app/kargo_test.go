@@ -128,6 +128,13 @@ func kargoKey(t *testing.T, m *Model, key string) {
 	driveKargo(t, m, cmd)
 }
 
+func kargoCommand(t *testing.T, m *Model, command string) {
+	t.Helper()
+	kargoKey(t, m, ":")
+	m.inputComponents.SetCommandValue(command)
+	kargoKey(t, m, "enter")
+}
+
 func selectKargoStage(t *testing.T, m *Model) {
 	t.Helper()
 	// Both projects contain a Stage named prod. Selecting team-b must remain
@@ -187,7 +194,7 @@ func TestKargoCacheRefreshAndAuthenticationInvalidation(t *testing.T) {
 	m.config.Network.RefreshInterval = "2m"
 	selectKargoStage(t, m)
 	reads := fixture.Reads.Load()
-	kargoKey(t, m, "1")
+	kargoCommand(t, m, "projects")
 	if fixture.Reads.Load() != reads {
 		t.Fatal("project navigation ignored warm cache")
 	}
@@ -200,7 +207,7 @@ func TestKargoCacheRefreshAndAuthenticationInvalidation(t *testing.T) {
 	if fixture.Reads.Load() != reads+1 {
 		t.Fatal("explicit refresh did not bypass cache")
 	}
-	kargoKey(t, m, "4")
+	kargoCommand(t, m, "warehouses")
 	reads = fixture.Reads.Load()
 	_, cmd := m.Update(kargoRefreshMsg{m.switchEpoch, m.kargo.Sequence, m.kargoTarget()})
 	driveKargo(t, m, cmd)
@@ -307,15 +314,15 @@ func TestKargoLayoutsAndFullWarehouseDetails(t *testing.T) {
 	selectKargoStage(t, m)
 	for _, size := range []struct{ cols, rows int }{{60, 20}, {80, 24}, {100, 30}, {120, 30}, {160, 40}} {
 		m.state.Terminal.Cols, m.state.Terminal.Rows = size.cols, size.rows
-		for _, key := range []string{"0", "1", "2", "3", "4", "5"} {
-			kargoKey(t, m, key)
+		for _, key := range []string{"ctx", "projects", "stages", "promotions", "warehouses", "freight"} {
+			kargoCommand(t, m, key)
 			text := m.renderKargoView()
 			assertInspectionLayout(t, text, size.cols, size.rows)
 			if size.cols == 120 {
 				t.Logf("\nKargo %s\n%s", m.kargo.Kind, stripANSI(text))
 			}
 		}
-		kargoKey(t, m, "4")
+		kargoCommand(t, m, "warehouses")
 		kargoKey(t, m, "d")
 		text := strings.Join(m.state.Diff.Content, "\n")
 		if !strings.Contains(text, "registry timeout") || !strings.Contains(text, "https://git.example/team/repo") {
@@ -323,7 +330,7 @@ func TestKargoLayoutsAndFullWarehouseDetails(t *testing.T) {
 		}
 		assertInspectionLayout(t, m.renderKargoView(), size.cols, size.rows)
 		kargoKey(t, m, "esc")
-		kargoKey(t, m, "2")
+		kargoCommand(t, m, "stages")
 		kargoKey(t, m, "ctrl+p")
 		kargoKey(t, m, "enter")
 		m.kargo.Draft.Server += "/" + strings.Repeat("long-server-prefix/", 12)

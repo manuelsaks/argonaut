@@ -331,6 +331,9 @@ func (m *Model) View() tea.View {
 
 	v := tea.NewView(content)
 	v.AltScreen = true
+	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil && m.kargo.Form != nil {
+		v.Cursor = m.kargo.Form.Caret
+	}
 	if m.config.Clipboard.MouseSelection {
 		v.MouseMode = tea.MouseModeCellMotion
 	}

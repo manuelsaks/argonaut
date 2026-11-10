@@ -1,0 +1,19 @@
+[90m [93mContext: [97mcli[m                                              [90m [m
+[90m [93mResource: [97mKargo / Stage | team-b[m                          [90m [m
+[90m [95m<1>[34m┌─────────────[92m<Promote from upstream>[34m──────────────┐[m   [90m [m
+[90m [96;1m<ta[34;22m│[m                                                  [34m│[96mode[90m [m
+[90m [96;1m<en[34;22m│[m  [97m                [96mteam-b / prod[m                   [34m│[m   [90m [m
+[90m ╭──[34m│[m  [90mInstance:  [96mcli[m                                  [34m│[90m╮   [m
+[90m │ S[34m│[m  [90mServer:    [96mhttp://127.0.0.1:6998[m                [34m│[90m│   [m
+[90m │ p[34m│[m  [90mMode:      Promote[m  [92;4mPromote from upstream[m       [34m│[90m│   [m
+[90m │ t[34m│[m  [90mStage:     [96mprod[m                                 [34m│[90m│   [m
+[90m │  [34m│[m  [90mFreight:   [96mfreight-a[m                            [34m│[90m│   [m
+[90m │  [34m│[m  [90mAlias:     [96msleepy-owl[m                           [34m│[90m│   [m
+[90m │  [34m│[m  [90mChoice:    [96m1 / 1 (Up/Down)[m                      [34m│[90m│   [m
+[90m │  [34m│[m  [90mUpstream:  [96mtest[m                                 [34m│[90m│   [m
+[90m │  [34m│[m  [90mFilter:    [m                                     [34m│[90m│   [m
+[90m │  [34m│[m  [97m                                              [m  [34m│[90m│   [m
+[90m │  [34m│[m  [97m      [96mCancel[m      [92mPromote from upstream[m         [34m│[90m│   [m
+[90m ╰──[34m│[m                                                  [34m│[90m╯   [m
+[90m 2 i[34m└──────────────────────────────────────────────────┘[90m    [m
+

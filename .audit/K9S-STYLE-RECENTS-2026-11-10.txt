@@ -1,0 +1,57 @@
+K9s reference styling and recent resource navigation - 2026-11-10
+
+Reference
+User-supplied k9s screenshot: compact square blue modal, a caption embedded in
+the upper border, aligned fields and plain action buttons. Header: connection
+facts, recent navigation entries, and dense columns of resource-specific keys.
+
+Changes
+- Promotion and Retry use that modal language, with a centered project/Stage,
+  square blue frame, an embedded action title, aligned colored values, and
+  plain Cancel/Promote buttons. Promote and Promote from upstream remain
+  available through the Mode field and existing Ctrl+P / Ctrl+U actions.
+- The popup keeps the summary and action buttons visible. Its editable field
+  scrolls into view even at 60x20. PgUp/PgDown can inspect long content. A real
+  Bubble Tea terminal cursor marks the input; no cursor glyph is added to
+  selectable/copied text.
+- Argo CD and Kargo share a k9s-style header with Context, Server, User,
+  Resource, Scope/Project, Login and Network facts; actual recent resources;
+  current actions in columns; and the Argonaut version at the right.
+- Removed fixed numbered screen menus and mappings. Commands remain under
+  : and in Help; Kargo's help lists its resource commands.
+- 1-4 now reopen the actual last four resource lists in the current context,
+  preserving project/scope, filter, row identity, cursor and scroll position.
+  The current resource is excluded; slot 1 toggles back to the last resource.
+- History is session-only and isolated per context. It contains route/cursor
+  state, not credentials, clients or pending writes. It survives model rebuilds
+  during context selection/SSO while entries stay scoped to their context.
+- Numeric input remains numeric input inside search, commands, confirmations
+  and promotion forms. Recent shortcuts cannot bypass initial loading or SSO.
+- Argo/Kargo jumps preserve their real Esc return point. Kargo instance names
+  are re-resolved before restoring a saved location; removed instances do not
+  silently fall back to another server.
+
+Validation
+- PASS: GOTOOLCHAIN=go1.26.10 ARGONAUT_REAL_ARGOCD=C:\tools\argocd.exe
+  go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See k9s-style-race.log.
+- PASS: recent order, MRU slot changes, cursor/filter restoration, four-slot
+  retention, context isolation, SSO/input guards, Argo/Kargo Esc return,
+  existing promotion/upstream single-POST and API/session isolation tests.
+- PASS: existing visual goldens updated for intentional header/help changes.
+- PASS: batched actual TUI renderings at 60x20, 120x30 and 160x40, followed by
+  one correction/confirmation pass for column spacing and input visibility.
+  Native cursor coordinates are verified against the visible Filter row.
+- PASS: Windows amd64 build, Linux amd64 cross-build, Git Bash --version,
+  and Windows console-mode restoration under a real PTY.
+
+Visual evidence
+k9s-style-captures.log and k9s-*.ansi contain actual model rendering output
+using local fixtures. PNGs render those ANSI captures using Consolas and the
+standard ANSI palette via render-k9s-captures.ps1. Native blinking cursor pixels
+are not included in these static previews. No production data or promotion was
+used for tests/captures.
+
+Updated main Windows executable
+C:\tmp\argonaut\argonaut.exe
+SHA256: 5162E582B8B31C3E09F0D759DD1A5861C84AB506B2CB1AC5DCA5E12A0AB1DEA5
