@@ -1,6 +1,7 @@
-                                                                _____                                            __   
-Context: argo.example.com                                      /  _  \_______  ____   ____   ____ _____   __ ___/  |_ 
-Cluster: prod                                                 /  /_\  \_  __ \/ ___\ /  _ \ /    \\__  \ |  |  \   __\
-Namespace: payments                                          /    |    \  | \/ /_/  >  <_> )   |  \/ __ \|  |  /|  |  
-Project: billing                                             \____|__  /__|  \___  / \____/|___|  (____  /____/ |__|  
-ArgoCD: v2.10.3                                                      \/     /_____/             \/     \/          dev
+Context: argo.example.com                 <enter/r> resources            <ctrl-d> delete                  Argonaut dev
+Server:  argo.example.com                 <space> select                 <t> terminate                                
+View:    Applications                     <s> sync                       <K> k9s                                      
+Scope:   payments / billing               <d> diff                       </> filter                                   
+Login:   manual                           <R> rollback                   <esc> clear/back                             
+Cluster: prod                                                                                                         
+<0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                       

@@ -1,0 +1,43 @@
+Aktualna obsługa Windows — 2026-11-06
+
+Usunięto wymóg less i sh w aplikacji Windows.
+
+1. Diff, logi i pozostałe podglądy tekstowe używają wbudowanego pagera.
+   Przewijanie pionowe i poziome, wyszukiwanie, wklejanie do wyszukiwarki,
+   Unicode, ograniczanie szerokości oraz powrót do historii wdrożeń są testowane.
+   Na Unix zachowano less -R, z wbudowanym fallbackiem, jeżeli less nie istnieje.
+
+2. Automatycznie wykryte delta uruchamia się bezpośrednio, z --paging=never;
+   nie wymaga ani sh, ani cat. Bez delta pozostaje zwykły diff generowany przez Git.
+
+3. Własne komendy viewer/formatter na Windows uruchamia systemowy PowerShell,
+   bez profilu. Ścieżki manifestów przechodzą jako wartości środowiska, nie kod.
+   Testy uruchamiają rzeczywiste procesy Windows przez PowerShell, bez narzędzi
+   w PATH: spacje, apostrofy, &, $, %, Unicode; formatowanie przez stdin/stdout;
+   propagacja niezerowego kodu wyjścia. Viewer nadal musi czekać na zamknięcie
+   plików, np. code --wait --diff {left} {right}.
+
+4. Git diff ma wyłączoną konwersję autocrlf, zewnętrzne drivery i textconv.
+   Ostrzeżenia stderr nie trafiają do treści diffu. Test rollbacku z identycznymi
+   manifestami przechodzi na Windows i nie próbuje otwierać pagera.
+
+5. Poprawiono przenośność testów: CRLF w goldenach, USERPROFILE w testach
+   konfiguracji oraz obcy OS w fixture wyboru pliku aktualizacji. Nie zmieniano
+   rzeczywistych ścieżek konfiguracji ani mechanizmu pobierania aktualizacji.
+
+Weryfikacja na Windows amd64, Go 1.26.10:
+  go test -mod=readonly -timeout=150s ./cmd/... ./pkg/... ./scripts
+  go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+Oba przebiegi PASS, bez pomijania testów: 19 pakietów + 4 bez testów.
+Logi: windows-tests.log, windows-race-tests.log w tym katalogu.
+Kompilacja Windows i Linux amd64: PASS. git diff --check: PASS.
+
+Nowy plik: C:\tmp\argonaut\.audit\argonaut-windows.exe
+SHA256: 1F5BCA0BE2704C831E8FDA95466736077426D475D3F841C24F654574321430E9
+--version: dev. Kompilacja: Go 1.26.10, -mod=readonly -trimpath.
+
+Wymagania użytkowe: Argo CD CLI z konfiguracją i Git do diffu. K9s oraz kubectl
+są potrzebne do swoich integracji. less, sh, Git Bash i WSL nie są potrzebne
+do uruchamiania aplikacji. Developerski Makefile/k3d i skrypty e2e nadal są
+uniksowe. Nie sprawdzano interaktywnej pracy z rzeczywistym klastrem użytkownika;
+testy API korzystały z lokalnych serwerów i fikcyjnych danych.

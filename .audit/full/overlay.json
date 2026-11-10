@@ -1,0 +1,7 @@
+{
+  "Replace": {
+    "C:\\tmp\\argonaut\\pkg\\services\\security_audit_test.go": "C:\\tmp\\argonaut\\.audit\\full\\services_security_audit_test.go",
+    "C:\\tmp\\argonaut\\pkg\\api\\security_audit_test.go": "C:\\tmp\\argonaut\\.audit\\full\\api_security_audit_test.go",
+    "C:\\tmp\\argonaut\\cmd\\app\\security_audit_test.go": "C:\\tmp\\argonaut\\.audit\\full\\app_security_audit_test.go"
+  }
+}

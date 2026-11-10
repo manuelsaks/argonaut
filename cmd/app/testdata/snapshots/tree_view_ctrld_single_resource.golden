@@ -1,11 +1,11 @@
- Context: argo.example.com                                                           Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Resources | Namespace: all | Project: all | Login: manual                                    
+ <y> delete  <c> cascade  <p> policy  <f> force  <esc> cancel                                       
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
  │ Application [my-app] (Healthy, Synced)                                                         │ 
- │ ├── Deployment [production/api-server] (Healthy)                                               │ 
- │ ├── Service [production/api-server] (Healthy)                                                  │ 
- │ └── ConfigMap [produc                                                                          │ 
- │                       ╭────────────────────────────────────────────────╮                       │ 
- │                       │                                                │                       │ 
+ │ ├── Deployment [produ                                                                          │ 
+ │ ├── Service [producti ╭────────────────────────────────────────────────╮                       │ 
+ │ └── ConfigMap [produc │                                                │                       │ 
  │                       │    Delete Deployment/production/api-server?    │                       │ 
  │                       │                                                │                       │ 
  │                       │                   Delete (y)                   │                       │ 

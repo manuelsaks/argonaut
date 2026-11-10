@@ -1,0 +1,50 @@
+Zmiany terminala, SSO i naglowka - 2026-11-09
+
+1. Wyjscie z TUI
+Raportowanie myszy zmieniono z kazdego ruchu na ruch podczas przeciagania.
+Przy Quit raportowanie jest wylaczane przed zatrzymaniem czytnika wejscia.
+Po zakonczeniu TUI resetowane sa tryby myszy, focus i bracketed paste.
+Windows: przywrocenie poczatkowych trybow konsoli, czyszczenie oczekujacych
+raportow wejscia, reset ANSI przy wlaczonym VT. Osobna obsluga MSYS PTY
+(Git Bash/mintty), bez pisania sekwencji terminalowych do zwyklych plikow/potokow.
+Zamkniecie zatrzymuje watchery i aktywny proces logowania.
+
+2. SSO na kontekst
+c/0 otwiera konteksty. a przelacza zapisane auto-login ON/OFF dla danego wiersza.
+Domyslnie OFF. L uruchamia reczne logowanie wybranego/aktywnego kontekstu.
+Na bledzie uwierzytelnienia: najpierw CLI account get-user-info korzystajacy
+z istniejacego refresh tokena SSO, potem interaktywny argocd relogin.
+Jawne --config i --argocd-context; zachowane opcje grpc-web/root-path.
+Zmienne ARGOCD_* nie nadpisuja celu procesu; proxy/browser env pozostaja.
+Komendy uruchamiane jako executable + argumenty, bez sh/PowerShell.
+Argumenty nie zawieraja hasel ani tokenow. CLI zarzadza konfiguracja uwierzytelnienia.
+SSO moze wymagac potwierdzenia w przegladarce/MFA. Timeout: 30s refresh, 5m SSO.
+Brak automatycznego logowania po 403 lub bledzie sieci. Proby ograniczone do
+jednej na minute na kontekst; L pozwala ponowic recznie. Operacje sync/delete
+nie sa odtwarzane. Epoch + request + nazwa kontekstu odrzucaja stare odpowiedzi.
+Zmiana kontekstu i wyjscie anuluja aktywny proces CLI.
+Preferencje: [auth] command oraz [auth.auto_relogin] nazwa = true/false.
+
+3. Naglowek w stylu k9s
+Kontekst/serwer, widok, scope, login, obok legenda akcji dla danego trybu.
+Osobne legendy aplikacji, drzewa, kontekstow, diffu, historii i potwierdzen.
+Klawisze 0/c konteksty; 1 apps; 2 klastry; 3 namespaces; 4 projekty; 5 appsets.
+Nie przechwytuja wpisywanego tekstu i nie omijaja potwierdzen operacji.
+Responsywne uklady sprawdzone od 60x20 do 160x40; zaktualizowane goldeny.
+
+Walidacja, Go 1.26.10:
+go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts: PASS
+19 pakietow z testami, 4 bez testow. Log: ui-auth-windows-race.log.
+Test rzeczywistej konsoli Windows w izolowanym PTY:
+TestTerminalWindowsRestoresConsoleModes: PASS (bez skip).
+Test procesu CLI i pelnej sciezki tea.ExecProcess: PASS, bez prawdziwego SSO.
+Testy bez kubeconfiga i zaleznosci od shell: PASS.
+Build Windows amd64 i Linux amd64: PASS. --version: dev.
+Kontrola whitespace: PASS z dozwolonym paddingiem snapshotow terminala.
+Detektor UI: brak znalezisk. Nie testowano firmowego IdP ani konkretnej sesji
+Git Bash uzytkownika; te zachowania sprawdzono na lokalnych fixture'ach i PTY.
+Bez nowych wersji zaleznosci; isatty 0.0.24 przeniesiono do zaleznosci bezposrednich.
+
+Aktualny EXE: C:\tmp\argonaut\.audit\argonaut-windows.exe
+SHA256: A8827BCBACE54B7EFC24DE8B604DCC4D3DAA96C7D7353587604195817FD07432
+Zastepuje buildy z raportow z 2026-11-06.

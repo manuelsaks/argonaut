@@ -1,0 +1,25 @@
+C:\Users\Manuel\go\pkg\mod\github.com\xo\terminfo@v1.2.0\terminfo.go:4://go:generate go run gen.go
+C:\Users\Manuel\go\pkg\mod\github.com\clipperhouse\displaywidth@v0.11.0\gen.go:3://go:generate go run -C internal/gen .
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\x\windows@v0.2.2\doc.go:4://go:generate go run golang.org/x/sys/windows/mkwinsyscall -output zsyscall_windows.go syscall_windows.go
+C:\Users\Manuel\go\pkg\mod\gopkg.in\yaml.v3@v3.0.1\yaml.go:522:func init() {
+C:\Users\Manuel\go\pkg\mod\golang.org\x\oauth2@v0.37.0\deviceauth.go:102:	req, err := http.NewRequest("POST", c.Endpoint.DeviceAuthURL, strings.NewReader(v.Encode()))
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\x\ansi@v0.11.8\parser.go:18://go:generate go run ./gen.go
+C:\Users\Manuel\go\pkg\mod\github.com\mattn\go-isatty@v0.0.24\isatty_windows.go:29:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\ultraviolet@v0.0.0-20261001125412-878653296cfd\decoder.go:1320:func init() {
+C:\Users\Manuel\go\pkg\mod\golang.org\x\sys@v0.48.0\windows\dll_windows.go:20://go:linkname syscall_loadlibrary syscall.loadlibrary
+C:\Users\Manuel\go\pkg\mod\golang.org\x\sys@v0.48.0\windows\dll_windows.go:23://go:linkname syscall_getprocaddress syscall.getprocaddress
+C:\Users\Manuel\go\pkg\mod\golang.org\x\oauth2@v0.37.0\internal\token.go:196:	req, err := http.NewRequest("POST", tokenURL, strings.NewReader(v.Encode()))
+C:\Users\Manuel\go\pkg\mod\charm.land\bubbletea\v2@v2.0.10\exec.go:39://	c := exec.Command("vim", "file.txt")
+C:\Users\Manuel\go\pkg\mod\charm.land\bubbletea\v2@v2.0.10\exec.go:47://	cmd := ExecProcess(exec.Command("vim", "file.txt"), nil)
+C:\Users\Manuel\go\pkg\mod\charm.land\bubbletea\v2@v2.0.10\exec.go:54:// ExecCallback is used when executing an *exec.Command to return a message
+C:\Users\Manuel\go\pkg\mod\github.com\pelletier\go-toml\v2@v2.4.3\unstable\bridge.go:9:func init() {
+C:\Users\Manuel\go\pkg\mod\gopkg.in\yaml.v3@v3.0.1\resolve.go:35:func init() {
+C:\Users\Manuel\go\pkg\mod\gopkg.in\yaml.v3@v3.0.1\resolve.go:86:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\log@v1.0.0\text.go:152:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\tidwall\gjson@v1.20.0\gjson.go:2987:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\mattn\go-runewidth@v0.0.30\runewidth.go:14://go:generate go run script/generate.go
+C:\Users\Manuel\go\pkg\mod\github.com\mattn\go-runewidth@v0.0.30\runewidth.go:72:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\tidwall\pretty@v1.2.2\pretty.go:438:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\colorprofile@v0.4.3\env.go:248:	cmd := exec.CommandContext(context.Background(), "tmux", "info")
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\x\ansi@v0.11.8\method.go:20:func init() {
+C:\Users\Manuel\go\pkg\mod\github.com\charmbracelet\x\ansi@v0.11.8\wcwidth.go:24:func init() {

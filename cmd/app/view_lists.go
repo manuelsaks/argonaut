@@ -203,7 +203,7 @@ func (m *Model) renderListHeader() string {
 	contentWidth := m.contentInnerWidth()
 	heading := "NAME"
 	if m.state.Navigation.View == model.ViewContexts {
-		heading = "ARGO CD CONTEXTS (Enter: switch, Esc: apps, /: filter)"
+		heading = "ARGO CD CONTEXTS (Enter: switch, a: auto-login, L: login)"
 	}
 	hdr := headerStyle.Render(heading)
 	if lipgloss.Width(hdr) < contentWidth {
@@ -315,10 +315,16 @@ func (m *Model) renderSimpleRow(label string, isCursor bool) string {
 	case model.ViewProjects:
 		isSelected = m.state.Selections.HasProject(label)
 	case model.ViewContexts:
+		contextName := label
 		if label == m.currentContextName {
 			label = "* " + label + " (active)"
 		} else {
 			label = "  " + label
+		}
+		if m.config.IsAutoReloginEnabled(contextName) {
+			label += "  [auto-login: ON]"
+		} else {
+			label += "  [auto-login: OFF]"
 		}
 	}
 

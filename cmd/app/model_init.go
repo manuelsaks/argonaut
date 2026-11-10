@@ -242,7 +242,7 @@ func (m *Model) validateAuthentication() tea.Cmd {
 			}
 
 			// Otherwise, it's likely an authentication issue
-			return model.AuthValidationResultMsg{Mode: model.ModeAuthRequired, SwitchEpoch: epoch}
+			return model.AuthValidationResultMsg{Mode: model.ModeAuthRequired, SwitchEpoch: epoch, NeedsLogin: requiresRelogin(err)}
 		}
 
 		cblog.With("component", "auth").Info("Authentication validated successfully")

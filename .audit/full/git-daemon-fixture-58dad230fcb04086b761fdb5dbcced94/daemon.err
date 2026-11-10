@@ -1,0 +1,3 @@
+[8228] unable to set SO_KEEPALIVE on socket: Input/output error
+fatal: the remote end hung up unexpectedly
+[28728] unable to set SO_KEEPALIVE on socket: Input/output error

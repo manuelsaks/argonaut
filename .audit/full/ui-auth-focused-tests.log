@@ -1,0 +1,245 @@
+=== RUN   TestAutoReloginRefreshesOnlySelectedContextViaCLI
+2026/11/09 16:54:51 INFO Switching context component=context-switch from=prod to=prod server=https://prod.example.test
+--- PASS: TestAutoReloginRefreshesOnlySelectedContextViaCLI (0.01s)
+=== RUN   TestAutoReloginFallsBackToSSOAndThrottlesFailures
+--- PASS: TestAutoReloginFallsBackToSSOAndThrottlesFailures (0.01s)
+=== RUN   TestReloginGatesRepliesAndCancellation
+=== RUN   TestReloginGatesRepliesAndCancellation/epoch
+=== RUN   TestReloginGatesRepliesAndCancellation/request
+=== RUN   TestReloginGatesRepliesAndCancellation/quit
+--- PASS: TestReloginGatesRepliesAndCancellation (0.03s)
+    --- PASS: TestReloginGatesRepliesAndCancellation/epoch (0.01s)
+    --- PASS: TestReloginGatesRepliesAndCancellation/request (0.01s)
+    --- PASS: TestReloginGatesRepliesAndCancellation/quit (0.01s)
+=== RUN   TestCLILoginArgumentsAndEnvironmentAreContextBound
+--- PASS: TestCLILoginArgumentsAndEnvironmentAreContextBound (0.00s)
+=== RUN   TestContextAutoReloginPreferencePersistsPerContext
+--- PASS: TestContextAutoReloginPreferencePersistsPerContext (0.00s)
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures/401_unauthorized
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures/token_is_expired
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures/403_forbidden
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures/connection_refused
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures/[permission:FORBIDDEN]_Insufficient_permissions
+=== RUN   TestAutoReloginOnlyHandlesAuthenticationFailures/[auth:UNAUTHORIZED]_Session_expired
+--- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures (0.00s)
+    --- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures/401_unauthorized (0.00s)
+    --- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures/token_is_expired (0.00s)
+    --- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures/403_forbidden (0.00s)
+    --- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures/connection_refused (0.00s)
+    --- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures/[permission:FORBIDDEN]_Insufficient_permissions (0.00s)
+    --- PASS: TestAutoReloginOnlyHandlesAuthenticationFailures/[auth:UNAUTHORIZED]_Session_expired (0.00s)
+=== RUN   TestTerminalResetDisablesReportsWithoutQueryingTheShell
+--- PASS: TestTerminalResetDisablesReportsWithoutQueryingTheShell (0.00s)
+=== RUN   TestTerminalCleanupDoesNotWriteEscapesIntoRedirectedOutput
+--- PASS: TestTerminalCleanupDoesNotWriteEscapesIntoRedirectedOutput (0.00s)
+=== RUN   TestTerminalWindowsRestoresConsoleModes
+    terminal_windows_test.go:15: requires a Windows console; covered by the explicit PTY test run
+--- SKIP: TestTerminalWindowsRestoresConsoleModes (0.00s)
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/apps/normal
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/tree/normal
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/contexts/normal
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/apps/search
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/apps/confirm-app-delete
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/tree/confirm-resource-delete
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/apps/auth-required
+=== RUN   TestHeaderShowsCurrentViewAndAvailableActions/apps/diff
+--- PASS: TestHeaderShowsCurrentViewAndAvailableActions (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/apps/normal (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/tree/normal (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/contexts/normal (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/apps/search (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/apps/confirm-app-delete (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/tree/confirm-resource-delete (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/apps/auth-required (0.00s)
+    --- PASS: TestHeaderShowsCurrentViewAndAvailableActions/apps/diff (0.00s)
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation/0
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation/1
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation/2
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation/3
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation/4
+=== RUN   TestViewSwitchShortcutsRespectTextInputAndConfirmation/5
+--- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation (0.01s)
+    --- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation/0 (0.00s)
+    --- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation/1 (0.00s)
+    --- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation/2 (0.00s)
+    --- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation/3 (0.00s)
+    --- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation/4 (0.00s)
+    --- PASS: TestViewSwitchShortcutsRespectTextInputAndConfirmation/5 (0.00s)
+=== RUN   TestHeaderLayouts
+    view_header_test.go:94: 
+        apps 80x24
+         Context: production-eu                                            Argonaut dev 
+         View: Applications | Namespace: all | Project: all | Login: auto SSO           
+         <enter/r> resources  <space> select  <s> sync  <d> diff  <R> rollback          
+         <ctrl-d> delete  <t> terminate  <K> k9s  </> filter  <esc> clear/back          
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ ▲NAME                                                 SYNC          HEALTH │ 
+         │ payments-api                                      V Synced       V Healthy │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                             Ready • 1/1 
+    view_header_test.go:94: 
+        tree 80x24
+         Context: production-eu                                            Argonaut dev 
+         View: Resources | Namespace: all | Project: all | Login: auto SSO              
+         <enter/e> events  <h/l> fold/unfold  <space> select  <s> sync  <d> diff        
+         <a> actions  <ctrl-d> delete  <R> rollback  <t> terminate  <K> k9s             
+         <u/i> scroll events  <esc> back                                                
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ (no resources)                                                             │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <tree>                                                       e: events • Ready 
+    view_header_test.go:94: 
+        contexts 80x24
+         Context: production-eu                                            Argonaut dev 
+         View: Argo CD contexts | Namespace: all | Project: all | Login: auto SSO       
+         <enter> switch  <a> auto-login on/off  <L> SSO login  </> filter  <esc> apps   
+         <0/c> ctx  <1> apps  <:> views  <?> help                                       
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ ARGO CD CONTEXTS (Enter: switch, a: auto-login, L: login)                  │ 
+         │   development  [auto-login: OFF]                                           │ 
+         │ * production-eu (active)  [auto-login: ON]                                 │ 
+         │   staging  [auto-login: OFF]                                               │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         <contexts>                                                         Ready • 1/3 
+    view_header_test.go:94: 
+        apps 120x30
+         Context: production-eu                    <enter/r> resources            <ctrl-d> delete                  Argonaut dev 
+         Server:  argo.example.com                 <space> select                 <t> terminate                                 
+         View:    Applications                     <s> sync                       <K> k9s                                       
+         Scope:   all / all                        <d> diff                       </> filter                                    
+         Login:   auto SSO                         <R> rollback                   <esc> clear/back                              
+         <0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                        
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ ▲NAME                                                                                         SYNC          HEALTH │ 
+         │ payments-api                                                                              V Synced       V Healthy │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                                     Ready • 1/1 
+    view_header_test.go:94: 
+        tree 120x30
+         Context: production-eu                    <enter/e> events               <ctrl-d> delete                  Argonaut dev 
+         Server:  argo.example.com                 <h/l> fold/unfold              <R> rollback                                  
+         View:    Resources                        <space> select                 <t> terminate                                 
+         Scope:   all / all                        <s> sync                       <K> k9s                                       
+         Login:   auto SSO                         <d> diff                       <u/i> scroll events                           
+                                                   <a> actions                    <esc> back                                    
+         <0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                        
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ (no resources)                                                                                                     │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <tree>                                                                                               e: events • Ready 
+    view_header_test.go:94: 
+        contexts 120x30
+         Context: production-eu                    <enter> switch                 </> filter                       Argonaut dev 
+         Server:  argo.example.com                 <a> auto-login on/off          <esc> apps                                    
+         View:    Argo CD contexts                 <L> SSO login                                                                
+         Scope:   all / all                                                                                                     
+         Login:   auto SSO                                                                                                      
+         <0/c> ctx  <1> apps  <2> cls  <3> ns  <4> proj  <5> sets  <:> command  <?> help                                        
+                                                                                                                                
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ ARGO CD CONTEXTS (Enter: switch, a: auto-login, L: login)                                                          │ 
+         │   development  [auto-login: OFF]                                                                                   │ 
+         │ * production-eu (active)  [auto-login: ON]                                                                         │ 
+         │   staging  [auto-login: OFF]                                                                                       │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         │                                                                                                                    │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <contexts>                                                                                                 Ready • 1/3 
+--- PASS: TestHeaderLayouts (0.01s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.090s

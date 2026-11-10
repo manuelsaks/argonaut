@@ -326,7 +326,7 @@ func (m *Model) View() tea.View {
 
 	v := tea.NewView(content)
 	v.AltScreen = true
-	v.MouseMode = tea.MouseModeAllMotion // Track all motion for better selection support
+	v.MouseMode = tea.MouseModeCellMotion // Drag selection without reporting every hover to the terminal.
 	return v
 }
 
@@ -662,9 +662,9 @@ func (m *Model) renderAuthRequiredView() string {
 
 	// Instructions (matches AuthRequiredView.tsx instructions array)
 	instructions := []string{
-		"1. Run: argocd login <your-argocd-server>",
-		"2. Follow prompts to authenticate",
-		"3. Re-run argonaut",
+		"Press L to log in with the Argo CD CLI and return here.",
+		"Press c to select another Argo CD context.",
+		"In contexts, press a to enable automatic SSO login per context.",
 	}
 
 	// Header - ArgoNaut Banner
@@ -690,7 +690,7 @@ func (m *Model) renderAuthRequiredView() string {
 		Foreground(outOfSyncColor).
 		Bold(true).
 		Align(lipgloss.Center).
-		Render("Please login to ArgoCD before running argonaut."))
+		Render("Your Argo CD session needs authentication."))
 	contentSections = append(contentSections, "")
 
 	// Add instructions
@@ -706,7 +706,7 @@ func (m *Model) renderAuthRequiredView() string {
 	content := strings.Join(contentSections, "\n")
 
 	// Status
-	status := statusStyle.Render("Press l to view logs, q to quit.")
+	status := m.renderStatusLine()
 
 	// Use the new layout helper with red border (matches AuthRequiredView borderColor="red")
 	return m.renderFullScreenViewWithOptions(header, content, status, FullScreenViewOptions{
@@ -832,7 +832,8 @@ func (m *Model) renderDiffView() string {
 		BORDER_LINES           = 2 // contentBorderStyle border top+bottom
 		MAIN_CONTAINER_PADDING = 1 // main container has some margin
 	)
-	overhead := TITLE_LINES + STATUS_LINES + BORDER_LINES + MAIN_CONTAINER_PADDING
+	header := m.renderBanner()
+	overhead := TITLE_LINES + STATUS_LINES + BORDER_LINES + MAIN_CONTAINER_PADDING + countLines(header)
 	if m.state.Mode == model.ModeSearch {
 		overhead++
 	}
@@ -865,6 +866,7 @@ func (m *Model) renderDiffView() string {
 	// Build sections ensuring header and status are always visible
 	// Don't use fixed height container which can clip the header
 	var sections []string
+	sections = append(sections, header)
 	sections = append(sections, title)
 	sections = append(sections, content)
 	if m.state.Mode == model.ModeSearch {

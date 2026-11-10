@@ -1,0 +1,1681 @@
+2026/11/06 15:13:53 INFO watch stream ended, scheduling reconnect component=watch delay=1ms
+2026/11/06 15:13:53 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[] generation=0
+2026/11/06 15:13:54 INFO maybeRestartWatchForScope: scope changed, scheduling restart component=watch current=[] new=[proj-a]
+2026/11/06 15:13:54 INFO restartWatchWithScope: restarting watch component=watch projects=[proj-a] target_generation=1
+2026/11/06 15:13:54 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[proj-a] generation=1
+2026/11/06 15:13:54 INFO AppsLoadedMsg received component=model apps_count=1 watchChan_nil=true resourceVersion=""
+2026/11/06 15:13:54 INFO Starting watch as watchChan is nil component=model
+2026/11/06 15:13:54 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[] generation=0
+2026/11/06 15:13:54 INFO Switching context component=context-switch from=old-context to=new-context server=https://new.example.com
+2026/11/06 15:13:54 INFO Switching context component=context-switch from="" to=new-context server=https://new.example.com
+2026/11/06 15:13:54 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 15:13:54 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 15:13:54 INFO Application test-app deleted successfully component=status
+2026/11/06 15:13:54 INFO Application test-app deleted successfully component=status
+2026/11/06 15:13:54 INFO Failed to delete test-app: Failed to delete application: permission denied component=status
+2026/11/06 15:13:54 INFO Failed to delete test-app: Failed to delete application: permission denied component=status
+2026/11/06 15:13:54 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 15:13:54 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 15:13:54 INFO Application test-app deleted successfully component=status
+2026/11/06 15:13:54 INFO Application test-app deleted successfully component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Tree loaded component=status
+2026/11/06 15:13:54 INFO Terminating operation for test-app component=status
+2026/11/06 15:13:54 INFO Terminating operation for test-app component=status
+2026/11/06 15:13:54 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 15:13:54 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 15:13:54 INFO Terminating operation for test-app component=status
+2026/11/06 15:13:54 INFO Terminating operation for test-app component=status
+2026/11/06 15:13:54 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 15:13:54 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 15:13:54 INFO Terminating operation for test-app component=status
+2026/11/06 15:13:54 INFO Terminating operation for test-app component=status
+2026/11/06 15:13:54 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[] generation=0
+2026/11/06 15:13:54 ERRO API Error: boom component=status
+2026/11/06 15:13:54 ERRO API Error: boom component=status
+2026/11/06 15:13:54 ERRO auth required component=status
+2026/11/06 15:13:54 ERRO auth required component=status
+2026/11/06 15:13:54 INFO startLoadingApplications called component=api_integration
+2026/11/06 15:13:54 INFO startLoadingApplications: executing load component=api_integration
+2026/11/06 15:13:54 INFO Ran promote on Rollout/web component=status
+2026/11/06 15:13:54 INFO Ran promote on Rollout/web component=status
+2026/11/06 15:13:54 INFO Ran promote on Rollout/previous-rollout component=status
+2026/11/06 15:13:54 INFO Ran promote on Rollout/previous-rollout component=status
+2026/11/06 15:13:54 INFO Action executed component=resource-action app=x kind=Rollout name=y action=promote
+2026/11/06 15:13:54 INFO Ran promote on Rollout/web component=status
+2026/11/06 15:13:54 INFO Ran promote on Rollout/web component=status
+2026/11/06 15:13:54 INFO Starting rollback session component=rollback app=my-app
+2026/11/06 15:13:54 INFO Loaded application history component=rollback app=demo-app count=3
+2026/11/06 15:13:54 INFO Loaded application history component=rollback app=demo-app count=0
+2026/11/06 15:13:54 INFO Loaded application history component=rollback app=demo-app count=0
+2026/11/06 15:13:54 INFO Loaded application history component=rollback app=demo-app count=0
+2026/11/06 15:13:54 WARN HTTP request failed component=api op=http method=GET url=https://argo.example.com/api/v1/applications/my-app/managed-resources error="Get \"https://argo.example.com/api/v1/applications/my-app/managed-resources\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:54 WARN Attempt failed component=retry attempt=1 maxAttempts=5 took=21.6053ms err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications/my-app/managed-resources\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:54 WARN HTTP request failed component=api op=http method=GET url="https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt" error="Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:54 WARN Attempt failed component=retry attempt=1 maxAttempts=5 took=22.1348ms err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:54 ERRO Failed to run less component=pager err="exec: \"less\": executable file not found in %PATH%"
+[2J[H--- FAIL: TestRollbackDiff_ComparesSelectedAgainstCurrentRevision (0.23s)
+    rollback_pane_test.go:437: result = {Err:exec: "less": executable file not found in %PATH%}, want rollbackDiffNoChangesMsg for identical manifests
+2026/11/06 15:13:55 INFO Starting rollback session component=rollback app=tree-app
+2026/11/06 15:13:55 INFO Starting rollback session component=rollback app=app-b
+2026/11/06 15:13:55 INFO Starting rollback session component=rollback app=child-app
+2026/11/06 15:13:55 INFO Rollback initiated for test-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for test-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for test-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for test-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for test-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for test-app component=status
+2026/11/06 15:13:55 INFO Starting rollback session component=rollback app=test-app
+2026/11/06 15:13:55 INFO Sync initiated for test-app component=status
+2026/11/06 15:13:55 INFO Sync initiated for test-app component=status
+2026/11/06 15:13:55 INFO Starting sequential multi-delete component=app-delete count=2 cascade=true policy=foreground
+2026/11/06 15:13:55 INFO Successfully deleted app component=app-delete app=shared
+2026/11/06 15:13:55 INFO Successfully deleted app component=app-delete app=shared
+2026/11/06 15:13:55 INFO Sequential multi-delete completed successfully component=app-delete count=2
+2026/11/06 15:13:55 INFO Starting resource sync component=resource-sync count=2 apps=2 prune=false force=false
+2026/11/06 15:13:55 INFO Successfully synced resources for app component=resource-sync app=shared resourceCount=1
+2026/11/06 15:13:55 INFO Successfully synced resources for app component=resource-sync app=shared resourceCount=1
+2026/11/06 15:13:55 INFO Resource sync completed successfully component=resource-sync count=2
+2026/11/06 15:13:55 INFO Starting resource deletion component=resource-delete count=2 cascade=true policy="" orphan=false force=false
+2026/11/06 15:13:55 INFO Successfully deleted resource component=resource-delete kind=ConfigMap name=cfg
+2026/11/06 15:13:55 INFO Successfully deleted resource component=resource-delete kind=ConfigMap name=cfg
+2026/11/06 15:13:55 INFO Resource deletion completed successfully component=resource-delete count=2
+2026/11/06 15:13:55 INFO Application shared deleted successfully component=status
+2026/11/06 15:13:55 INFO Application shared deleted successfully component=status
+2026/11/06 15:13:55 INFO Tree loaded component=status
+2026/11/06 15:13:55 INFO Tree loaded component=status
+2026/11/06 15:13:55 INFO Tree loaded component=status
+2026/11/06 15:13:55 INFO Tree loaded component=status
+2026/11/06 15:13:55 WARN HTTP request failed component=api op=http method=GET url="https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt" error="Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:55 WARN Attempt failed component=retry attempt=2 maxAttempts=5 took=0s err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:55 ERRO interactive diff viewer failed component=diff err="exec: \"sh\": executable file not found in %PATH%"
+[2J[H2026/11/06 15:13:55 WARN HTTP request failed component=api op=http method=GET url=https://argo.example.com/api/v1/applications/my-app/managed-resources error="Get \"https://argo.example.com/api/v1/applications/my-app/managed-resources\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:55 WARN Attempt failed component=retry attempt=2 maxAttempts=5 took=0s err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications/my-app/managed-resources\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:55 ERRO interactive diff viewer failed component=diff err="exec: \"sh\": executable file not found in %PATH%"
+[2J[H2026/11/06 15:13:55 ERRO interactive diff viewer failed component=diff err="exec: \"sh\": executable file not found in %PATH%"
+[2J[H2026/11/06 15:13:55 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 15:13:55 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 15:13:55 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 15:13:55 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 15:13:55 INFO Sync initiated for app-b component=status
+2026/11/06 15:13:55 INFO Sync initiated for app-b component=status
+2026/11/06 15:13:55 INFO Sync initiated for app-b component=status
+2026/11/06 15:13:55 INFO Sync initiated for app-b component=status
+2026/11/06 15:13:55 INFO Sync initiated for 2 app(s) component=status
+2026/11/06 15:13:55 INFO Sync initiated for 2 app(s) component=status
+2026/11/06 15:13:55 INFO Rollback initiated for app-b component=status
+2026/11/06 15:13:55 INFO Rollback initiated for app-b component=status
+2026/11/06 15:13:55 INFO Sync initiated for my-app component=status
+2026/11/06 15:13:55 INFO Sync initiated for my-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for my-app component=status
+2026/11/06 15:13:55 INFO Rollback initiated for my-app component=status
+--- FAIL: TestGolden_ListView_Apps (0.00s)
+    view_golden_test.go:50: golden mismatch for list_view_apps
+        --- got ---
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ ▲NAME                                                                     SYNC          HEALTH │
+        │ app-a                                                                 V Synced       V Healthy │
+        │ app-b                                                              ^ OutOfSync      ! Degraded │
+        │ app-c                                                                ? Unknown   . Progressing │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+        --- want ---
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ ▲NAME                                                                     SYNC          HEALTH │
+        │ app-a                                                                 V Synced       V Healthy │
+        │ app-b                                                              ^ OutOfSync      ! Degraded │
+        │ app-c                                                                ? Unknown   . Progressing │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+--- FAIL: TestGolden_HelpModal (0.00s)
+    view_modals_golden_test.go:32: golden mismatch for modal_help
+        --- got ---
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ GENERAL      : command • / search • ? help                                                     │ 
+         │                                                                                                │ 
+         │ NAVIGATION   j/k up/down •  Space  select •  Enter  drill down •  Esc  clear/up                │ 
+         │               PgUp / PgDn  page up/down                                                        │ 
+         │                                                                                                │ 
+         │ VIEWS        :cls|:clusters • :ns|:namespaces • :proj|:projects • :apps                        │ 
+         │              :appsets|:applicationsets • :theme • :logs                                        │ 
+         │              :context|:contexts|:ctx|:argocd [name]                                            │ 
+         │                                                                                                │ 
+         │ APPS VIEW     s  sync •  t  terminate •  R  rollback •  r  resources •  d  diff •  K  open in  │ 
+         │ k9s •  Ctrl+D  delete                                                                          │ 
+         │              :diff [app] • :sync [app] • :rollback [app] • :delete [app]                       │ 
+         │              :refresh [app] • :refresh! [app] (hard) • :terminate                              │ 
+         │              :sort health|sync asc|desc                                                        │ 
+         │              :resources [app] • :up • :all                                                     │ 
+         │                                                                                                │ 
+         │ TREE VIEW    / filter • n/N next/prev match •  d  diff • K open in k9s                         │ 
+         │               Space  select •  s  sync •  a  actions (Rollouts) •  Ctrl+D  delete              │ 
+         │               e  toggle events •  t  terminate •  u / i  or  ⇧↓ / ⇧↑  scroll events            │ 
+         │              :refresh|:refresh! • :up                                                          │ 
+         │                                                                                                │ 
+         │ COMMANDS     :events on|off [always] • :q (to exit, google how to exit vim)                    │ 
+         │                                                                                                │ 
+         │ Press ?, q or Esc to close                                                                     │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                 Ready • 0/0 
+        --- want ---
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ GENERAL      : command • / search • ? help                                                     │ 
+         │                                                                                                │ 
+         │ NAVIGATION   j/k up/down •  Space  select •  Enter  drill down •  Esc  clear/up                │ 
+         │               PgUp / PgDn  page up/down                                                        │ 
+         │                                                                                                │ 
+         │ VIEWS        :cls|:clusters • :ns|:namespaces • :proj|:projects • :apps                        │ 
+         │              :appsets|:applicationsets • :theme • :logs                                        │ 
+         │              :context|:contexts|:ctx|:argocd [name]                                            │ 
+         │                                                                                                │ 
+         │ APPS VIEW     s  sync •  t  terminate •  R  rollback •  r  resources •  d  diff •  K  open in  │ 
+         │ k9s •  Ctrl+D  delete                                                                          │ 
+         │              :diff [app] • :sync [app] • :rollback [app] • :delete [app]                       │ 
+         │              :refresh [app] • :refresh! [app] (hard) • :terminate                              │ 
+         │              :sort health|sync asc|desc                                                        │ 
+         │              :resources [app] • :up • :all                                                     │ 
+         │                                                                                                │ 
+         │ TREE VIEW    / filter • n/N next/prev match •  d  diff • K open in k9s                         │ 
+         │               Space  select •  s  sync •  a  actions (Rollouts) •  Ctrl+D  delete              │ 
+         │               e  toggle events •  t  terminate •  u / i  or  ⇧↓ / ⇧↑  scroll events            │ 
+         │              :refresh|:refresh! • :up                                                          │ 
+         │                                                                                                │ 
+         │ COMMANDS     :events on|off [always] • :q (to exit, google how to exit vim)                    │ 
+         │                                                                                                │ 
+         │ Press ?, q or Esc to close                                                                     │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                                                                                 Ready • 0/0 
+--- FAIL: TestGolden_DiffLoadingSpinner (0.00s)
+    view_modals_golden_test.go:39: golden mismatch for modal_diff_loading_spinner
+        --- got ---
+                                  
+         ╭──────────────────────╮ 
+         │                      │ 
+         │  ⣾  Loading diff...  │ 
+         │                      │ 
+         ╰──────────────────────╯ 
+                                  
+        --- want ---
+                                  
+         ╭──────────────────────╮ 
+         │                      │ 
+         │  ⣾  Loading diff...  │ 
+         │                      │ 
+         ╰──────────────────────╯ 
+                                  
+--- FAIL: TestGolden_SyncLoadingModal (0.00s)
+    view_modals_golden_test.go:45: golden mismatch for modal_sync_loading
+        --- got ---
+                                  
+         ╭──────────────────────╮ 
+         │                      │ 
+         │  ⣾  Syncing…         │ 
+         │                      │ 
+         ╰──────────────────────╯ 
+                                  
+        --- want ---
+                                  
+         ╭──────────────────────╮ 
+         │                      │ 
+         │  ⣾  Syncing…         │ 
+         │                      │ 
+         ╰──────────────────────╯ 
+                                  
+--- FAIL: TestGolden_InitialLoadingModal (0.00s)
+    view_modals_golden_test.go:51: golden mismatch for modal_initial_loading
+        --- got ---
+                                          
+         ╭──────────────────────────────╮ 
+         │                              │ 
+         │  ⣾  Loading...               │ 
+         │                              │ 
+         ╰──────────────────────────────╯ 
+                                          
+        --- want ---
+                                          
+         ╭──────────────────────────────╮ 
+         │                              │ 
+         │  ⣾  Loading...               │ 
+         │                              │ 
+         ╰──────────────────────────────╯ 
+                                          
+--- FAIL: TestGolden_ResourceActionModal_List (0.00s)
+    view_modals_golden_test.go:70: golden mismatch for modal_resource_action_list
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │      Actions on Rollout/payments/checkout      │ 
+         │                                                │ 
+         │            abort            promote            │ 
+         │         promote-full        restart            │ 
+         │                     retry                      │ 
+         │                                                │ 
+         │           type to select • Enter run           │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │      Actions on Rollout/payments/checkout      │ 
+         │                                                │ 
+         │            abort            promote            │ 
+         │         promote-full        restart            │ 
+         │                     retry                      │ 
+         │                                                │ 
+         │           type to select • Enter run           │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_ResourceActionModal_WithFilter (0.00s)
+    view_modals_golden_test.go:91: golden mismatch for modal_resource_action_filter
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │      Actions on Rollout/payments/checkout      │ 
+         │                                                │ 
+         │            abort            promote            │ 
+         │         promote-full        restart            │ 
+         │                     retry                      │ 
+         │                                                │ 
+         │             Esc clear • Enter run              │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │      Actions on Rollout/payments/checkout      │ 
+         │                                                │ 
+         │            abort            promote            │ 
+         │         promote-full        restart            │ 
+         │                     retry                      │ 
+         │                                                │ 
+         │             Esc clear • Enter run              │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_ResourceActionModal_ExecuteError (0.00s)
+    view_modals_golden_test.go:111: golden mismatch for modal_resource_action_execute_error
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │      Actions on Rollout/payments/checkout      │ 
+         │                                                │ 
+         │               abort       promote              │ 
+         │                                                │ 
+         │           type to select • Enter run           │ 
+         │                                                │ 
+         │   Error: rpc error: code = PermissionDenied    │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │      Actions on Rollout/payments/checkout      │ 
+         │                                                │ 
+         │               abort       promote              │ 
+         │                                                │ 
+         │           type to select • Enter run           │ 
+         │                                                │ 
+         │   Error: rpc error: code = PermissionDenied    │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_ResourceActionModal_NoActions (0.00s)
+    view_modals_golden_test.go:127: golden mismatch for modal_resource_action_no_actions
+        --- got ---
+                                          
+         ╭──────────────────────────────╮ 
+         │                              │ 
+         │  ○ No actions available      │ 
+         │                              │ 
+         ╰──────────────────────────────╯ 
+                                          
+        --- want ---
+                                          
+         ╭──────────────────────────────╮ 
+         │                              │ 
+         │  ○ No actions available      │ 
+         │                              │ 
+         ╰──────────────────────────────╯ 
+                                          
+--- FAIL: TestGolden_ResourceActionModal_ListError (0.00s)
+    view_modals_golden_test.go:143: golden mismatch for modal_resource_action_list_error
+        --- got ---
+                                                  
+         ╭──────────────────────────────────────╮ 
+         │                                      │ 
+         │  ✗ rpc error: code =                 │ 
+         │  PermissionDenied                    │ 
+         │                                      │ 
+         ╰──────────────────────────────────────╯ 
+                                                  
+        --- want ---
+                                                  
+         ╭──────────────────────────────────────╮ 
+         │                                      │ 
+         │  ✗ rpc error: code =                 │ 
+         │  PermissionDenied                    │ 
+         │                                      │ 
+         ╰──────────────────────────────────────╯ 
+                                                  
+--- FAIL: TestGolden_ResourceActionModal_Loading (0.00s)
+    view_modals_golden_test.go:158: golden mismatch for modal_resource_action_loading
+        --- got ---
+                                      
+         ╭──────────────────────────╮ 
+         │                          │ 
+         │  ⣾  Loading actions…     │ 
+         │                          │ 
+         ╰──────────────────────────╯ 
+                                      
+        --- want ---
+                                      
+         ╭──────────────────────────╮ 
+         │                          │ 
+         │  ⣾  Loading actions…     │ 
+         │                          │ 
+         ╰──────────────────────────╯ 
+                                      
+--- FAIL: TestGolden_ResourceActionModal_Executing (0.00s)
+    view_modals_golden_test.go:175: golden mismatch for modal_resource_action_executing
+        --- got ---
+                                      
+         ╭──────────────────────────╮ 
+         │                          │ 
+         │  ⣾  Running promote…     │ 
+         │                          │ 
+         ╰──────────────────────────╯ 
+                                      
+        --- want ---
+                                      
+         ╭──────────────────────────╮ 
+         │                          │ 
+         │  ⣾  Running promote…     │ 
+         │                          │ 
+         ╰──────────────────────────╯ 
+                                      
+--- FAIL: TestGolden_Banner (0.00s)
+    view_modals_golden_test.go:185: golden mismatch for banner
+        --- got ---
+                                                                        _____                                            __   
+        Context: argo.example.com                                      /  _  \_______  ____   ____   ____ _____   __ ___/  |_ 
+        Cluster: prod                                                 /  /_\  \_  __ \/ ___\ /  _ \ /    \\__  \ |  |  \   __\
+        Namespace: payments                                          /    |    \  | \/ /_/  >  <_> )   |  \/ __ \|  |  /|  |  
+        Project: billing                                             \____|__  /__|  \___  / \____/|___|  (____  /____/ |__|  
+        ArgoCD: v2.10.3                                                      \/     /_____/             \/     \/          dev
+        --- want ---
+                                                                        _____                                            __   
+        Context: argo.example.com                                      /  _  \_______  ____   ____   ____ _____   __ ___/  |_ 
+        Cluster: prod                                                 /  /_\  \_  __ \/ ___\ /  _ \ /    \\__  \ |  |  \   __\
+        Namespace: payments                                          /    |    \  | \/ /_/  >  <_> )   |  \/ __ \|  |  /|  |  
+        Project: billing                                             \____|__  /__|  \___  / \____/|___|  (____  /____/ |__|  
+        ArgoCD: v2.10.3                                                      \/     /_____/             \/     \/          dev
+--- FAIL: TestGolden_FullScreenLayout_Sample (0.00s)
+    view_modals_golden_test.go:194: golden mismatch for layout_fullscreen_sample
+        --- got ---
+         Header Title                                                                   
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ Sample body line 1                                                         │ 
+         │ Sample body line 2                                                         │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         Status footer                                                                  
+        --- want ---
+         Header Title                                                                   
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ Sample body line 1                                                         │ 
+         │ Sample body line 2                                                         │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         Status footer                                                                  
+--- FAIL: TestGolden_AppDeleteConfirmModal (0.00s)
+    view_modals_golden_test.go:215: golden mismatch for modal_app_delete_confirm
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │                Delete test-app?                │ 
+         │                                                │ 
+         │                   Delete (y)                   │ 
+         │                                                │ 
+         │     c: Cascade On (all resources deleted)      │ 
+         │    p: Policy foreground (wait for cleanup)     │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │                Delete test-app?                │ 
+         │                                                │ 
+         │                   Delete (y)                   │ 
+         │                                                │ 
+         │     c: Cascade On (all resources deleted)      │ 
+         │    p: Policy foreground (wait for cleanup)     │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_AppDeleteConfirmModal_WithInput (0.00s)
+    view_modals_golden_test.go:234: golden mismatch for modal_app_delete_confirm_with_input
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │               Delete my-service?               │ 
+         │                                                │ 
+         │                     Delete                     │ 
+         │                                                │ 
+         │     c: Cascade On (all resources deleted)      │ 
+         │      p: Policy background (async cleanup)      │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │               Delete my-service?               │ 
+         │                                                │ 
+         │                     Delete                     │ 
+         │                                                │ 
+         │     c: Cascade On (all resources deleted)      │ 
+         │      p: Policy background (async cleanup)      │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_AppDeleteLoadingModal (0.00s)
+    view_modals_golden_test.go:248: golden mismatch for modal_app_delete_loading
+        --- got ---
+                                          
+         ╭──────────────────────────────╮ 
+         │                              │ 
+         │  ⣾  Deleting application...  │ 
+         │                              │ 
+         ╰──────────────────────────────╯ 
+                                          
+        --- want ---
+                                          
+         ╭──────────────────────────────╮ 
+         │                              │ 
+         │  ⣾  Deleting application...  │ 
+         │                              │ 
+         ╰──────────────────────────────╯ 
+                                          
+--- FAIL: TestGolden_AppDeleteErrorModal (0.00s)
+    view_modals_golden_test.go:263: golden mismatch for modal_app_delete_error
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │               Delete error-app?                │ 
+         │                                                │ 
+         │                   Delete (y)                   │ 
+         │                                                │ 
+         │      c: Cascade Off (resources orphaned)       │ 
+         │                   p: Policy                    │ 
+         │                                                │ 
+         │      Error: Failed to delete application:      │ 
+         │               resource not found               │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │               Delete error-app?                │ 
+         │                                                │ 
+         │                   Delete (y)                   │ 
+         │                                                │ 
+         │      c: Cascade Off (resources orphaned)       │ 
+         │                   p: Policy                    │ 
+         │                                                │ 
+         │      Error: Failed to delete application:      │ 
+         │               resource not found               │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_AppDeleteConfirmModal_NoCascade (0.00s)
+    view_modals_golden_test.go:281: golden mismatch for modal_app_delete_confirm_no_cascade
+        --- got ---
+                                                  
+         ╭──────────────────────────────────────╮ 
+         │                                      │ 
+         │       Delete non-cascade-app?        │ 
+         │                                      │ 
+         │              Delete (y)              │ 
+         │                                      │ 
+         │      c: Cascade Off (resources       │ 
+         │              orphaned)               │ 
+         │    p: Policy orphan (no cleanup)     │ 
+         │                                      │ 
+         ╰──────────────────────────────────────╯ 
+                                                  
+        --- want ---
+                                                  
+         ╭──────────────────────────────────────╮ 
+         │                                      │ 
+         │       Delete non-cascade-app?        │ 
+         │                                      │ 
+         │              Delete (y)              │ 
+         │                                      │ 
+         │      c: Cascade Off (resources       │ 
+         │              orphaned)               │ 
+         │    p: Policy orphan (no cleanup)     │ 
+         │                                      │ 
+         ╰──────────────────────────────────────╯ 
+                                                  
+--- FAIL: TestGolden_ConfirmSyncModal (0.00s)
+    view_modals_sync_test.go:102: golden mismatch for modal_confirm_sync
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │                 Sync demo-app?                 │ 
+         │                                                │ 
+         │    p  Prune     Off                            │ 
+         │    f  Force     Off                            │ 
+         │    d  Dry run   Off                            │ 
+         │    w  Watch     On                             │ 
+         │                                                │ 
+         │               Sync        Cancel               │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │                 Sync demo-app?                 │ 
+         │                                                │ 
+         │    p  Prune     Off                            │ 
+         │    f  Force     Off                            │ 
+         │    d  Dry run   Off                            │ 
+         │    w  Watch     On                             │ 
+         │                                                │ 
+         │               Sync        Cancel               │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_ConfirmSyncModal_PruneOn (0.00s)
+    view_modals_sync_test.go:107: golden mismatch for modal_confirm_sync_prune_on
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │                 Sync demo-app?                 │ 
+         │                                                │ 
+         │    p  Prune     On  removes extras             │ 
+         │    f  Force     Off                            │ 
+         │    d  Dry run   Off                            │ 
+         │    w  Watch     On                             │ 
+         │                                                │ 
+         │               Sync        Cancel               │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │                 Sync demo-app?                 │ 
+         │                                                │ 
+         │    p  Prune     On  removes extras             │ 
+         │    f  Force     Off                            │ 
+         │    d  Dry run   Off                            │ 
+         │    w  Watch     On                             │ 
+         │                                                │ 
+         │               Sync        Cancel               │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_ConfirmSyncModal_ForceConfirmation (0.00s)
+    view_modals_sync_test.go:133: golden mismatch for modal_confirm_sync_force
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │   Force sync deletes and recreates resources   │ 
+         │                  in demo-app.                  │ 
+         │                                                │ 
+         │             Force sync      Cancel             │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │   Force sync deletes and recreates resources   │ 
+         │                  in demo-app.                  │ 
+         │                                                │ 
+         │             Force sync      Cancel             │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_TerminateModal_Confirm (0.00s)
+    view_modals_terminate_test.go:52: golden mismatch for modal_terminate_confirm
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │    Terminate the running sync of demo-app?     │ 
+         │                                                │ 
+         │             Terminate      Cancel              │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │    Terminate the running sync of demo-app?     │ 
+         │                                                │ 
+         │             Terminate      Cancel              │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+2026/11/06 15:13:55 WARN HTTP request failed component=api op=http method=GET url="https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt" error="Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 15:13:55 WARN Attempt failed component=retry attempt=3 maxAttempts=5 took=0s err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+--- FAIL: TestGolden_TerminateModal_Error (0.00s)
+    view_modals_terminate_test.go:82: golden mismatch for modal_terminate_error
+        --- got ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │    Terminate the running sync of demo-app?     │ 
+         │                                                │ 
+         │             Terminate      Cancel              │ 
+         │                                                │ 
+         │    Error: Unable to terminate operation. No    │ 
+         │            operation is in progress            │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+        --- want ---
+                                                            
+         ╭────────────────────────────────────────────────╮ 
+         │                                                │ 
+         │    Terminate the running sync of demo-app?     │ 
+         │                                                │ 
+         │             Terminate      Cancel              │ 
+         │                                                │ 
+         │    Error: Unable to terminate operation. No    │ 
+         │            operation is in progress            │ 
+         │                                                │ 
+         ╰────────────────────────────────────────────────╯ 
+                                                            
+--- FAIL: TestGolden_EventsPane_SideBySide (0.00s)
+    view_pane_golden_test.go:93: golden mismatch for pane_events_side_100x24
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭──────────────────────────────────────────────╮╭─ Pod web-6f7d9b-x4k2m ───── ⟳ updated 12s ago ─╮ 
+         │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
+         │ ├── Deployment [demo/web] (Degraded)         ││ Health        Degraded                         │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degrad… ││ Sync          OutOfSync                        │ 
+         │ └── Service [demo/web] (Healthy)             ││ Age           3d                               │ 
+         │                                              ││ Message       containers with unready status:  │ 
+         │                                              ││               [web]                            │ 
+         │                                              ││ Last sync     SyncFailed                       │ 
+         │                                              ││   pod spec invalid                             │ 
+         │                                              ││                                                │ 
+         │                                              ││ EVENTS                                         │ 
+         │                                              ││ BackOff                          x412 · 2m ago │ 
+         │                                              ││   Back-off restarting failed container web in  │ 
+         │                                              ││   pod web-6f7d9b-x4k2m_demo(a1b2c3d)           │ 
+         │                                              ││                                                │ 
+         │                                              ││ Pulled                           x413 · 2m ago │ 
+         │                                              ││   Container image "web:1.4.2" already present  │ 
+         │                                              ││   on machine                                   │ 
+         │                                              ││                                                │ 
+         │                                              ││ Unhealthy                         x38 · 5m ago │ 
+         ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
+         <tree>                                                            u/i: scroll events • Ready • 1/4 
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭──────────────────────────────────────────────╮╭─ Pod web-6f7d9b-x4k2m ───── ⟳ updated 12s ago ─╮ 
+         │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
+         │ ├── Deployment [demo/web] (Degraded)         ││ Health        Degraded                         │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degrad… ││ Sync          OutOfSync                        │ 
+         │ └── Service [demo/web] (Healthy)             ││ Age           3d                               │ 
+         │                                              ││ Message       containers with unready status:  │ 
+         │                                              ││               [web]                            │ 
+         │                                              ││ Last sync     SyncFailed                       │ 
+         │                                              ││   pod spec invalid                             │ 
+         │                                              ││                                                │ 
+         │                                              ││ EVENTS                                         │ 
+         │                                              ││ BackOff                          x412 · 2m ago │ 
+         │                                              ││   Back-off restarting failed container web in  │ 
+         │                                              ││   pod web-6f7d9b-x4k2m_demo(a1b2c3d)           │ 
+         │                                              ││                                                │ 
+         │                                              ││ Pulled                           x413 · 2m ago │ 
+         │                                              ││   Container image "web:1.4.2" already present  │ 
+         │                                              ││   on machine                                   │ 
+         │                                              ││                                                │ 
+         │                                              ││ Unhealthy                         x38 · 5m ago │ 
+         ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
+         <tree>                                                            u/i: scroll events • Ready • 1/4 
+--- FAIL: TestGolden_EventsPane_BottomAt80x24 (0.00s)
+    view_pane_golden_test.go:99: golden mismatch for pane_events_bottom_80x24
+        --- got ---
+         Context: argo.example.com                                       Argonaut dev   
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ Application [demo-app] (Degraded, Synced)                                  │ 
+         │ ├── Deployment [demo/web] (Degraded)                                       │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degraded)                             │ 
+         │ └── Service [demo/web] (Healthy)                                           │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Pod web-6f7d9b-x4k2m ───────────────────────────────── ⟳ updated 12s ago ─╮ 
+         │                                                                            │ 
+         │ Health        Degraded                                                     │ 
+         │ Sync          OutOfSync                                                    │ 
+         │ Age           3d                                                           │ 
+         │ Message       containers with unready status: [web]                        │ 
+         │ Last sync     SyncFailed                                                   │ 
+         │   pod spec invalid                                                         │ 
+         │                                                                            │ 
+         │ EVENTS                                                                     │ 
+         │ BackOff                                                      x412 · 2m ago │ 
+         │   Back-off restarting failed container web in pod web-6f7d9b-x4k2m_demo(a1 │ 
+         │   b2c3d)                                                                   │ 
+         ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <tree>                                        u/i: scroll events • Ready • 1/4 
+        --- want ---
+         Context: argo.example.com                                       Argonaut dev   
+         ╭────────────────────────────────────────────────────────────────────────────╮ 
+         │ Application [demo-app] (Degraded, Synced)                                  │ 
+         │ ├── Deployment [demo/web] (Degraded)                                       │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degraded)                             │ 
+         │ └── Service [demo/web] (Healthy)                                           │ 
+         │                                                                            │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Pod web-6f7d9b-x4k2m ───────────────────────────────── ⟳ updated 12s ago ─╮ 
+         │                                                                            │ 
+         │ Health        Degraded                                                     │ 
+         │ Sync          OutOfSync                                                    │ 
+         │ Age           3d                                                           │ 
+         │ Message       containers with unready status: [web]                        │ 
+         │ Last sync     SyncFailed                                                   │ 
+         │   pod spec invalid                                                         │ 
+         │                                                                            │ 
+         │ EVENTS                                                                     │ 
+         │ BackOff                                                      x412 · 2m ago │ 
+         │   Back-off restarting failed container web in pod web-6f7d9b-x4k2m_demo(a1 │ 
+         │   b2c3d)                                                                   │ 
+         ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <tree>                                        u/i: scroll events • Ready • 1/4 
+--- FAIL: TestGolden_EventsPane_ScrolledShowsBothMarkers (0.00s)
+    view_pane_golden_test.go:107: golden mismatch for pane_events_scrolled
+        --- got ---
+          argo.example.com                                                                   Argonaut dev   
+         ╭──────────────────────────────────────────────╮╭─ Pod web-… ─ ⟳ updated 12s ago ─ ▲ more above ─╮ 
+         │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
+         │ ├── Deployment [demo/web] (Degraded)         ││               [web]                            │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degrad… ││ Last sync     SyncFailed                       │ 
+         │ └── Service [demo/web] (Healthy)             ││   pod spec invalid                             │ 
+         │                                              ││                                                │ 
+         │                                              ││ EVENTS                                         │ 
+         │                                              ││ BackOff                          x412 · 2m ago │ 
+         │                                              ││   Back-off restarting failed container web in  │ 
+         │                                              ││   pod web-6f7d9b-x4k2m_demo(a1b2c3d)           │ 
+         ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
+         <tree>                                                            u/i: scroll events • Ready • 1/4 
+        --- want ---
+          argo.example.com                                                                   Argonaut dev   
+         ╭──────────────────────────────────────────────╮╭─ Pod web-… ─ ⟳ updated 12s ago ─ ▲ more above ─╮ 
+         │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
+         │ ├── Deployment [demo/web] (Degraded)         ││               [web]                            │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degrad… ││ Last sync     SyncFailed                       │ 
+         │ └── Service [demo/web] (Healthy)             ││   pod spec invalid                             │ 
+         │                                              ││                                                │ 
+         │                                              ││ EVENTS                                         │ 
+         │                                              ││ BackOff                          x412 · 2m ago │ 
+         │                                              ││   Back-off restarting failed container web in  │ 
+         │                                              ││   pod web-6f7d9b-x4k2m_demo(a1b2c3d)           │ 
+         ╰──────────────────────────────────────────────╯╰───────────────────────────────── ▼ more below ─╯ 
+         <tree>                                                            u/i: scroll events • Ready • 1/4 
+--- FAIL: TestGolden_EventsPane_LoadingEmptyError (0.00s)
+    view_pane_golden_test.go:129: golden mismatch for pane_events_loading_empty_error
+        --- got ---
+        ╭─ Pod web-6f7d9b-x4k2m ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ EVENTS                                         │
+        │ Loading events…                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+        
+        ╭─ Pod web-6f7d9b-x4k2m ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ EVENTS                                         │
+        │ No events.                                     │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+        
+        ╭─ Pod web-6f7d9b-x4k2m ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ EVENTS                                         │
+        │ connection refused: dial tcp 10.0.0.1:443      │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+        --- want ---
+        ╭─ Pod web-6f7d9b-x4k2m ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ EVENTS                                         │
+        │ Loading events…                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+        
+        ╭─ Pod web-6f7d9b-x4k2m ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ EVENTS                                         │
+        │ No events.                                     │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+        
+        ╭─ Pod web-6f7d9b-x4k2m ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ EVENTS                                         │
+        │ connection refused: dial tcp 10.0.0.1:443      │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+--- FAIL: TestGolden_EventsPane_AppRow_StatusBlockAboveEvents (0.00s)
+    view_pane_golden_test.go:168: golden mismatch for pane_approw_status_and_events_100x30
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭──────────────────────────────────────────────╮╭─ Application demo-app ───────────────── ⟳ 10s ─╮ 
+         │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
+         │ ├── Deployment [demo/web] (Degraded)         ││ Operation     Sync (dry run, partial)          │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degrad… ││ Phase         Failed                           │ 
+         │ └── Service [demo/web] (Healthy)             ││ Started       2 minutes ago                    │ 
+         │                                              ││ Duration      6s                               │ 
+         │                                              ││ Revision      a1b2c3d4                         │ 
+         │                                              ││ Initiated by  alice                            │ 
+         │                                              ││ Message       one or more objects failed to ap │ 
+         │                                              ││               ply                              │ 
+         │                                              ││                                                │ 
+         │                                              ││ RESULT                                         │ 
+         │                                              ││ ✔ Service      demo/web                 Synced │ 
+         │                                              ││   service/web unchanged                        │ 
+         │                                              ││ ✖ Deployment   demo/web             SyncFailed │ 
+         │                                              ││   Deployment.apps "web" is invalid: spec.templ │ 
+         │                                              ││   ate.spec.containers[0].image: Required value │ 
+         │                                              ││                                                │ 
+         │                                              ││ EVENTS                                         │ 
+         │                                              ││ OperationCompleted                 x1 · 1m ago │ 
+         │                                              ││   Sync operation to a1b2c3d failed: one or mor │ 
+         │                                              ││   e objects failed to apply                    │ 
+         │                                              ││                                                │ 
+         │                                              ││ OperationStarted                   x1 · 2m ago │ 
+         │                                              ││   admin initiated sync to HEAD                 │ 
+         │                                              ││                                                │ 
+         ╰──────────────────────────────────────────────╯╰────────────────────────────────────────────────╯ 
+         <tree>                                                            u/i: scroll events • Ready • 1/4 
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭──────────────────────────────────────────────╮╭─ Application demo-app ───────────────── ⟳ 10s ─╮ 
+         │ Application [demo-app] (Degraded, Synced)    ││                                                │ 
+         │ ├── Deployment [demo/web] (Degraded)         ││ Operation     Sync (dry run, partial)          │ 
+         │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degrad… ││ Phase         Failed                           │ 
+         │ └── Service [demo/web] (Healthy)             ││ Started       2 minutes ago                    │ 
+         │                                              ││ Duration      6s                               │ 
+         │                                              ││ Revision      a1b2c3d4                         │ 
+         │                                              ││ Initiated by  alice                            │ 
+         │                                              ││ Message       one or more objects failed to ap │ 
+         │                                              ││               ply                              │ 
+         │                                              ││                                                │ 
+         │                                              ││ RESULT                                         │ 
+         │                                              ││ ✔ Service      demo/web                 Synced │ 
+         │                                              ││   service/web unchanged                        │ 
+         │                                              ││ ✖ Deployment   demo/web             SyncFailed │ 
+         │                                              ││   Deployment.apps "web" is invalid: spec.templ │ 
+         │                                              ││   ate.spec.containers[0].image: Required value │ 
+         │                                              ││                                                │ 
+         │                                              ││ EVENTS                                         │ 
+         │                                              ││ OperationCompleted                 x1 · 1m ago │ 
+         │                                              ││   Sync operation to a1b2c3d failed: one or mor │ 
+         │                                              ││   e objects failed to apply                    │ 
+         │                                              ││                                                │ 
+         │                                              ││ OperationStarted                   x1 · 2m ago │ 
+         │                                              ││   admin initiated sync to HEAD                 │ 
+         │                                              ││                                                │ 
+         ╰──────────────────────────────────────────────╯╰────────────────────────────────────────────────╯ 
+         <tree>                                                            u/i: scroll events • Ready • 1/4 
+--- FAIL: TestGolden_EventsPane_AppRow_NeverSynced (0.00s)
+    view_pane_golden_test.go:177: golden mismatch for pane_approw_never_synced
+        --- got ---
+        ╭─ Application demo-app ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ This application has never been synced.        │
+        │                                                │
+        │ EVENTS                                         │
+        │ Scheduled                          x1 · 1h ago │
+        │   Successfully assigned demo/web-6f7d9b-x4k2m  │
+        │   to node-2                                    │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+        --- want ---
+        ╭─ Application demo-app ───────────────── ⟳ 10s ─╮
+        │                                                │
+        │ This application has never been synced.        │
+        │                                                │
+        │ EVENTS                                         │
+        │ Scheduled                          x1 · 1h ago │
+        │   Successfully assigned demo/web-6f7d9b-x4k2m  │
+        │   to node-2                                    │
+        │                                                │
+        │                                                │
+        │                                                │
+        │                                                │
+        ╰────────────────────────────────────────────────╯
+--- FAIL: TestGolden_TreeView_SyncSummaryVariants (0.00s)
+    view_pane_golden_test.go:201: golden mismatch for tree_view_sync_summary_variants
+        --- got ---
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ Application [demo-app] (Degraded, Synced) · ✖ sync failed 2m ago                               │
+        │ ├── Deployment [demo/web] (Degraded)                                                           │
+        │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degraded)                                                 │
+        │ └── Service [demo/web] (Healthy)                                                               │
+        │                                                                                                │
+        │ Application [other-app] (Healthy, Synced) · ◌ syncing                                          │
+        │ └── Service [api]                                                                              │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+        --- want ---
+        ╭────────────────────────────────────────────────────────────────────────────────────────────────╮
+        │ Application [demo-app] (Degraded, Synced) · ✖ sync failed 2m ago                               │
+        │ ├── Deployment [demo/web] (Degraded)                                                           │
+        │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degraded)                                                 │
+        │ └── Service [demo/web] (Healthy)                                                               │
+        │                                                                                                │
+        │ Application [other-app] (Healthy, Synced) · ◌ syncing                                          │
+        │ └── Service [api]                                                                              │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        │                                                                                                │
+        ╰────────────────────────────────────────────────────────────────────────────────────────────────╯
+--- FAIL: TestGolden_RollbackPane_100x24 (0.00s)
+    view_rollback_golden_test.go:52: golden mismatch for rollback_pane_100x24
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                              3d ago   by bob.smith               │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #29 11223344 ────────────────────────────────────────────────────────────── deployed 21h ago ─╮ 
+         │                                                                                                │ 
+         │ DEPLOYMENT                                                                                     │ 
+         │ Deployed       21h ago · 2026-08-07 14:02                                                      │ 
+         │ Time to deploy 14s                                                                             │ 
+         │ Initiated by   automated sync policy                                                           │ 
+         │ Active for     20h0m                                                                           │ 
+         │                                                                                                │ 
+         │ COMMIT         1122334455aa                                                                    │ 
+         │ Author         Jane Doe                                                                        │ 
+         │ Date           22h ago · 2026-08-07 13:58                                                      │ 
+         │                                                                                                │ 
+         │ fix: suggest and validate :events arguments                                                    │ 
+         │                                                                                                │ 
+         │ SOURCE                                                                                         │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                              3d ago   by bob.smith               │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #29 11223344 ────────────────────────────────────────────────────────────── deployed 21h ago ─╮ 
+         │                                                                                                │ 
+         │ DEPLOYMENT                                                                                     │ 
+         │ Deployed       21h ago · 2026-08-07 14:02                                                      │ 
+         │ Time to deploy 14s                                                                             │ 
+         │ Initiated by   automated sync policy                                                           │ 
+         │ Active for     20h0m                                                                           │ 
+         │                                                                                                │ 
+         │ COMMIT         1122334455aa                                                                    │ 
+         │ Author         Jane Doe                                                                        │ 
+         │ Date           22h ago · 2026-08-07 13:58                                                      │ 
+         │                                                                                                │ 
+         │ fix: suggest and validate :events arguments                                                    │ 
+         │                                                                                                │ 
+         │ SOURCE                                                                                         │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+--- FAIL: TestGolden_RollbackPane_80x24 (0.00s)
+    view_rollback_golden_test.go:57: golden mismatch for rollback_pane_80x24
+        --- got ---
+         Context: argo.example.com                                       Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :...  1h ago   by jane.doe   curr… │ 
+         │ #29  11223344 fix: suggest and validate :...  21h ago  by automated        │ 
+         │ #28  deadbeef                                 3d ago   by automated        │ 
+         │ #27  55667788                                 3d ago   by bob.smith        │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #29 11223344 ────────────────────────────────────────── deployed 21h ago ─╮ 
+         │                                                                            │ 
+         │ DEPLOYMENT                                                                 │ 
+         │ Deployed       21h ago · 2026-08-07 14:02                                  │ 
+         │ Time to deploy 14s                                                         │ 
+         │ Initiated by   automated sync policy                                       │ 
+         │ Active for     20h0m                                                       │ 
+         │                                                                            │ 
+         │ COMMIT         1122334455aa                                                │ 
+         │ Author         Jane Doe                                                    │ 
+         │ Date           22h ago · 2026-08-07 13:58                                  │ 
+         │                                                                            │ 
+         │ fix: suggest and validate :events arguments                                │ 
+         │                                                                            │ 
+         │ SOURCE                                                                     │ 
+         ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>        enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+        --- want ---
+         Context: argo.example.com                                       Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :...  1h ago   by jane.doe   curr… │ 
+         │ #29  11223344 fix: suggest and validate :...  21h ago  by automated        │ 
+         │ #28  deadbeef                                 3d ago   by automated        │ 
+         │ #27  55667788                                 3d ago   by bob.smith        │ 
+         ╰────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #29 11223344 ────────────────────────────────────────── deployed 21h ago ─╮ 
+         │                                                                            │ 
+         │ DEPLOYMENT                                                                 │ 
+         │ Deployed       21h ago · 2026-08-07 14:02                                  │ 
+         │ Time to deploy 14s                                                         │ 
+         │ Initiated by   automated sync policy                                       │ 
+         │ Active for     20h0m                                                       │ 
+         │                                                                            │ 
+         │ COMMIT         1122334455aa                                                │ 
+         │ Author         Jane Doe                                                    │ 
+         │ Date           22h ago · 2026-08-07 13:58                                  │ 
+         │                                                                            │ 
+         │ fix: suggest and validate :events arguments                                │ 
+         │                                                                            │ 
+         │ SOURCE                                                                     │ 
+         ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>        enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+--- FAIL: TestGolden_RollbackPane_States (0.00s)
+    view_rollback_golden_test.go:76: golden mismatch for rollback_pane_states
+        --- got ---
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ Loading deployment history…                                                                    │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Deployment ───────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ Nothing to show.                                                                               │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ connection refused                                                                             │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Deployment ───────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ Nothing to show.                                                                               │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ No deployment history.                                                                         │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Deployment ───────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ Nothing to show.                                                                               │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 0/0 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                              3d ago   by bob.smith               │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #28 deadbeef ─────────────────────────────────────────────────────────────── deployed 3d ago ─╮ 
+         │                                                                                                │ 
+         │ DEPLOYMENT                                                                                     │ 
+         │ Deployed       3d ago · 2026-08-05 09:02                                                       │ 
+         │ Initiated by   automated sync policy                                                           │ 
+         │ Active for     53h0m                                                                           │ 
+         │                                                                                                │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 3/4 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                              3d ago   by bob.smith               │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #27 55667788 ─────────────────────────────────────────────────────────────── deployed 3d ago ─╮ 
+         │                                                                                                │ 
+         │ DEPLOYMENT                                                                                     │ 
+         │ Deployed       3d ago · 2026-08-04 16:02                                                       │ 
+         │ Initiated by   bob.smith                                                                       │ 
+         │ Active for     17h0m                                                                           │ 
+         │                                                                                                │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 4/4 
+        --- want ---
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ Loading deployment history…                                                                    │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Deployment ───────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ Nothing to show.                                                                               │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ connection refused                                                                             │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Deployment ───────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ Nothing to show.                                                                               │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ No deployment history.                                                                         │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ Deployment ───────────────────────────────────────────────────────────────────────────────────╮ 
+         │                                                                                                │ 
+         │ Nothing to show.                                                                               │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 0/0 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                              3d ago   by bob.smith               │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #28 deadbeef ─────────────────────────────────────────────────────────────── deployed 3d ago ─╮ 
+         │                                                                                                │ 
+         │ DEPLOYMENT                                                                                     │ 
+         │ Deployed       3d ago · 2026-08-05 09:02                                                       │ 
+         │ Initiated by   automated sync policy                                                           │ 
+         │ Active for     53h0m                                                                           │ 
+         │                                                                                                │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 3/4 
+        
+          argo.example.com                                                                   Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                              3d ago   by bob.smith               │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         ╭─ #27 55667788 ─────────────────────────────────────────────────────────────── deployed 3d ago ─╮ 
+         │                                                                                                │ 
+         │ DEPLOYMENT                                                                                     │ 
+         │ Deployed       3d ago · 2026-08-04 16:02                                                       │ 
+         │ Initiated by   bob.smith                                                                       │ 
+         │ Active for     17h0m                                                                           │ 
+         │                                                                                                │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 4/4 
+--- FAIL: TestGolden_RollbackPane_Confirm (0.00s)
+    view_rollback_golden_test.go:82: golden mismatch for rollback_pane_confirm
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                                               ated               │ 
+         │ #27  55667788      ╭──────────────────────────────────────────────────────╮ mith               │ 
+         ╰─────────────────── │                                                      │ ───────────────────╯ 
+         ╭─ #29 11223344 ──── │                  Rollback demo-app?                  │  deployed 21h ago ─╮ 
+         │                    │                                                      │                    │ 
+         │ DEPLOYMENT         │       a1b2c3d4 (current) → 11223344 (21h ago)        │                    │ 
+         │ Deployed       21h │     fix: suggest and validate :events arguments      │                    │ 
+         │ Time to deploy 14s │                                                      │                    │ 
+         │ Initiated by   aut │       ⚠ Auto-sync on — will be disabled first        │                    │ 
+         │ Active for     20h │                                                      │                    │ 
+         │                    │              Rollback (y)        Cancel              │                    │ 
+         │ COMMIT         112 │                                                      │                    │ 
+         │ Author         Jan │              p: Prune Off • w: Watch On              │                    │ 
+         │ Date           22h │                                                      │                    │ 
+         │                    ╰──────────────────────────────────────────────────────╯                    │ 
+         │ fix: suggest and v                                                                             │ 
+         │                                                                                                │ 
+         │ SOURCE                                                                                         │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 2/4 
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                                               ated               │ 
+         │ #27  55667788      ╭──────────────────────────────────────────────────────╮ mith               │ 
+         ╰─────────────────── │                                                      │ ───────────────────╯ 
+         ╭─ #29 11223344 ──── │                  Rollback demo-app?                  │  deployed 21h ago ─╮ 
+         │                    │                                                      │                    │ 
+         │ DEPLOYMENT         │       a1b2c3d4 (current) → 11223344 (21h ago)        │                    │ 
+         │ Deployed       21h │     fix: suggest and validate :events arguments      │                    │ 
+         │ Time to deploy 14s │                                                      │                    │ 
+         │ Initiated by   aut │       ⚠ Auto-sync on — will be disabled first        │                    │ 
+         │ Active for     20h │                                                      │                    │ 
+         │                    │              Rollback (y)        Cancel              │                    │ 
+         │ COMMIT         112 │                                                      │                    │ 
+         │ Author         Jan │              p: Prune Off • w: Watch On              │                    │ 
+         │ Date           22h │                                                      │                    │ 
+         │                    ╰──────────────────────────────────────────────────────╯                    │ 
+         │ fix: suggest and v                                                                             │ 
+         │                                                                                                │ 
+         │ SOURCE                                                                                         │ 
+         ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
+         <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 2/4 
+--- FAIL: TestGolden_RollbackPane_ConfirmRedeploy (0.00s)
+    view_rollback_golden_test.go:92: golden mismatch for rollback_pane_confirm_redeploy
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                                               mith               │ 
+         ╰─────────────────── ╭──────────────────────────────────────────────────────╮ ───────────────────╯ 
+         ╭─ #30 a1b2c3d4 ──── │                                                      │ ─ deployed 1h ago ─╮ 
+         │                    │                  Redeploy demo-app?                  │                    │ 
+         │ DEPLOYMENT         │                                                      │                    │ 
+         │ Deployed       1h  │        a1b2c3d4 (current) → a1b2c3d4 (1h ago)        │                    │ 
+         │ Initiated by   jan │     fix: suggest and validate :events arguments      │                    │ 
+         │ Active for     1h5 │                                                      │                    │ 
+         │                    │              Redeploy (y)        Cancel              │                    │ 
+         │ COMMIT         a1b │                                                      │                    │ 
+         │ Author         Jan │              p: Prune Off • w: Watch On              │                    │ 
+         │ Date           22h │                                                      │                    │ 
+         │                    ╰──────────────────────────────────────────────────────╯                    │ 
+         │ fix: suggest and v                                                                             │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 1/4 
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
+         │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
+         │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
+         │ #28  deadbeef                                              3d ago   by automated               │ 
+         │ #27  55667788                                                               mith               │ 
+         ╰─────────────────── ╭──────────────────────────────────────────────────────╮ ───────────────────╯ 
+         ╭─ #30 a1b2c3d4 ──── │                                                      │ ─ deployed 1h ago ─╮ 
+         │                    │                  Redeploy demo-app?                  │                    │ 
+         │ DEPLOYMENT         │                                                      │                    │ 
+         │ Deployed       1h  │        a1b2c3d4 (current) → a1b2c3d4 (1h ago)        │                    │ 
+         │ Initiated by   jan │     fix: suggest and validate :events arguments      │                    │ 
+         │ Active for     1h5 │                                                      │                    │ 
+         │                    │              Redeploy (y)        Cancel              │                    │ 
+         │ COMMIT         a1b │                                                      │                    │ 
+         │ Author         Jan │              p: Prune Off • w: Watch On              │                    │ 
+         │ Date           22h │                                                      │                    │ 
+         │                    ╰──────────────────────────────────────────────────────╯                    │ 
+         │ fix: suggest and v                                                                             │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 1/4 
+--- FAIL: TestGolden_TreeView_SelectionStyle (0.00s)
+    view_tree_golden_test.go:27: golden mismatch for tree_view_selection
+        --- got ---
+        [95m╭────────────────────────────────────────────────────────────────────────────────────────────────╮[m
+        [95m│[m [97;105m[m[97;105mApplication[m[105m [m[30;105m[demo-app][m[105m [m[30;105m(Healthy, Synced)[m[105m                                                      [m [95m│[m
+        [95m│[m [97m├── [m[97mDeployment[m [90m[ns-a/web][m [92m(Healthy)[m                                                            [95m│[m
+        [95m│[m [97m└── [m[97mService[m [90m[ns-a/web][m [92m(Healthy)[m                                                               [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m╰────────────────────────────────────────────────────────────────────────────────────────────────╯[m
+        --- want ---
+        [95m╭────────────────────────────────────────────────────────────────────────────────────────────────╮[m
+        [95m│[m [97;105m[m[97;105mApplication[m[105m [m[30;105m[demo-app][m[105m [m[30;105m(Healthy, Synced)[m[105m                                                      [m [95m│[m
+        [95m│[m [97m├── [m[97mDeployment[m [90m[ns-a/web][m [92m(Healthy)[m                                                            [95m│[m
+        [95m│[m [97m└── [m[97mService[m [90m[ns-a/web][m [92m(Healthy)[m                                                               [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m╰────────────────────────────────────────────────────────────────────────────────────────────────╯[m
+--- FAIL: TestGolden_TreeView_CtrlD_SingleResource (0.00s)
+    view_tree_golden_test.go:68: golden mismatch for tree_view_ctrld_single_resource
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ Application [my-app] (Healthy, Synced)                                                         │ 
+         │ ├── Deployment [production/api-server] (Healthy)                                               │ 
+         │ ├── Service [production/api-server] (Healthy)                                                  │ 
+         │ └── ConfigMap [produc                                                                          │ 
+         │                       ╭────────────────────────────────────────────────╮                       │ 
+         │                       │                                                │                       │ 
+         │                       │    Delete Deployment/production/api-server?    │                       │ 
+         │                       │                                                │                       │ 
+         │                       │                   Delete (y)                   │                       │ 
+         │                       │                                                │                       │ 
+         │                       │     c: Cascade On (all resources deleted)      │                       │ 
+         │                       │    p: Policy foreground (wait for cleanup)     │                       │ 
+         │                       │                  f: Force Off                  │                       │ 
+         │                       │                                                │                       │ 
+         │                       ╰────────────────────────────────────────────────╯                       │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <tree>                                                                                 Ready • 2/4 
+        
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ Application [my-app] (Healthy, Synced)                                                         │ 
+         │ ├── Deployment [production/api-server] (Healthy)                                               │ 
+         │ ├── Service [production/api-server] (Healthy)                                                  │ 
+         │ └── ConfigMap [produc                                                                          │ 
+         │                       ╭────────────────────────────────────────────────╮                       │ 
+         │                       │                                                │                       │ 
+         │                       │    Delete Deployment/production/api-server?    │                       │ 
+         │                       │                                                │                       │ 
+         │                       │                   Delete (y)                   │                       │ 
+         │                       │                                                │                       │ 
+         │                       │     c: Cascade On (all resources deleted)      │                       │ 
+         │                       │    p: Policy foreground (wait for cleanup)     │                       │ 
+         │                       │                  f: Force Off                  │                       │ 
+         │                       │                                                │                       │ 
+         │                       ╰────────────────────────────────────────────────╯                       │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <tree>                                                                                 Ready • 2/4 
+--- FAIL: TestGolden_TreeView_CtrlD_MultiSelect (0.00s)
+    view_tree_golden_test.go:116: golden mismatch for tree_view_ctrld_multi_select
+        --- got ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ Application [multi-app] (Healthy, Synced)                                                      │ 
+         │ ├── Deployment [staging/backend] (Healthy)                                                     │ 
+         │ ├── Service [staging/backend-svc] (Healthy)                                                    │ 
+         │ ├── Deployment [stagi                                                                          │ 
+         │ └── Service [staging/ ╭────────────────────────────────────────────────╮                       │ 
+         │                       │                                                │                       │ 
+         │                       │             Delete 3 resource(s)?              │                       │ 
+         │                       │                                                │                       │ 
+         │                       │                   Delete (y)                   │                       │ 
+         │                       │                                                │                       │ 
+         │                       │     c: Cascade On (all resources deleted)      │                       │ 
+         │                       │      p: Policy background (async cleanup)      │                       │ 
+         │                       │                  f: Force Off                  │                       │ 
+         │                       │                                                │                       │ 
+         │                       ╰────────────────────────────────────────────────╯                       │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <tree>                                                                                 Ready • 4/5 
+        
+        --- want ---
+         Context: argo.example.com                                                           Argonaut dev   
+         ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ Application [multi-app] (Healthy, Synced)                                                      │ 
+         │ ├── Deployment [staging/backend] (Healthy)                                                     │ 
+         │ ├── Service [staging/backend-svc] (Healthy)                                                    │ 
+         │ ├── Deployment [stagi                                                                          │ 
+         │ └── Service [staging/ ╭────────────────────────────────────────────────╮                       │ 
+         │                       │                                                │                       │ 
+         │                       │             Delete 3 resource(s)?              │                       │ 
+         │                       │                                                │                       │ 
+         │                       │                   Delete (y)                   │                       │ 
+         │                       │                                                │                       │ 
+         │                       │     c: Cascade On (all resources deleted)      │                       │ 
+         │                       │      p: Policy background (async cleanup)      │                       │ 
+         │                       │                  f: Force Off                  │                       │ 
+         │                       │                                                │                       │ 
+         │                       ╰────────────────────────────────────────────────╯                       │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         │                                                                                                │ 
+         ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         <tree>                                                                                 Ready • 4/5 
+--- FAIL: TestGolden_TreeView_CtrlD_HighlightPreserved (0.00s)
+    view_tree_golden_test.go:153: golden mismatch for tree_view_ctrld_highlight_preserved
+        --- got ---
+        [95m╭────────────────────────────────────────────────────────────────────────────────────────────────╮[m
+        [95m│[m [97m[m[97mApplication[m [90m[highlight-test][m ([92mHealthy[m, [92mSynced[m)                                                 [95m│[m
+        [95m│[m [97m├── [m[97;105mDeployment[m[105m [m[30;105m[default/web][m[105m [m[30;105m(Healthy)[m                                                         [95m│[m
+        [95m│[m [97m└── [m[97mService[m [90m[default/web][m [92m(Healthy)[m                                                            [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m╰────────────────────────────────────────────────────────────────────────────────────────────────╯[m
+        --- want ---
+        [95m╭────────────────────────────────────────────────────────────────────────────────────────────────╮[m
+        [95m│[m [97m[m[97mApplication[m [90m[highlight-test][m ([92mHealthy[m, [92mSynced[m)                                                 [95m│[m
+        [95m│[m [97m├── [m[97;105mDeployment[m[105m [m[30;105m[default/web][m[105m [m[30;105m(Healthy)[m                                                         [95m│[m
+        [95m│[m [97m└── [m[97mService[m [90m[default/web][m [92m(Healthy)[m                                                            [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m│[m                                                                                                [95m│[m
+        [95m╰────────────────────────────────────────────────────────────────────────────────────────────────╯[m
+FAIL
+FAIL	github.com/darksworm/argonaut/cmd/app	4.172s
+ok  	github.com/darksworm/argonaut/pkg/api	4.546s
+ok  	github.com/darksworm/argonaut/pkg/autocomplete	0.139s
+--- FAIL: TestGetConfigPath (0.00s)
+    --- FAIL: TestGetConfigPath/ARGOCD_CONFIG_DIR_is_used (0.00s)
+        cli_config_test.go:106: GetConfigPath() = \custom\config\dir\config, want /custom/config/dir/config
+    --- FAIL: TestGetConfigPath/Legacy_path_~/.argocd/config_if_exists (0.00s)
+        cli_config_test.go:106: GetConfigPath() = C:\Users\Manuel\.config\argocd\config, want C:\Users\Manuel\AppData\Local\Temp\TestGetConfigPathLegacy_path_~.argocdconfig_if_exists2954279196\001\.argocd\config
+    --- FAIL: TestGetConfigPath/Default_to_~/.config/argocd/config (0.00s)
+        cli_config_test.go:106: GetConfigPath() = C:\Users\Manuel\.config\argocd\config, want C:\Users\Manuel\AppData\Local\Temp\TestGetConfigPathDefault_to_~.configargocdconfig141105278\001\.config\argocd\config
+FAIL
+FAIL	github.com/darksworm/argonaut/pkg/config	0.065s
+ok  	github.com/darksworm/argonaut/pkg/context	0.238s
+?   	github.com/darksworm/argonaut/pkg/errors	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/humantime	0.063s
+ok  	github.com/darksworm/argonaut/pkg/kubeconfig	0.056s
+ok  	github.com/darksworm/argonaut/pkg/model	0.217s
+ok  	github.com/darksworm/argonaut/pkg/neat	0.111s
+?   	github.com/darksworm/argonaut/pkg/portforward	[no test files]
+?   	github.com/darksworm/argonaut/pkg/retry	[no test files]
+2026/11/06 15:14:01 WARN HTTP request failed component=api op=http method=POST url=http://127.0.0.1:12554/api/v1/applications/my-app/sync error="Post \"http://127.0.0.1:12554/api/v1/applications/my-app/sync\": EOF"
+--- FAIL: TestFindDownloadURL_PrefersExactPlatformMatch (0.00s)
+    update_test.go:215: expected native asset, got "https://example.com/win.zip"
+2026/11/06 15:14:01 WARN No matching asset found component=update os=windows arch=amd64
+2026/11/06 15:14:01 INFO Update check completed component=update available=true current=v1.0.0 latest=v2.0.0 install_method=manual
+2026/11/06 15:14:01 INFO Update check completed component=update available=false current=v1.0.0 latest=v1.0.0 install_method=manual
+2026/11/06 15:14:01 WARN Failed to load release checksum component=update err="no checksum asset found in release"
+2026/11/06 15:14:01 INFO Update check completed component=update available=true current=dev latest=v0.0.1 install_method=manual
+FAIL
+FAIL	github.com/darksworm/argonaut/pkg/services	0.100s
+ok  	github.com/darksworm/argonaut/pkg/services/appdelete	0.110s
+ok  	github.com/darksworm/argonaut/pkg/sort	0.237s
+ok  	github.com/darksworm/argonaut/pkg/theme	0.055s
+ok  	github.com/darksworm/argonaut/pkg/trust	2.144s
+ok  	github.com/darksworm/argonaut/pkg/tui	0.057s
+?   	github.com/darksworm/argonaut/pkg/tui/clipboard	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/tui/listnav	0.162s
+ok  	github.com/darksworm/argonaut/pkg/tui/selection	0.206s
+ok  	github.com/darksworm/argonaut/pkg/tui/treeview	0.057s
+ok  	github.com/darksworm/argonaut/scripts	1.093s
+FAIL

@@ -188,6 +188,34 @@ Argonaut uses that context's server and token directly, without kubeconfig, and
 does not change the CLI's `current-context`. Core and port-forward contexts are
 not supported for live switching. You can also switch directly with `:ctx NAME`.
 
+The header shows the active Argo CD context, current view and the shortcuts
+available in that view, in a layout inspired by k9s. Press `0`/`c` for contexts,
+`1` for apps, `2` for clusters, `3` for namespaces, `4` for projects and `5` for
+ApplicationSets. `:` opens commands and `?` shows full help. View shortcuts do
+not intercept text input or bypass confirmation dialogs.
+
+For SSO, open contexts and press `a` on a row to toggle **auto-login** for that
+context. Preferences persist in Argonaut's config. On an authentication failure,
+Argonaut first asks the Argo CD CLI to refresh the session silently. If a new SSO
+login is necessary, it hands the terminal to `argocd relogin`, which can open your
+browser, then reloads credentials and returns to the TUI. Press `L` to log in
+manually for the selected context (or the active context outside the picker).
+SSO/MFA can still require confirmation in the browser. Failed or cancelled login
+attempts are throttled; interrupted sync/delete actions are never retried.
+
+Auto-login is off until enabled for a context. Argonaut stores no passwords;
+credentials remain in the Argo CD CLI config. The CLI must be installed. If it
+is not on PATH, set an executable path (without shell arguments), for example:
+
+```toml
+[auth]
+command = 'C:\Tools\argocd.exe'
+
+[auth.auto_relogin]
+development = true
+production = false
+```
+
 ---
 
 ## ✨ Highlights

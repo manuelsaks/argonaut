@@ -666,7 +666,10 @@ func (m *Model) handleDiffModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // diffPageSize returns the number of visible rows for page scrolling in diff mode
 func (m *Model) diffPageSize() int {
 	// Diff view uses most of the terminal height minus borders and header
-	overhead := 5 // title, footer, borders, container padding
+	overhead := 5 + countLines(m.renderBanner()) // title, footer, borders, header, padding
+	if m.state.Mode == model.ModeSearch {
+		overhead++
+	}
 	return max(1, m.state.Terminal.Rows-overhead)
 }
 
@@ -1865,6 +1868,26 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch m.state.Mode {
 		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
 			return m.openContextPicker()
+		}
+	}
+	if msg.String() == "L" {
+		switch m.state.Mode {
+		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
+			return m, m.beginContextRelogin(m.selectedArgoContext(), false)
+		}
+	}
+	if m.state.Mode == model.ModeNormal {
+		if m.state.Navigation.View == model.ViewContexts && msg.String() == "a" {
+			return m.toggleContextAutoRelogin()
+		}
+		commands := map[string]string{"1": "apps", "2": "clusters", "3": "namespaces", "4": "projects", "5": "appsets"}
+		if msg.String() == "0" {
+			return m.openContextPicker()
+		}
+		if command, ok := commands[msg.String()]; ok {
+			m.state.Mode = model.ModeCommand
+			m.inputComponents.SetCommandValue(command)
+			return m.handleEnhancedCommandModeKeys(tea.KeyPressMsg{Code: tea.KeyEnter})
 		}
 	}
 

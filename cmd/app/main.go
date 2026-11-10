@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	cblog "github.com/charmbracelet/log"
 	"github.com/darksworm/argonaut/pkg/api"
@@ -378,16 +377,8 @@ func main() {
 	// Start with empty apps - they will be loaded from API
 	m.state.Apps = []model.App{}
 
-	// Create the Bubbletea program
-	p := tea.NewProgram(
-		m,
-	)
-
-	// Store program pointer for terminal hand-off (pager integration)
-	m.SetProgram(p)
-
 	// Run the program
-	if _, err := p.Run(); err != nil {
+	if err := runTUI(m); err != nil {
 		fmt.Fprintf(os.Stderr, "Error running program: %v\n", err)
 		os.Exit(1)
 	}

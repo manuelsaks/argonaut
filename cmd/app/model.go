@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -161,10 +163,15 @@ type Model struct {
 	pendingDefaultViewScope *defaultViewScope
 
 	// Context switching state
+	reloginContext     string
 	argoConfigPath     string // Path to ArgoCD CLI config (for re-reads on switch)
 	currentContextName string // Active ArgoCD context name
 	switchEpoch        int    // Incremented on each context switch; captured by async closures
 	contextSwitchSeq   int    // Latest context switch request within this epoch
+	reloginSeq         int
+	reloginInProgress  bool
+	reloginAttempts    map[string]time.Time
+	reloginCancel      context.CancelFunc
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -690,6 +697,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.SwitchEpoch != m.switchEpoch {
 			return m, nil
 		}
+		if requiresRelogin(msg.Error) {
+			if cmd, handled := m.maybeAutoRelogin(); handled {
+				return m, cmd
+			}
+		}
 		// Handle structured errors with proper error state management
 		if msg.Error != nil {
 			errorMsg := fmt.Sprintf("Error: %s", msg.Error.Message)
@@ -740,6 +752,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Gate by switch epoch
 		if msg.SwitchEpoch != m.switchEpoch {
 			return m, nil
+		}
+		if msg.StatusCode != 403 && (msg.StatusCode == 401 || requiresRelogin(errors.New(msg.Message))) {
+			if cmd, handled := m.maybeAutoRelogin(); handled {
+				return m, cmd
+			}
 		}
 		m.cleanupAppWatcher()
 		// If we're already in auth-required mode, suppress generic API errors to avoid
@@ -872,6 +889,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Gate by switch epoch
 		if msg.SwitchEpoch != m.switchEpoch {
 			return m, nil
+		}
+		if requiresRelogin(msg.Error) {
+			if cmd, handled := m.maybeAutoRelogin(); handled {
+				return m, cmd
+			}
 		}
 		m.cleanupAppWatcher()
 		// Log error and store in model for display
@@ -1537,12 +1559,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Username != "" {
 			m.currentUsername = msg.Username
 		}
+		if msg.Mode == model.ModeAuthRequired && msg.NeedsLogin {
+			if cmd, handled := m.maybeAutoRelogin(); handled {
+				return m, cmd
+			}
+		}
 		return m, func() tea.Msg { return model.SetModeMsg{Mode: msg.Mode} }
+
+	case contextReloginMsg:
+		return m.handleContextRelogin(msg)
 
 	case model.ContextSwitchResultMsg:
 		return m.handleContextSwitchResult(msg)
 
 	case model.QuitMsg:
+		m.cancelContextRelogin()
 		return m, tea.Quit
 
 	case model.SetInitialLoadingMsg:

@@ -1,0 +1,2 @@
+CONFIRMED: --export-all permits an unauthenticated clone of a synthetic sibling repository.
+Safety: bound only to 127.0.0.1; base path contains newly generated synthetic repositories only.

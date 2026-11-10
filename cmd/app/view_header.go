@@ -1,0 +1,214 @@
+package main
+
+import (
+	"fmt"
+	"strings"
+
+	"charm.land/lipgloss/v2"
+	"github.com/darksworm/argonaut/pkg/model"
+)
+
+type viewHotkey struct{ key, action string }
+
+func (m *Model) viewHotkeys() []viewHotkey {
+	switch m.state.Mode {
+	case model.ModeSearch:
+		return []viewHotkey{{"enter", "apply"}, {"esc", "cancel"}, {"up/down", "select"}}
+	case model.ModeCommand:
+		return []viewHotkey{{"enter", "run"}, {"tab", "complete"}, {"esc", "cancel"}}
+	case model.ModeHelp:
+		return []viewHotkey{{"esc/?", "close help"}, {"ctrl-c", "quit"}}
+	case model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
+		return []viewHotkey{{"L", "SSO login"}, {"c", "contexts"}, {"q", "quit"}}
+	case model.ModeDiff:
+		return []viewHotkey{{"j/k", "scroll"}, {"h/l", "pan"}, {"/", "filter"}, {"esc/q", "close"}}
+	case model.ModeConfirmSync:
+		if m.state.Modals.ConfirmSyncForcePending {
+			return []viewHotkey{{"enter", "confirm force"}, {"h/l", "choose"}, {"esc", "back"}}
+		}
+		return []viewHotkey{{"enter", "confirm"}, {"p", "prune"}, {"f", "force"}, {"d", "dry-run"}, {"w", "watch"}, {"esc", "cancel"}}
+	case model.ModeConfirmAppDelete:
+		return []viewHotkey{{"y", "delete"}, {"c", "cascade"}, {"p", "policy"}, {"esc", "cancel"}}
+	case model.ModeConfirmResourceDelete:
+		return []viewHotkey{{"y", "delete"}, {"c", "cascade"}, {"p", "policy"}, {"f", "force"}, {"esc", "cancel"}}
+	case model.ModeConfirmResourceSync:
+		return []viewHotkey{{"enter", "confirm"}, {"h/l", "choose"}, {"p", "prune"}, {"f", "force"}, {"esc", "cancel"}}
+	case model.ModeConfirmTerminate:
+		return []viewHotkey{{"enter", "confirm"}, {"h/l", "choose"}, {"esc", "cancel"}}
+	case model.ModeResourceAction:
+		return []viewHotkey{{"j/k", "select"}, {"enter", "run action"}, {"esc", "cancel"}}
+	case model.ModeRollback:
+		if m.state.Rollback != nil && m.state.Rollback.Mode == "confirm" {
+			return []viewHotkey{{"enter", "confirm"}, {"p", "prune"}, {"w", "watch"}, {"h/l", "choose"}, {"esc", "back"}}
+		}
+		return []viewHotkey{{"enter", "select revision"}, {"d", "diff"}, {"u/i", "scroll details"}, {"esc", "apps"}}
+	case model.ModeLoading:
+		return []viewHotkey{{"c", "contexts"}, {"L", "SSO login"}, {"ctrl-c", "quit"}}
+	}
+	if m.state.Navigation.View == model.ViewContexts {
+		return []viewHotkey{{"enter", "switch"}, {"a", "auto-login on/off"}, {"L", "SSO login"}, {"/", "filter"}, {"esc", "apps"}}
+	}
+	if m.state.Navigation.View == model.ViewTree {
+		return []viewHotkey{{"enter/e", "events"}, {"h/l", "fold/unfold"}, {"space", "select"}, {"s", "sync"}, {"d", "diff"}, {"a", "actions"}, {"ctrl-d", "delete"}, {"R", "rollback"}, {"t", "terminate"}, {"K", "k9s"}, {"u/i", "scroll events"}, {"esc", "back"}}
+	}
+	if m.state.Navigation.View == model.ViewApps {
+		return []viewHotkey{{"enter/r", "resources"}, {"space", "select"}, {"s", "sync"}, {"d", "diff"}, {"R", "rollback"}, {"ctrl-d", "delete"}, {"t", "terminate"}, {"K", "k9s"}, {"/", "filter"}, {"esc", "clear/back"}}
+	}
+	return []viewHotkey{{"enter", "open"}, {"/", "filter"}, {"esc", "back"}, {"j/k", "select"}}
+}
+
+func (m *Model) headerViewName() string {
+	switch m.state.Mode {
+	case model.ModeDiff:
+		return "Diff"
+	case model.ModeRollback:
+		return "Deployment history"
+	case model.ModeAuthRequired:
+		return "Login required"
+	case model.ModeConnectionError:
+		return "Connection error"
+	case model.ModeHelp:
+		return "Help"
+	}
+	switch m.state.Navigation.View {
+	case model.ViewApps:
+		return "Applications"
+	case model.ViewTree:
+		if m.state.UI.TreeApp != nil {
+			return "Resources / " + m.state.UI.TreeApp.Name
+		}
+		return "Resources"
+	case model.ViewContexts:
+		return "Argo CD contexts"
+	case model.ViewClusters:
+		return "Clusters"
+	case model.ViewNamespaces:
+		return "Namespaces"
+	case model.ViewProjects:
+		return "Projects"
+	case model.ViewApplicationSets:
+		return "ApplicationSets"
+	}
+	return string(m.state.Navigation.View)
+}
+
+func renderHotkey(k viewHotkey) string {
+	return lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render("<"+k.key+">") + " " + k.action
+}
+
+func (m *Model) renderK9sHeader() string {
+	width := max(1, m.state.Terminal.Cols-2)
+	ctx := m.currentContextName
+	if ctx == "" {
+		ctx = "no context"
+		if m.state.Server != nil {
+			ctx = hostFromURL(m.state.Server.BaseURL)
+		}
+	}
+	server := "not connected"
+	if m.state.Server != nil {
+		server = hostFromURL(m.state.Server.BaseURL)
+	}
+	ns, project := m.effectiveNamespaceProjectScope()
+	if ns == "—" {
+		ns = "all"
+	}
+	if project == "—" {
+		project = "all"
+	}
+	login := "manual"
+	if m.config.IsAutoReloginEnabled(m.currentContextName) {
+		login = "auto SSO"
+	}
+	if m.reloginInProgress {
+		login = "signing in..."
+	}
+	meta := []string{"Context: " + ctx, "Server:  " + server, "View:    " + m.headerViewName(), "Scope:   " + ns + " / " + project, "Login:   " + login}
+	if m.currentUsername != "" {
+		meta[4] += " (" + m.currentUsername + ")"
+	}
+	if cluster := scopeToText(m.state.Selections.ScopeClusters); cluster != "—" {
+		meta = append(meta, "Cluster: "+cluster)
+	}
+	keyStyle := lipgloss.NewStyle().Foreground(cyanBright).Bold(true)
+	title := keyStyle.Render("Context: ") + ctx
+	brand := lipgloss.NewStyle().Foreground(magentaBright).Bold(true).Render("Argonaut " + appVersion)
+	actions := m.viewHotkeys()
+	var rows []string
+	if width >= 105 && m.state.Terminal.Rows > 22 {
+		leftWidth := min(42, width/3)
+		brandWidth := lipgloss.Width(brand)
+		legendWidth := width - leftWidth - 3 - brandWidth - 2
+		// K9s-style columns: context on the left, view actions beside it.
+		cells := 2
+		if legendWidth >= 78 {
+			cells = 3
+		}
+		cellWidth := legendWidth / cells
+		columnRows := (len(actions) + cells - 1) / cells
+		for i := 0; i < max(len(meta), columnRows); i++ {
+			left := ""
+			if i < len(meta) {
+				left = meta[i]
+			}
+			line := padRight(truncateWithEllipsis(left, leftWidth), leftWidth) + "   "
+			for col := 0; col < cells; col++ {
+				n := i + col*columnRows
+				cell := ""
+				if i < columnRows && n < len(actions) {
+					cell = renderHotkey(actions[n])
+				}
+				line += padRight(clipAnsiToWidth(cell, cellWidth), cellWidth)
+			}
+			if i == 0 {
+				line = padRight(line, width-brandWidth) + brand
+			}
+			rows = append(rows, clipAnsiToWidth(line, width))
+		}
+	} else {
+		brandWidth := lipgloss.Width(brand) + 2
+		if width > brandWidth+20 {
+			title = joinWithRightAlignment(clipAnsiToWidth(title, width-brandWidth), brand, width)
+		}
+		rows = append(rows, clipAnsiToWidth(title, width))
+		rows = append(rows, clipAnsiToWidth(fmt.Sprintf("View: %s | Namespace: %s | Project: %s | Login: %s", m.headerViewName(), ns, project, login), width))
+		line := ""
+		for _, action := range actions {
+			cell := renderHotkey(action)
+			if line != "" && lipgloss.Width(line)+lipgloss.Width(cell)+2 > width {
+				rows = append(rows, line)
+				line = ""
+			}
+			if line != "" {
+				line += "  "
+			}
+			line += cell
+		}
+		if line != "" {
+			rows = append(rows, clipAnsiToWidth(line, width))
+		}
+		// Keep useful content visible on very small terminals; full help is ?.
+		if m.state.Terminal.Rows <= 22 && len(rows) > 4 {
+			rows = rows[:4]
+		}
+	}
+	if m.state.Mode == model.ModeNormal {
+		nav := []viewHotkey{{"0/c", "ctx"}, {"1", "apps"}, {"2", "cls"}, {"3", "ns"}, {"4", "proj"}, {"5", "sets"}, {":", "command"}, {"?", "help"}}
+		line := ""
+		for _, k := range nav {
+			if line != "" {
+				line += "  "
+			}
+			line += renderHotkey(k)
+		}
+		// On narrow screens retain context/app switching and the help affordance.
+		if lipgloss.Width(line) > width {
+			line = renderHotkey(nav[0]) + "  " + renderHotkey(nav[1]) + "  " + renderHotkey(viewHotkey{":", "views"}) + "  " + renderHotkey(nav[len(nav)-1])
+		}
+		rows = append(rows, clipAnsiToWidth(line, width))
+	}
+	for i := range rows {
+		rows[i] = padRight(clipAnsiToWidth(rows[i], width), width)
+	}
+	return strings.Join(rows, "\n")
+}

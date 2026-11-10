@@ -24,6 +24,7 @@ func (m *Model) renderHelpModal() string {
 	// GENERAL
 	general := strings.Join([]string{
 		mono(":"), " command ", bullet(), " ", mono("/"), " search ", bullet(), " ", mono("?"), " help",
+		"\n", mono("0/c"), " contexts ", bullet(), " ", mono("1"), " apps ", bullet(), " ", mono("2"), " clusters ", bullet(), " ", mono("3"), " namespaces ", bullet(), " ", mono("4"), " projects ", bullet(), " ", mono("5"), " appsets",
 	}, "")
 
 	// NAVIGATION
@@ -40,6 +41,7 @@ func (m *Model) renderHelpModal() string {
 		mono(":appsets"), "|", mono(":applicationsets"), " ", bullet(), " ", mono(":theme"), " ", bullet(), " ", mono(":logs"),
 		"\n",
 		mono("c"), " Argo CD contexts ", bullet(), " ", mono(":ctx"), " [name] ",
+		"\n", mono("a"), " auto-login on/off (contexts) ", bullet(), " ", mono("L"), " SSO login",
 	}, "")
 
 	// COMMANDS

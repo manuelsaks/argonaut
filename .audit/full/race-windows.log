@@ -1,0 +1,22 @@
+ok  	github.com/darksworm/argonaut/cmd/app	23.525s
+ok  	github.com/darksworm/argonaut/pkg/api	5.948s
+ok  	github.com/darksworm/argonaut/pkg/autocomplete	1.337s
+ok  	github.com/darksworm/argonaut/pkg/config	1.562s
+ok  	github.com/darksworm/argonaut/pkg/context	1.564s
+?   	github.com/darksworm/argonaut/pkg/errors	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/humantime	1.155s
+ok  	github.com/darksworm/argonaut/pkg/kubeconfig	1.418s
+ok  	github.com/darksworm/argonaut/pkg/model	1.715s
+ok  	github.com/darksworm/argonaut/pkg/neat	1.552s
+?   	github.com/darksworm/argonaut/pkg/portforward	[no test files]
+?   	github.com/darksworm/argonaut/pkg/retry	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/services	1.347s
+ok  	github.com/darksworm/argonaut/pkg/services/appdelete	1.430s
+ok  	github.com/darksworm/argonaut/pkg/sort	1.250s
+ok  	github.com/darksworm/argonaut/pkg/theme	1.399s
+ok  	github.com/darksworm/argonaut/pkg/trust	6.173s
+ok  	github.com/darksworm/argonaut/pkg/tui	1.235s
+?   	github.com/darksworm/argonaut/pkg/tui/clipboard	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/tui/listnav	1.188s
+ok  	github.com/darksworm/argonaut/pkg/tui/selection	1.331s
+ok  	github.com/darksworm/argonaut/pkg/tui/treeview	1.139s

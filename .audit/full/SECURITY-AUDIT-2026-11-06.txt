@@ -1,0 +1,605 @@
+AUDYT BEZPIECZEŃSTWA REPOZYTORIUM ARGONAUT
+Data: 6 listopada 2026, Europe/Warsaw
+Repozytorium: https://github.com/darksworm/argonaut
+Commit: 5a1eca5b4b4c1a1bed5843337402dc95b1eabdfc
+Środowisko analizy: Windows amd64, Go 1.26.10
+Skanery: govulncheck 1.9.0, gosec 2.30.0, Gitleaks 8.30.1
+
+DECYZJA DLA UŻYTKOWNIKA
+
+Nie znaleziono dowodów celowego wykradania danych, ukrytej telemetrii,
+mechanizmu utrwalania malware ani złośliwego pobierania kodu w zwykłym
+uruchomieniu aplikacji. Nie znaleziono też produkcyjnych tokenów/kluczy
+w skanowanej historii. Nie oznacza to dowodu, że program jest wolny od
+każdego rodzaju malware lub błędów.
+
+Wykryto jednak rzeczywiste problemy bezpieczeństwa i bezpieczeństwa operacji.
+Przed użyciem sync/delete w środowisku z Application w wielu namespaces
+należy poprawić identyfikowanie aplikacji. Przed pracą z poufnymi manifestami
+należy poprawić sprzątanie plików tymczasowych. Nie należy uruchamiać obecnego
+make argocd-git-daemon z katalogiem nadrzędnym zawierającym prywatne repozytoria.
+
+Nie ma twardej przeszkody do natywnej kompilacji na Windows. Obsługa Windows
+jest jednak niepełna: brak oficjalnych wydań i CI, wymagania less/sh,
+nieprzenośne testy i obsługa katalogów CA. WSL2 zmniejsza problemy zgodności,
+ale nie usuwa opisanych błędów aplikacji ani ryzyk narzędzi developerskich.
+
+NAJWAŻNIEJSZE USTALENIA
+
+F01 WYSOKIE  Błędna tożsamość aplikacji: nazwa bez namespace; sync/delete
+              mogą wskazać inną Application. Potwierdzone lokalnie.
+F02 WYSOKIE  Developer git daemon udostępnia anonimowo sąsiednie repozytoria
+              i nasłuchuje na wszystkich interfejsach. Potwierdzone lokalnie.
+F03 ŚREDNIE  Przekierowanie HTTPS -> HTTP na tej samej nazwie hosta przenosi
+              bearer token jawnym HTTP. Potwierdzone lokalnie.
+F04 ŚREDNIE  Diff zostawia jawne manifesty w katalogu tymczasowym.
+              Potwierdzone lokalnie.
+F05 ŚREDNIE  Zdarzenie strumienia drzewa nie ma identyfikatora kontekstu
+              i może podmienić dane po przełączeniu. Potwierdzony handler;
+              scenariusza z rzeczywistymi klastrami nie odtwarzano.
+F06 NISKIE   Surowe sekwencje DCS z danych zdarzeń przechodzą do wyjścia
+              terminala. Nie wykazano RCE ani skutecznego zapisu schowka.
+F07 NISKIE   Nieograniczone odczyty odpowiedzi HTTP i rozpakowywanie aktualizacji.
+F08 NISKIE   Słabsze zabezpieczenia dystrybucji i rozpoznawania pliku aktualizacji.
+F09 NISKIE   Logi DEBUG mogą zachować dane odpowiedzi/zdarzeń bez redakcji.
+
+Poziomy są oceną warunkowego wpływu, nie wynikiem CVSS ani potwierdzeniem
+ataku z Internetu. F01 wymaga odpowiedniej konfiguracji Argo CD i uprawnień
+użytkownika. F02 wymaga uruchomienia osobnego celu Makefile. Żadne z nich
+nie dowodzi intencji autora ani automatycznego wycieku przy starcie EXE.
+
+ZAKRES I METODA
+
+1. Kod własny: przegląd przepływów danych, autoryzacji, klientów HTTP/TLS,
+   procesów, zapisu/odczytu plików, aktualizacji, działań mutujących,
+   wyboru namespace, zmiany kontekstu, strumieni i renderowania terminala.
+   Automatyczna analiza obejmowała 70 plików produkcyjnych na każdej
+   platformie: 27081 linii na Windows i 27353 na Linux; różne implementacje
+   k9s są wybierane przez build tags. Cały inwentarz kodu Go aplikacji
+   ma około 27 tys. linii, łącznie z wariantami platformowymi.
+2. Repozytorium i historia: 328 śledzonych plików, lokalna historia Git,
+   skrypty, NPM, Nix, Docker, AUR, Makefile, GitHub Actions i konfiguracja
+   wydania. git fsck --full --no-dangling zakończył się bez błędów.
+3. Pochodzenie: publiczny origin HEAD i main wskazywały ten sam commit
+   co badany checkout. Śledzone pliki nie miały lokalnych zmian.
+4. Zależności: zapisano pełny wykaz modułów oraz pakiety włączane do
+   windows/amd64. Przejrzano importy, inicjalizatory i wrażliwe miejsca
+   używanych bibliotek (sieć/procesy/go:linkname). Nie wykonano ręcznego
+   przeglądu każdej linii wszystkich zewnętrznych bibliotek.
+5. SAST: gosec dla Windows i Linux; wszystkie 108 zgłoszeń platformowych
+   mają objaśnienie w gosec-triage.csv. Wiele zgłoszeń dotyczy tego samego
+   miejsca na obu platformach; 108 nie oznacza 108 podatności.
+6. Znane podatności: analiza źródeł i gotowego Windows EXE narzędziem Go.
+7. Sekrety: Gitleaks zeskanował 670 lokalnych commitów/refów, ok. 8,45 MB
+   danych historii; raport ma redakcję wartości. Nie sprawdzano ważności
+   żadnych kluczy przez logowanie do usług.
+8. Testy: istniejące testy jednostkowe, detektor race i 14 dodatkowych
+   testów audytowych przez Go overlay. Testy audytowe wykonywały żądania
+   wyłącznie do atrap na loopback lub sztucznego RoundTrippera.
+9. Osobna próba git daemon: dwa świeżo utworzone, sztuczne repozytoria,
+   nasłuch tylko na 127.0.0.1 i zatrzymanie procesu po próbie. Nie
+   uruchamiano podatnego celu Makefile ani nie serwowano katalogu C:\tmp.
+
+F01 — NAZWA APLIKACJI BEZ NAMESPACE MOŻE WSKAZAĆ NIEWŁAŚCIWY CEL
+
+Kategoria: integralność operacji; priorytet wysoki w instalacjach używających
+Applications in any namespace. To nie jest obejście RBAC: serwer nadal
+egzekwuje uprawnienia tokenu, ale użytkownik może mieć prawo do obu aplikacji.
+
+Miejsca:
+- pkg/model/index.go:29, :49 — NameToIndex jest mapą po samej nazwie.
+- cmd/app/model.go:1616 — applyBatchAppUpdate zastępuje wpis po samej nazwie.
+- cmd/app/api_integration.go:808, :843 — zbiorczy sync nie zachowuje namespace.
+- cmd/app/api_integration.go:1354, :1392 — zbiorczy delete bierze pierwszy
+  wpis o danej nazwie.
+- cmd/app/api_integration.go:1492, :1536 — usuwanie zasobów nie przekazuje
+  AppNamespace do DeleteResourceRequest.
+- cmd/app/input_handlers.go:1094 — namespace w modalu delete jest jawnie nil.
+- cmd/app/api_integration.go:1643, :1678 — selective sync grupuje po samej
+  nazwie i szuka namespace pierwszego wpisu o tej nazwie.
+
+Warunki i skutek:
+W Argo CD dwa obiekty Application mogą nazywać się tak samo, jeśli znajdują
+się w różnych namespaces. Namespace samego obiektu Application jest inną
+rzeczą niż namespace zasobów wdrażanych przez aplikację. Po utracie tego
+pierwszego identyfikatora program może wywołać operację dla domyślnej lub
+pierwszej znalezionej Application. Jeśli nie istnieje drugi pasujący cel,
+typowym skutkiem będzie błąd API, a nie modyfikacja innej aplikacji.
+
+Potwierdzone próby:
+- Zaznaczona team-a/same-name: zbiorczy sync wysyła appNamespace="" w JSON
+  i nie dodaje namespace do query.
+- Dwa wpisy same-name: zbiorczy delete wysyła appNamespace=argocd dla
+  pierwszego wpisu. Model selekcji nie umie odróżnić drugiego po namespace.
+- Zdarzenie team-a/same-name nadpisuje wpis team-b/same-name na liście.
+- Usunięcie zasobu Application w team-a nie wysyła appNamespace do API.
+
+Dowód: proof-tests.log oraz app_security_audit_test.go. Są to prawdziwe
+wywołania badanych funkcji z przechwyceniem żądań, nie test samej kopii logiki.
+
+Naprawa:
+Wprowadzić jeden typ tożsamości Application {namespace, name}. Używać go
+w indeksie, selekcjach, drzewach, komunikatach watch, modalach i grupowaniu
+operacji. Przy potwierdzeniu utrwalić kompletną listę celów, wraz z namespace
+i kontekstem. Nie odszukiwać namespace później po samej nazwie. Każde żądanie
+API powinno zawierać namespace wybranego obiektu. Dodać testy dwóch identycznych
+nazw w różnych namespaces dla sync, selective sync, delete, resource delete,
+refresh i watch.
+
+Źródło zachowania API: https://argo-cd.readthedocs.io/en/stable/operator-manual/app-any-namespace/#using-the-rest-api
+
+F02 — GIT DAEMON MOŻE UJAWNIĆ PRYWATNE REPOZYTORIA OBOK PROJEKTU
+
+Kategoria: poufność; priorytet wysoki, ale wyłącznie dla narzędzi developerskich.
+
+Miejsca: Makefile:21-25 i :99-112. Domyślny GIT_DAEMON_BASE_PATH jest katalogiem
+nadrzędnym checkoutu. Serwer startuje z --listen=0.0.0.0 i --export-all,
+bez listy ograniczającej obsługiwane repozytoria. Domyślny port to 9418.
+
+Warunki i skutek:
+Po uruchomieniu make argocd-git-daemon, albo celu zależnego od niego,
+osiągalny klient może bez uwierzytelniania pobrać repozytoria pod katalogiem
+bazowym, jeśli proces może je czytać. Może to obejmować prywatny kod i sekrety
+obecne w historii innych projektów. Osiągalność z LAN zależy m.in. od zapory,
+WSL/Dockera i routingu. Nie twierdzimy, że port użytkownika był wystawiony.
+
+Potwierdzenie:
+Uruchomiono analogiczny daemon na 127.0.0.1 nad katalogiem zawierającym
+intended-demo i private-sibling. Anonimowy git clone private-sibling poprawnie
+pobrał plik z syntetycznym znacznikiem. Żadne prywatne pliki użytkownika nie
+uczestniczyły w próbie. Proces został zatrzymany przez finally.
+
+Dowód: git-daemon-proof.log i probe-git-daemon.ps1.
+
+Naprawa:
+Użyć dedykowanego katalogu wyłącznie na fixture repos, usunąć --export-all
+i jawnie wskazać dozwolone katalogi z --strict-paths lub wymagać
+git-daemon-export-ok tylko w repozytoriach testowych. Ograniczyć adres
+nasłuchu i dostęp do interfejsu potrzebnego klastrowi demonstracyjnemu.
+Samo ustawienie localhost może uniemożliwić k3d dostęp do hosta; zakres
+nasłuchu trzeba dobrać razem z siecią kontenera i zaporą.
+
+Źródło: https://git-scm.com/docs/git-daemon
+
+F03 — HTTPS -> HTTP MOŻE PRZENIEŚĆ TOKEN DO JAWNEGO POŁĄCZENIA
+
+Kategoria: poufność tokenu; priorytet średni, zależny od przekierowania.
+
+Miejsca: pkg/api/client.go:47-52, :95-99, :126-129, :208-235, :292-310;
+pkg/trust/trust.go:160. Brak polityki CheckRedirect, która wymuszałaby HTTPS
+i ten sam origin.
+
+Potwierdzenie:
+Lokalny zaufany dla testu serwer HTTPS odpowiedział 302 do HTTP na tej samej
+nazwie hosta, na innym porcie. Drugi serwer odebrał nagłówek Authorization
+z syntetycznym bearer tokenem. Nie wyłączano TLS w konfiguracji Server tego
+testu; zaufanie do testowego certyfikatu pochodziło z httptest.Client.
+
+Warunki:
+Poprawnie chroniony serwer/proxy musi zwrócić takie przekierowanie, np.
+wskutek błędu konfiguracji albo przejęcia. Sam pasywny podsłuchujący nie może
+zmienić odpowiedzi HTTPS z poprawnym certyfikatem. Domyślna biblioteka Go
+usuwa Authorization przy przekierowaniu do niezwiązanej nazwy hosta — ten
+pozytywny przypadek też sprawdzono. Nie stwierdzono wysyłania tokenu do autora.
+
+Naprawa:
+Wspólna polityka redirect dla zwykłego klienta i streamów: odrzucać downgrade
+HTTPS -> HTTP; najlepiej nie podążać za przekierowaniami uwierzytelnionego API,
+albo dopuścić tylko jawnie uzasadniony ten sam origin (schemat, host, port).
+Wyjątek HTTP dla lokalnego port-forward powinien być świadomy i ograniczony.
+
+Dowód: TestAuditRedirectDowngradeForwardsBearer i
+TestAuditUnrelatedHostRedirectStripsBearer, api_security_audit_test.go.
+
+F04 — DIFF ZOSTAWIA JAWNE MANIFESTY PO ZAKOŃCZENIU
+
+Kategoria: poufność danych lokalnych; priorytet średni dla poufnych manifestów.
+
+Miejsca: cmd/app/api_integration.go:547-572, :624-652, :656-671, :1329-1332.
+
+Zwykłe diffy aplikacji i zasobu tworzą current-*.yaml oraz predicted-*.yaml
+i nie usuwają ich po zakończeniu ani po błędzie pagera. Rollback sprząta
+część ścieżek, ale przy interaktywnym viewerze również pozostawia pliki.
+
+Potwierdzenie:
+Atrapa API zwróciła ConfigMap z syntetyczną wartością password. Wywołano
+rzeczywisty podgląd diffu. Po powrocie funkcji plik current-*.yaml nadal
+zawierał znacznik w postaci jawnej. Ścieżka testowa t.TempDir została później
+usunięta przez framework testów; samo sprzątanie aplikacji nie nastąpiło.
+
+Ograniczenie skutku:
+Nie oznacza to, że każdy użytkownik systemu odczyta plik. Uprawnienia i ACL
+katalogu tymczasowego nadal mają znaczenie. Nie potwierdzono też, że konkretna
+instalacja Argo CD zwraca w tym miejscu niemaskowane Kubernetes Secrets.
+Poufne dane mogą jednak znajdować się również w ConfigMap lub innych polach.
+
+Naprawa:
+Osobny prywatny katalog tymczasowy, pliki 0600 i zawsze defer cleanup po
+zakończeniu odbiorcy plików. Obsłużyć błędy writeTempYAML zamiast je ignorować.
+Nie usuwać plików przed zakończeniem zewnętrznego viewera. Jeśli trwałe pliki
+są zamierzoną funkcją, wymaga ona jasnej kontroli i retencji.
+
+Dowód: TestAuditManifestDiffLeavesPlaintextTempFiles.
+
+F05 — SPÓŹNIONY STREAM DRZEWA NIE JEST ODRZUCANY PO KONTEKŚCIE
+
+Kategoria: integralność prezentowanych celów operacji; priorytet średni.
+
+Miejsca: pkg/model/messages.go:510, cmd/app/model.go:241-255,
+cmd/app/api_integration.go:746, cmd/app/model_tree_stream.go:22.
+
+ResourceTreeStreamMsg zawiera AppName i TreeJSON, ale nie SwitchEpoch,
+namespace ani identyfikator sesji ładowania. Handler może zastosować payload
+do drzewa bieżącego modelu. Inne komunikaty (np. AppsLoadedMsg) mają kontrolę
+epoki, więc w tej ścieżce ochrona jest niespójna.
+
+Potwierdzenie:
+Model z epoką 5 i drzewem nowego kontekstu przyjął syntetyczny payload
+opisujący stary kontekst i zastąpił węzeł new-context-object przez
+old-context-object. Potwierdzono brak ochrony w handlerze. Nie odtworzono
+pełnego wyścigu sieciowego na dwóch rzeczywistych klastrach.
+
+Warunki i skutek:
+Stary komunikat musi być już w locie lub w kolejce podczas przełączenia,
+a bieżący model musi wyświetlać drzewo. Ryzykiem jest pokazanie nieaktualnych
+zasobów i późniejsze działanie użytkownika na błędnie przedstawionym celu.
+Nie wykazano automatycznego wykonania mutacji ani przeniesienia tokenu między
+serwerami. Zakolejkowane operacje mutujące są osobno związane ze starym
+serwerem i zmiana kontekstu ich automatycznie nie anuluje.
+
+Naprawa:
+Dodać do wszystkich wiadomości drzewa SwitchEpoch, identyfikator sesji
+ładowania oraz pełną tożsamość Application. Walidować je przed zmianą modelu.
+Analogicznie sprawdzić treeWatchStartedMsg i odpowiedzi resource delete,
+refresh oraz multi-delete, które mają mniej ochrony niż nowsze komunikaty.
+
+Dowód: TestAuditTreeStreamHasNoContextEpochGuard i
+TestAuditBatchCommandContinuesAfterContextSwitch.
+
+F06 — DANE ZDARZEŃ MOGĄ PRZEKAZAĆ DCS DO TERMINALA
+
+Kategoria: neutralizacja danych terminalowych; niski priorytet, utwardzenie.
+
+Miejsca: pkg/api/events.go:37, cmd/app/view_pane.go:153-176,
+cmd/app/view_utils.go:35; zależność ultraviolet/styled.go:124.
+
+flattenWhitespace nie usuwa znaków ESC. Renderowanie traktuje tekst zdarzenia
+jako tekst z ANSI. Prosta sekwencja DCS z syntetyczną treścią przeszła aż do
+wyjścia TerminalScreen przechwyconego w bytes.Buffer. Nie wysyłano jej do
+rzeczywistego terminala.
+
+Ważne wyniki negatywne:
+Sama obecność OSC52 w wyniku renderEventCards nie dowodzi podatności końcowej.
+Po przejściu przez renderer ultraviolet bezpośredni OSC52 został usunięty.
+Usunięta została też sprawdzana próbka tmux z osadzonym OSC52. Nie wykazano
+zapisu schowka, odczytu plików ani RCE. Efekt innych DCS/APC zależy od terminala.
+
+Naprawa:
+Oddzielić własne sekwencje stylowania od nieufnego tekstu API. Usuwać znaki
+sterujące/sekwencje terminalowe z komunikatów, autorów i opisów przed
+dodaniem własnego stylowania. Testować końcowy renderer, nie tylko stringi
+pośrednie.
+
+Dowód: TestAuditEventRenderingRetainsTerminalControl oraz
+TestAuditFinalTerminalRenderingControlHandling; wynik DCS-device-control=true,
+direct-OSC52=false, DCS-tmux-passthrough=false.
+
+F07 — BRAK LIMITÓW ODPOWIEDZI HTTP I ROZPAKOWANYCH AKTUALIZACJI
+
+Kategoria: dostępność; niski priorytet przy zaufanym serwerze.
+
+Miejsca: pkg/api/client.go:252 i :379, pkg/services/update.go:119, :249,
+:547, :624. Zwykłe API używa io.ReadAll bez limitu. Pobieranie aktualizacji
+i ekstrakcja tar również nie mają limitu całkowitego rozpakowanego rozmiaru.
+
+Próba potwierdziła przyjęcie odpowiedzi 4 MiB. Nie próbowano wyczerpać pamięci
+ani dysku. Możliwość OOM/disk-full przy większym strumieniu jest wnioskiem
+z nieograniczonego odczytu, nie zmierzonym skutkiem tej próby.
+
+Ochrony istniejące:
+Żądania API mają timeouty; SSE ma limit akumulacji ok. 32 MiB; changelog
+ma LimitReader 1 MiB. Są to korzystne zabezpieczenia, ale nie ograniczają
+wszystkich zwykłych odpowiedzi ani rozpakowania archiwum.
+
+Naprawa:
+Jawne limity per endpoint z możliwością konfiguracji dla dużych instalacji;
+czytać limit+1 i sygnalizować przekroczenie. Dla archiwów limit danych
+pobranych, liczby plików, rozmiaru pliku i sumy rozpakowanych danych.
+
+Dowód: TestAuditResponseBodyHasNoApplicationSizeLimit; gosec G110.
+
+F08 — UTWARDZENIE DYSTRYBUCJI I DOBORU PLIKU AKTUALIZACJI
+
+Kategoria: łańcuch dostaw i dostępność; niski priorytet dla bieżącego,
+samodzielnie zbudowanego EXE, większy przy instalacji gotowych artefaktów.
+
+Miejsca: install.sh:77-90; Dockerfile:30-32, Dockerfile.runtime i .v2;
+pkg/services/update.go:342, :448, :701; .goreleaser.release.yml:140;
+.github/workflows/goreleaser.yml:83-96 i pr-prerelease.yml:133-139.
+
+- install.sh pobiera archiwum i rozpakowuje je bez sprawdzenia sumy/podpisu.
+- Obrazy Docker pobierają Argo CD CLI z releases/latest bez weryfikacji sumy.
+  Bazowe obrazy mają tagi, nie stałe digesty; GoReleaser używa nightly.
+- Sam updater wymaga SHA-256 przed instalacją, co jest dobrym zabezpieczeniem.
+  Metadane sumy i plik pochodzą jednak z tego samego źródła GitHub release.
+  Nie ma weryfikacji niezależnego podpisu autora/proweniencji.
+- findBinaryInDir akceptuje plik, którego nazwa tylko zawiera argonaut.
+  Próba potwierdziła wybór argonaut-not-the-binary. To przede wszystkim
+  ryzyko błędu pakowania/dostępności; osoba kontrolująca całe wydanie już
+  ma bardzo szeroki wpływ na zaufaną dystrybucję.
+- Kod rozpoznaje .zip jako archiwum, lecz ekstraktor obsługuje tylko .tar.gz.
+  Oficjalnych artefaktów Windows obecnie nie buduje; nie zakładać, że :upgrade
+  obsłuży własny Windows EXE.
+
+Naprawa:
+Instalować z przypiętego commita/wersji przy aktualnym toolchainie; weryfikować
+podpisane sumy lub proweniencję; przypiąć narzędzia budowania i obrazy.
+Updater powinien wymagać dokładnej nazwy argonaut/argonaut.exe, właściwego
+formatu i jawnie obsługiwanej platformy. Nie uruchamiać go z sudo tylko po to,
+aby obejść problem aktualizacji.
+
+Pozytywne próby:
+Odrzucono ../escape, pełną ścieżkę absolutną bieżącej platformy i symlink
+w archiwum. Próba Windows z /absolute początkowo miała zbyt szerokie założenie:
+ta ścieżka bez litery dysku może zostać bezpiecznie złożona wewnątrz katalogu.
+Nie uznano tego za potwierdzony path traversal.
+
+Dowód: TestAuditArchiveTraversalAndSymlinksRejected oraz
+TestAuditBinarySelectionAcceptsWrongSubstring.
+
+F09 — RETENCJA I REDAKCJA LOGÓW
+
+Kategoria: lokalna poufność; niski priorytet, większy przy DEBUG i udostępnianiu.
+
+Miejsca: cmd/app/main.go:399-426, pkg/api/client.go:396-402,
+pkg/api/applications.go:521, :923. Logi a9s-*.log są tworzone w temp,
+bez jawnej retencji. DEBUG może zapisać odpowiedź błędu lub zdarzenia.
+
+Nie znaleziono celowego logowania nagłówka Authorization ani wartości
+tokenu z konfiguracji. Dane API mogą jednak zawierać informacje wewnętrzne
+lub wartości poufne. Log nie jest automatycznie wysyłany do autora.
+
+Naprawa:
+Ograniczyć zapisywanie surowych odpowiedzi, dodać redakcję typowych pól
+sekretnych, rotację i retencję. Logów nie przekazywać do zgłoszeń bez przeglądu.
+
+DODATKOWE RYZYKA OPERACYJNE I CI
+
+A. scripts/seed-history.sh i argocd/fixtures/seed-sync-fixtures.sh usuwają
+   istniejące aplikacje o znanych nazwach w aktualnym kontekście Argo CD
+   i odtwarzają repozytoria demonstracyjne. Sama kontrola account get-user-info
+   potwierdza osiągalność, nie to, że jest to demo. Cel make argocd-history
+   zależy od argocd-up, które przełącza na środowisko k3d; bezpośrednie
+   uruchamianie skryptów wymaga odrębnej ostrożności. Zalecana jest jawna
+   walidacja adresu/kontekstu demonstracyjnego i bezpiecznych katalogów.
+   Nie uruchamiano tych skryptów podczas audytu.
+
+B. Zmiana kontekstu nie anuluje już zakolejkowanego potwierdzonego sync/delete.
+   Operacje są przechwycone ze starym server pointerem. To może być zamierzona
+   semantyka, więc nie sklasyfikowano jej osobno jako podatności. UI powinno
+   jasno prezentować operacje w toku i ich kontekst.
+
+C. CI: akcje są przypięte SHA, co jest korzystne. Nie znaleziono ścieżki
+   pull_request_target wykonującej automatycznie kod obcego PR z sekretami.
+   Fork PR ma ograniczenia tokenu GitHub; nie przypisano mu uprawnień write.
+   Manualny /prerelease jest ograniczony do darksworm, ale wykonuje kod PR
+   (w tym hooki GoReleaser) w jobie z pull-requests:write. Zalecane jest
+   rozdzielenie budowania nieufnego kodu od komentowania/publikacji,
+   krótsze zakresy tokenów i przypięta wersja GoReleaser zamiast nightly.
+   Nix updater wykonuje kod gałęzi PR przy szerokich deklarowanych prawach;
+   dla forków GitHub nadal ogranicza token. Nie potwierdzono tu anonimowego
+   przejęcia sekretów.
+
+D. Interpolacje inputs.tag w shell/JS oraz github.head_ref w komendzie push
+   warto zastąpić przekazaniem przez env/argumenty i walidacją. Obecne
+   osiągalne ścieżki wymagają uprawnień do triggera lub gałęzi tego repo;
+   nie przedstawiono ich jako krytycznego, nieuwierzytelnionego RCE.
+
+E. go vet w Go 1.26.10 wykrywa unreachable code w
+   cmd/app/input_handlers.go:784. To problem jakości/bramki CI, nie dowód
+   wycieku. Testy race uruchomiono z -vet=off, a odstępstwo zapisano w wynikach.
+
+RZECZYWISTY PRZEPŁYW DANYCH I POŁĄCZENIA
+
+Źródła lokalne:
+- Konfiguracja Argo CD: wybrany plik --argocd-config/--config albo ścieżki
+  ARGOCD_CONFIG, ARGOCD_CONFIG_DIR, legacy ~/.argocd, XDG i ~/.config/argocd.
+  Plik zawiera istniejący token użytkownika. Program odczytuje go do pamięci.
+- Kubeconfig: mapowanie cluster/context i użycie kubectl/k9s; dostęp do
+  klastra zależy od osobnych uprawnień Kubernetes, nie tylko Argo CD RBAC.
+- CA i opcjonalny certyfikat klienta z podanych lokalnych ścieżek.
+- Argonaut config.toml: preferencje, komendy i ustawienia aktualizacji;
+  domyślnie nie magazynuje tokenu Argo CD.
+
+Sieć:
+- Wybrany serwer Argo CD: Authorization: Bearer, listy aplikacji, zasoby,
+  manifesty, events, status i operacje użytkownika.
+- api.github.com/repos/darksworm/argonaut/releases/latest: domyślnie po
+  ok. 5 s od startu i następnie co godzinę, plus metadane sum przy aktualizacji.
+  Używa osobnego klienta bez tokenu Argo CD i User-Agent aktualizatora.
+- raw.githubusercontent.com: changelog na ręczne żądanie.
+- URL artefaktu GitHub release: dopiero po potwierdzeniu :upgrade.
+- kubectl port-forward: lokalne 127.0.0.1 przez połączenie Kubernetes.
+Nie znaleziono osobnego endpointu analityki, uploadu logów ani mechanizmu
+wysyłania tokenów/manifestów do autora. Istnieją ryzyka F02 i F03, które
+mogą ujawnić dane inną drogą niż celowa telemetria.
+
+Procesy:
+- git diff --no-index; less -R; sh -lc dla wybranego viewera/formattera;
+  k9s; kubectl; pbcopy/xclip/xsel lub własna komenda schowka.
+- Parametry zasobów są przekazywane jako oddzielne argumenty, a ścieżki
+  plików dla viewera są escapowane. Nie znaleziono wklejania nazw zasobów
+  z odpowiedzi API do polecenia powłoki.
+- Konfiguracja viewer/formatter jest świadomie wykonywalna. Nie importować
+  jej z nieufnego źródła; procesy dziedziczą prawa i środowisko użytkownika.
+- Zależność colorprofile może uruchomić tmux info do wykrywania kolorów.
+  Przejrzano to wywołanie; nie jest to ukryty transfer danych.
+- Biblioteka oauth2 zawiera funkcje HTTP, ale w badanej aplikacji jest
+  używana do kontekstu z klientem HTTP, nie do automatycznego logowania
+  do zewnętrznego odbiorcy. Nie wykazano nieoczekiwanego wywołania OAuth.
+- Nie znaleziono usług autostartu, zaplanowanych zadań, modyfikowania rejestru,
+  skanowania ~/.ssh lub ~/.aws ani pobierania kolejnego payloadu przy starcie.
+
+POZYTYWNE ZABEZPIECZENIA
+
+- HTTPS i sprawdzanie certyfikatu są domyślne. insecure/plain-text to
+  ustawienia pobierane z konfiguracji kontekstu, nie ukryte wartości domyślne.
+- TLS custom CA, certyfikat klienta i co najmniej TLS 1.2 w custom trust.
+- Token API znajduje się w nagłówku, nie w query URL.
+- Zapisy POST/PUT/PATCH/DELETE i wywołanie sync nie są automatycznie ponawiane
+  po niepewnym błędzie transportu; ogranicza to podwójne wykonanie.
+- Destrukcyjne akcje mają potwierdzenia; force sync ma dodatkowy krok.
+- Aktualizacja wymaga potwierdzenia i poprawnego SHA-256.
+- Ekstrakcja archiwum odrzuca przejście poza katalog oraz linki.
+- Kontener uruchamia program jako UID 10001.
+- Rozmiar SSE i pobieranego changelogu jest ograniczony.
+- Wiele odpowiedzi asynchronicznych ma kontrolę epoki/kontekstu; F05 dotyczy
+  niespójności pokrycia, a nie całkowitego braku tego mechanizmu.
+
+WINDOWS — WYNIK I OGRANICZENIA
+
+Build windows/amd64 i --version przeszły. Końcowy EXE znajduje się w:
+C:\tmp\argonaut\.audit\argonaut.exe
+Go 1.26.10; appVersion=dev; SHA-256:
+987E7E38742CFA7D2C307001D2015632B6D4E04DF8934192B3BA5ADC0854CF23
+
+- .goreleaser.release.yml:19 buduje linux/darwin. CI testuje Ubuntu;
+  e2e terminalowe ma warunek unix. Native Windows nie ma tej samej walidacji.
+- less i sh nie były dostępne w PATH tego środowiska. Diff i podglądy
+  korzystają z less, a formatowanie/viewer również z sh. Zainstalowane były
+  argocd, kubectl, k9s i git. To ograniczenie potwierdzono błędem testu.
+- trust.go:67 dzieli katalogi CA po ':', co rozbija literę dysku i nie
+  obsługuje windowsowej listy katalogów. Ścieżka na bieżącym dysku może
+  przypadkiem zadziałać jako ścieżka bez litery. Używać --ca-cert z plikiem
+  PEM; poprawka powinna odróżniać pojedynczą ścieżkę od listy platformowej.
+- KUBECONFIG jest odczytywany jako jeden plik, bez obsługi listy plików.
+- Schowek natywny ma implementacje Linux/macOS, na Windows używa fallback
+  OSC52 zależnego od terminala. Własna komenda clip.exe jest możliwa;
+  poprawności Unicode i interakcji schowka nie badano.
+- Windowsowa konfiguracja aplikacji to %APPDATA%\argonaut\config.toml,
+  chyba że ARGONAUT_CONFIG wskazuje inaczej.
+- Integracja k9s ma osobną implementację !unix; nazwa sandbox w kodzie
+  oznacza układ terminala/status bar, nie izolację uprawnień procesu.
+
+TESTY I WYNIKI
+
+go mod verify (z wcześniejszego etapu): all modules verified.
+govulncheck źródeł (etap końcowy, Go 1.26.10): No vulnerabilities found.
+govulncheck końcowego EXE: No vulnerabilities found.
+Wcześniejszy EXE z Go 1.26.0 zgłosił 28 symbolicznych podatności stdlib;
+został zastąpiony buildem 1.26.10. Nie używać starego toolchaina tylko
+dlatego, że go.mod akceptuje go jako minimum.
+
+Pełne zwykłe testy poprzedniego etapu: 15 pakietów OK, 3 FAIL, 4 bez testów.
+W cmd/app było 40 niezgodnych golden snapshots oraz błąd diff/less. Wzorce
+w checkout mają CRLF przy core.autocrlf=true, a test porównuje bajty.
+TestGetConfigPath zakłada HOME i '/', a test wyboru wydania zakłada, że
+podstawiony Windows asset nie jest assetem bieżącej platformy. Nie należy
+interpretować wszystkich tych niepowodzeń jako podatności lub usterek UI.
+
+Testy z detektorem race (Go 1.26.10, CGO, GCC 13.2.0):
+- 18 pakietów OK, 4 bez testów; brak zgłoszonych wyścigów w wykonanych testach.
+- Pominięto: TestGolden_*, TestGetConfigPath,
+  TestFindDownloadURL_PrefersExactPlatformMatch,
+  TestRollbackDiff_ComparesSelectedAgainstCurrentRevision.
+- Wyłączono vet ze względu na osobno odnotowany unreachable code.
+- Nie jest to dowód braku wyścigów na ścieżkach nieosiągniętych przez testy.
+
+Testy audytowe: 14 funkcji testowych, wszystkie końcowo PASS; jeden test
+zawiera 3 podprzypadki renderera. PASS w teście opisującym niepożądane
+zachowanie oznacza POTWIERDZENIE obserwacji, nie stwierdzenie bezpieczeństwa.
+
+Gitleaks: 2 znaleziska private-key, oba pod e2e/testdata/certs:
+- client.key, commit fb1413f71a52005bcdc7729aecf487af63260599;
+- server.key, commit 35d32773bb4a43a7508ea2145d6666c130cc087d.
+To klucze fixture TLS. Nie znaleziono dowodu ich użycia jako produkcyjnych
+poświadczeń i nie sklasyfikowano ich jako potwierdzonego wycieku produkcji.
+Nie należy ich nigdy używać poza testami. Brak innych trafień nie gwarantuje
+nieobecności sekretu w formacie nierozpoznawanym przez skaner.
+
+SAST: 50 zgłoszeń Windows, 58 Linux; brak błędów ładowania pakietów.
+Najczęstsze trafienia to lokalne ścieżki konfiguracyjne i świadome komendy.
+math/rand tworzy jitter ponowień, nie klucze. unsafe.Pointer na Unix służy
+ioctl winsize. Wymaganie 0600 dla programu wykonywalnego jest fałszywym
+alarmem. Nie przeniesiono bezkrytycznie etykiet HIGH skanera do oceny ryzyka.
+Pełna tabela decyzji znajduje się w gosec-triage.csv.
+
+ZALECANA KOLEJNOŚĆ POPRAWEK
+
+1. F01: pełna tożsamość Application we wszystkich operacjach i selekcjach.
+2. F02: odizolowany katalog oraz allowlista repozytoriów git daemon.
+3. F03: zakaz downgrade i ścisła polityka przekierowań API z tokenem.
+4. F04: prywatne pliki i gwarantowane sprzątanie wszystkich diffów.
+5. F05: epoka i tożsamość kontekstu/sesji w każdym strumieniu drzewa.
+6. Redakcja terminalowych danych i logów, limity rozmiaru, utwardzenie
+   instalacji/aktualizacji i CI; osobny pakiet poprawek Windows i jego CI.
+
+Do czasu tych zmian używać możliwie wąskiej roli Argo CD. Konto read-only
+zmniejsza skutki błędów mutujących, ale nie rozwiązuje lokalnej retencji
+poufnych manifestów. Nie uruchamiać całego narzędzia jako administrator/root.
+
+Jeśli automatyczny ruch do GitHuba jest niepożądany, w istniejącym
+%APPDATA%\argonaut\config.toml można ustawić:
+[updates]
+check_enabled = false
+To nie blokuje ręcznego changelogu lub :upgrade. Nie zmieniano konfiguracji
+użytkownika w trakcie tego audytu.
+
+OGRANICZENIA I RZECZY NIEWYKONANE
+
+- Nie podłączano aplikacji do rzeczywistego Argo CD ani klastra użytkownika;
+  nie wykonywano na nich sync/delete/rollback, logowania ani skanu uprawnień.
+- Nie wykonywano pełnego pentestu działającej infrastruktury, SSO/RBAC,
+  proxy, repo-server, Kubernetes ani zewnętrznych programów kubectl/k9s/git.
+- Nie wykonano skanu AV: Defender w środowisku zgłaszał wyłączony silnik
+  i brak sygnatur. Nie włączano go ani nie zmieniano ustawień systemu.
+  Innych silników AV nie zweryfikowano.
+- Nie analizowano każdego bajtu bibliotek, kompilatora, systemowych DLL
+  ani prebuiltów pobranych od autora. Nie wysyłano plików do VirusTotal
+  lub innej zewnętrznej usługi analizy kodu.
+- Nie potwierdzono bezpieczeństwa przyszłych commitów i wydań.
+- Źródła projektu pozostały bez zmian. Materiały, narzędzia i syntetyczne
+  fixture audytu zapisano w .audit/full; zależności narzędzi są w cache Go.
+  Tryby AI gosec nie były używane do analizy/fixów.
+
+PAKIET DOWODOWY W .audit/full
+
+proof-tests.log                       Wynik 14 testów audytowych
+app_security_audit_test.go             Próby logiki aplikacji
+api_security_audit_test.go             Próby redirect, tokenu i rozmiaru
+services_security_audit_test.go        Próby aktualizatora
+overlay.json                          Mapowanie testów bez zmian źródeł
+git-daemon-proof.log                   Anonimowy clone syntetycznego siblinga
+probe-git-daemon.ps1                   Powtarzalny lokalny eksperyment
+race-windows.log                      Testy z detektorem race
+vet-windows.log                       Oddzielny wynik go vet
+govulncheck-source.log                Końcowy wynik skanu źródeł
+gosec-windows.json / gosec-linux.json  Surowe wyniki SAST
+gosec-triage.csv                       Klasyfikacja wszystkich zgłoszeń
+gitleaks-history.json                 Zredagowane trafienia sekretów
+gitleaks-history.log                  Zakres i wersja skanera historii
+modules.json                          Wykaz modułów Go
+dependency-packages.txt               Pakiety windows/amd64 i lokalizacje
+dependency-imports.txt                Importy używanych pakietów
+dependency-source-files.txt           Lista źródeł używanych zależności
+dependency-sensitive-sites.txt        Wrażliwe miejsca zależności
+tracked-files-sha256.csv              Hash i rozmiar 328 śledzonych plików
+upstream-head.txt                     Porównanie z publicznym main/HEAD
+
+Wcześniejsze logi budowy/skanu EXE i zwykłych testów pozostają w .audit.
+Wszystkie ścieżki w raporcie odnoszą się do badanego commita, nie do zmian,
+które mogły zostać wykonane po audycie.
+
+GŁÓWNE ŹRÓDŁA ZEWNĘTRZNE
+
+Argo CD: tożsamość aplikacji i appNamespace REST API:
+https://argo-cd.readthedocs.io/en/stable/operator-manual/app-any-namespace/
+Git: git daemon, --export-all, --base-path i brak uwierzytelniania protokołu:
+https://git-scm.com/docs/git-daemon
+Go: zakres i konfiguracja govulncheck:
+https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck
+Go: przykład poprawki wymagającej 1.26.10:
+https://pkg.go.dev/vuln/GO-2026-6809
+Narzędzia analizy:
+https://github.com/securego/gosec
+https://github.com/gitleaks/gitleaks

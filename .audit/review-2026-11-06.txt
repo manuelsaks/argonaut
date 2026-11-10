@@ -1,0 +1,157 @@
+Przegląd bezpieczeństwa i zgodności z Windows — Argonaut
+UWAGA: Ten wstępny przegląd został rozszerzony. Aktualny raport i dodatkowe
+potwierdzone problemy są w .audit/full/SECURITY-AUDIT-2026-11-06.txt.
+Data: 2026-11-06, Europe/Warsaw
+Repozytorium: https://github.com/darksworm/argonaut
+Commit: 5a1eca5b4b4c1a1bed5843337402dc95b1eabdfc
+Katalog: C:\tmp\argonaut
+
+WYNIK
+Nie znaleziono w przejrzanych ścieżkach kodu oznak malware, ukrytej telemetrii,
+zbierania niezwiązanych z funkcją programu danych lub celowego przekazywania
+tokenów Argo CD do zewnętrznego odbiorcy. Nie jest to gwarancja braku złośliwego
+kodu ani pełny audyt wszystkich zależności. Nie wykonano skanu antywirusowego:
+Get-MpComputerStatus zgłosił AntivirusEnabled=False, AMServiceEnabled=False
+i wersję sygnatur 0.0.0.0. Nie oceniano innych produktów antywirusowych.
+
+Program kompiluje się natywnie na windows/amd64. Wsparcie funkcjonalne Windows
+jest częściowe. Do wrażliwego środowiska zalecane są poprawki opisane poniżej,
+aktualny kompilator, prawidłowe TLS i ograniczone uprawnienia po stronie Argo CD.
+
+WYKONANE SPRAWDZENIA
+- Przegląd konfiguracji, obsługi tokenów, połączeń HTTP/TLS, aktualizacji,
+  procesów zewnętrznych, logów, plików tymczasowych i skryptów instalacji.
+- Początkowe git status: brak lokalnych zmian w śledzonych plikach.
+- go build -mod=readonly -trimpath -o .audit/argonaut.exe ./cmd/app: sukces.
+  Automatycznie dobrana początkowa wersja: Go 1.26.0 windows/amd64.
+- go mod verify: all modules verified (integralność pobranych modułów;
+  nie jest to certyfikat bezpieczeństwa ich kodu).
+- govulncheck v1.9.0, analiza źródeł ./...: No vulnerabilities found.
+  Narzędzie automatycznie przełączyło swój toolchain na Go 1.26.10.
+- Skan początkowego EXE: 28 zgłoszeń dotyczących symboli biblioteki standardowej
+  Go 1.26.0. Nie wszystkie oznaczają osiągalny scenariusz ataku w tym programie;
+  skan binarny jest mniej precyzyjny od analizy przepływu wywołań w źródłach.
+  Szczegóły: vulnerabilities-binary.log.
+- Przebudowanie tych samych źródeł z GOTOOLCHAIN=go1.26.10: sukces.
+- Skan końcowego EXE: No vulnerabilities found.
+  Szczegóły: vulnerabilities-binary-patched.log.
+- Końcowy EXE uruchomiony tylko z --version: zwraca dev.
+- go test -mod=readonly -timeout=120s ./...: 15 pakietów OK, 3 FAIL,
+  4 pakiety bez testów. Wynik: unit-tests.log.
+- Nie uruchamiano interaktywnej aplikacji z rzeczywistą konfiguracją Argo CD,
+  nie sprawdzano rzeczywistego klastra ani nie wykonywano w nim operacji.
+  Testy używają atrap API; niektóre również fikcyjnego argo.example.com.
+- Nie zmieniono śledzonych źródeł ani systemowych ustawień Go. Utworzono .audit
+  i pobrano narzędzia/zależności do cache Go za zgodą użytkownika.
+
+USTALENIA BEZPIECZEŃSTWA
+1. Kompilator ma znaczenie. go.mod:3 wymaga co najmniej Go 1.26.0, ale nie
+   wymusza poprawek bezpieczeństwa. Początkowy build zawierał starą bibliotekę
+   standardową. Końcowy plik zbudowano Go 1.26.10 i przeskanowano ponownie.
+   Przykład zgłoszenia naprawionego w 1.26.10: GO-2026-6809 (crypto/x509).
+   https://pkg.go.dev/vuln/GO-2026-6809
+
+2. Pozostawiane manifesty w plikach tymczasowych.
+   cmd/app/api_integration.go:547 oraz :624 tworzą current-*.yaml i
+   predicted-*.yaml. Zwykłe podglądy diffu aplikacji i zasobu nie usuwają ich
+   po zakończeniu. Wariant rollback usuwa pliki w części ścieżek, ale zostawia
+   je przy użyciu zewnętrznego interaktywnego viewera (:1329).
+   Manifesty są zapisywane w postaci jawnej. Mogą zawierać wrażliwe wartości,
+   jeśli API Argo CD je zwróci; nie potwierdzono, że konkretna instalacja Argo
+   udostępnia tutaj niemaskowane Kubernetes Secrets. To ryzyko pozostawienia
+   danych lokalnie, nie dowód ich wysyłania przez sieć.
+
+3. Logi w katalogu tymczasowym.
+   cmd/app/main.go:399 tworzy a9s-*.log. Domyślny poziom to INFO.
+   DEBUG zapisuje m.in. fragmenty odpowiedzi API i zdarzenia zasobów:
+   pkg/api/client.go:401, pkg/api/applications.go:521 i :923.
+   Nie widać celowego logowania nagłówka Authorization. Logi mogą jednak
+   zawierać wewnętrzne adresy, nazwy aplikacji i dane zawarte w odpowiedziach.
+   Nie udostępniać logów bez przeglądu; nie włączać DEBUG bez potrzeby.
+
+4. TLS zależy od ustawień kontekstu Argo CD.
+   pkg/config/cli_config.go odczytuje token i flagi insecure/plain-text.
+   pkg/api/client.go:66, :89 i :117 wyłączają weryfikację certyfikatu, jeśli
+   kontekst ma insecure=true. plain-text lub jawne http:// dopuszcza HTTP.
+   Dla zdalnego serwera używać HTTPS z poprawnym CA. Lokalny port-forward
+   jest osobnym przypadkiem: program używa 127.0.0.1 przez tunel kubectl.
+
+5. Ruch zewnętrzny jest obecny, ale nie znaleziono wysyłania tam tokenów.
+   pkg/services/update.go:100: GitHub Releases API, domyślnie po starcie
+   i co godzinę; przy dostępnej aktualizacji również metadane sum kontrolnych.
+   cmd/app/changelog.go:17: raw.githubusercontent.com po żądaniu changelogu.
+   Updater używa oddzielnego klienta HTTP od klienta Argo CD. Żądanie wersji
+   wysyła User-Agent, nie token Argo CD ani manifesty.
+   :upgrade wymaga potwierdzenia w aplikacji, sprawdza SHA-256 i odrzuca
+   niebezpieczne ścieżki oraz symlinki archiwum. Sumy pochodzą jednak z tego
+   samego źródła wydania; nie stanowią niezależnego podpisu autora.
+   install.sh nie sprawdza sum pobranego archiwum. Budowa z przejrzanego
+   commita ogranicza zależność od gotowych plików publikowanych przez autora.
+
+6. Komendy z konfiguracji wykonują kod lokalny.
+   cmd/app/model_pager.go:71 i :103 uruchamiają viewer/formatter przez sh -lc.
+   To jawna funkcja konfiguracyjna, nie znaleziona furtka. Nie przyjmować
+   niezaufanych konfiguracji tych komend. kubectl, git i k9s są uruchamiane
+   jako osobne programy z PATH; odziedziczą uprawnienia procesu użytkownika.
+
+7. Program umożliwia sync, prune, rollback i delete.
+   Zakres skutków zależy od RBAC Argo CD; do przeglądania używać konta/roli
+   tylko do odczytu. Integracja k9s korzysta z osobnych uprawnień Kubernetes.
+
+WINDOWS
+- Oficjalna konfiguracja wydania .goreleaser.release.yml:19 obejmuje linux
+  i darwin. CI .github/workflows/test.yml działa na Ubuntu. Testy terminalowe
+  e2e mają warunek unix; nie potwierdzają poprawności Windows.
+- Diff i część podglądów uruchamiają less -R, a zewnętrzny viewer/formatter
+  dodatkowo sh -lc. U użytkownika less, sh i delta nie były w PATH.
+  Dostępne były argocd, kubectl, k9s i git.
+- Test rollback diffu rzeczywiście zakończył się błędem braku less.
+- 40 testów golden nie przeszło. Pliki wzorcowe w checkout mają CRLF,
+  core.autocrlf=true, a porównanie w testach jest bajtowe. To co najmniej
+  problem przenośności testów, nie dowód 40 usterek UI.
+- Testy konfiguracji mają założenia o separatorze '/' i zmieniają HOME,
+  podczas gdy os.UserHomeDir na Windows korzysta z USERPROFILE.
+- Test wyboru wydania zakłada, że podstawiony windows-amd64.zip nie jest
+  wydaniem bieżącej platformy. Na Windows to założenie jest nieprawdziwe.
+- --ca-path/SSL_CERT_DIR: pkg/trust/trust.go:67 dzieli listę po ':'. Rozbija
+  również literę dysku Windows. Ścieżka na bieżącym dysku może przypadkiem
+  zadziałać jako ścieżka bez litery; inne dyski i listy katalogów są problemem.
+  Praktyczne obejście: --ca-cert ze wskazaniem konkretnego pliku PEM.
+- Domyślny schowek natywny obsługuje Linux/macOS; Windows dostaje fallback
+  OSC 52 zależny od terminala. Można skonfigurować [clipboard] copy_command
+  na clip.exe, ale nie testowano tutaj działania schowka/Unicode.
+- K9s ma osobną implementację !unix: cmd/app/k9s_sandbox_other.go.
+- Konfiguracja Argonauta na Windows: %APPDATA%\argonaut\config.toml,
+  chyba że ustawiono ARGONAUT_CONFIG. Jest to inne miejsce niż ogólny
+  przykład ~/.config/argonaut/config.toml w README.
+- KUBECONFIG jest czytany jako pojedynczy plik, bez obsługi listy plików.
+- Natywny Windows jest możliwy, ale wymaga przygotowania narzędzi i testów
+  funkcjonalnych. WSL2 pasuje lepiej do założeń projektu; nie usuwa problemu
+  pozostawiania manifestów w plikach tymczasowych.
+
+ZALECANA KONFIGURACJA POCZĄTKOWA (do istniejącego config.toml)
+[updates]
+check_enabled = false
+
+Wyłącza automatyczne sprawdzanie aktualizacji, ale nie ręczne :upgrade
+lub pobieranie changelogu. Nie modyfikowano konfiguracji użytkownika.
+
+POWTÓRZENIE BUDOWY W POWERSHELL
+Set-Location C:\tmp\argonaut
+$env:GOTOOLCHAIN = 'go1.26.10'
+go build -mod=readonly -trimpath -o .audit/argonaut.exe ./cmd/app
+go run golang.org/x/vuln/cmd/govulncheck@latest -mode=binary .audit/argonaut.exe
+
+KOŃCOWY ARTEFAKT
+C:\tmp\argonaut\.audit\argonaut.exe
+Go 1.26.10, windows/amd64, appVersion=dev
+SHA-256: 987E7E38742CFA7D2C307001D2015632B6D4E04DF8934192B3BA5ADC0854CF23
+Źródła bez zmian. Znacznik +dirty w metadanych pochodzi z lokalnych,
+nieśledzonych artefaktów audytu. Nie wykonywano testu end-to-end z klastrem.
+
+OGRANICZENIA
+govulncheck sprawdza znane podatności, a nie obecność każdego rodzaju malware.
+Nie przeprowadzono pełnego ręcznego audytu całego drzewa zależności, analizy
+dynamicznej ruchu zalogowanej aplikacji, skanu AV ani testów produkcyjnego API.
+Ocena dotyczy tego commita i sprawdzonego builda, nie przyszłych aktualizacji.
+Dokumentacja narzędzia: https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck

@@ -1,4 +1,6 @@
- Context: argo.example.com                                                           Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps                                
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
  │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
@@ -18,7 +20,5 @@
  │ Date           22h ago · 2026-08-07 13:58                                                      │ 
  │                                                                                                │ 
  │ fix: suggest and validate :events arguments                                                    │ 
- │                                                                                                │ 
- │ SOURCE                                                                                         │ 
  ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 

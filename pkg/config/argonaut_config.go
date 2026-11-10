@@ -26,8 +26,27 @@ type ArgonautConfig struct {
 	HTTPTimeouts    HTTPTimeoutConfig `toml:"http_timeouts,omitempty"`
 	Updates         UpdatesConfig     `toml:"updates,omitempty"`
 	Events          EventsConfig      `toml:"events,omitempty"`
+	Auth            AuthConfig        `toml:"auth,omitempty"`
 	DefaultView     string            `toml:"default_view,omitempty"`
 	LastSeenVersion string            `toml:"last_seen_version,omitempty"`
+}
+
+// AuthConfig stores preferences only. Authentication and credential storage
+// remain with the Argo CD CLI; Command is an executable path, not shell code.
+type AuthConfig struct {
+	Command     string          `toml:"command,omitempty"`
+	AutoRelogin map[string]bool `toml:"auto_relogin,omitempty"`
+}
+
+func (c *ArgonautConfig) IsAutoReloginEnabled(contextName string) bool {
+	return c != nil && c.Auth.AutoRelogin[contextName]
+}
+
+func (c *ArgonautConfig) GetArgoCDCommand() string {
+	if c != nil && c.Auth.Command != "" {
+		return c.Auth.Command
+	}
+	return "argocd"
 }
 
 // AppearanceConfig holds theme and visual settings

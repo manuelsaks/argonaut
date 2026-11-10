@@ -1,0 +1,125 @@
+2026/11/06 14:56:27 INFO watch stream ended, scheduling reconnect component=watch delay=1ms
+2026/11/06 14:56:27 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[] generation=0
+2026/11/06 14:56:28 INFO maybeRestartWatchForScope: scope changed, scheduling restart component=watch current=[] new=[proj-a]
+2026/11/06 14:56:28 INFO restartWatchWithScope: restarting watch component=watch projects=[proj-a] target_generation=1
+2026/11/06 14:56:28 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[proj-a] generation=1
+2026/11/06 14:56:28 INFO AppsLoadedMsg received component=model apps_count=1 watchChan_nil=true resourceVersion=""
+2026/11/06 14:56:28 INFO Starting watch as watchChan is nil component=model
+2026/11/06 14:56:28 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[] generation=0
+2026/11/06 14:56:28 INFO Switching context component=context-switch from=old-context to=new-context server=https://new.example.com
+2026/11/06 14:56:28 INFO Switching context component=context-switch from="" to=new-context server=https://new.example.com
+2026/11/06 14:56:28 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 14:56:28 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 14:56:28 INFO Application test-app deleted successfully component=status
+2026/11/06 14:56:28 INFO Application test-app deleted successfully component=status
+--- FAIL: TestDeleteIntegration_FullFlow (0.00s)
+    delete_integration_test.go:94: Expected app 'test-app' to be removed from apps list
+2026/11/06 14:56:28 INFO Failed to delete test-app: Failed to delete application: permission denied component=status
+2026/11/06 14:56:28 INFO Failed to delete test-app: Failed to delete application: permission denied component=status
+2026/11/06 14:56:28 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 14:56:28 INFO Failed to delete test-app: No server configured component=status
+2026/11/06 14:56:28 INFO Application test-app deleted successfully component=status
+2026/11/06 14:56:28 INFO Application test-app deleted successfully component=status
+--- FAIL: TestDeleteIntegration_StateConsistency (0.00s)
+    delete_integration_test.go:367: Expected app count to be 1 after delete, got 2
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+--- FAIL: TestAppsBatchUpdate_RefreshesTreeSyncSummaryLive (0.00s)
+    events_pane_test.go:911: expected the root row's sync summary after a live app update
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+--- FAIL: TestResourceTreeLoaded_SyncSummary_DisambiguatesAppByNamespace (0.00s)
+    events_pane_test.go:1222: expected the tree-scoped app's summary (synced)
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Tree loaded component=status
+2026/11/06 14:56:28 INFO Terminating operation for test-app component=status
+2026/11/06 14:56:28 INFO Terminating operation for test-app component=status
+2026/11/06 14:56:28 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 14:56:28 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 14:56:28 INFO Terminating operation for test-app component=status
+2026/11/06 14:56:28 INFO Terminating operation for test-app component=status
+2026/11/06 14:56:28 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 14:56:28 INFO Failed to terminate test-app: no operation is in progress component=status
+2026/11/06 14:56:28 INFO Terminating operation for test-app component=status
+2026/11/06 14:56:28 INFO Terminating operation for test-app component=status
+2026/11/06 14:56:28 INFO startWatchingApplications called component=api_integration watchChan_nil=true resourceVersion="" scopeProjects=[] generation=0
+2026/11/06 14:56:28 ERRO API Error: boom component=status
+2026/11/06 14:56:28 ERRO API Error: boom component=status
+2026/11/06 14:56:28 ERRO auth required component=status
+2026/11/06 14:56:28 ERRO auth required component=status
+2026/11/06 14:56:28 INFO startLoadingApplications called component=api_integration
+2026/11/06 14:56:28 INFO startLoadingApplications: executing load component=api_integration
+2026/11/06 14:56:28 INFO Ran promote on Rollout/web component=status
+2026/11/06 14:56:28 INFO Ran promote on Rollout/web component=status
+2026/11/06 14:56:28 INFO Ran promote on Rollout/previous-rollout component=status
+2026/11/06 14:56:28 INFO Ran promote on Rollout/previous-rollout component=status
+2026/11/06 14:56:28 INFO Action executed component=resource-action app=x kind=Rollout name=y action=promote
+2026/11/06 14:56:28 INFO Ran promote on Rollout/web component=status
+2026/11/06 14:56:28 INFO Ran promote on Rollout/web component=status
+2026/11/06 14:56:28 INFO Starting rollback session component=rollback app=my-app
+2026/11/06 14:56:28 INFO Loaded application history component=rollback app=demo-app count=3
+2026/11/06 14:56:28 INFO Loaded application history component=rollback app=demo-app count=0
+2026/11/06 14:56:28 INFO Loaded application history component=rollback app=demo-app count=0
+2026/11/06 14:56:28 INFO Loaded application history component=rollback app=demo-app count=0
+2026/11/06 14:56:29 WARN HTTP request failed component=api op=http method=GET url=https://argo.example.com/api/v1/applications/my-app/managed-resources error="Get \"https://argo.example.com/api/v1/applications/my-app/managed-resources\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 14:56:29 WARN HTTP request failed component=api op=http method=GET url="https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt" error="Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 14:56:29 WARN Attempt failed component=retry attempt=1 maxAttempts=5 took=48.0515ms err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications/my-app/managed-resources\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 14:56:29 WARN Attempt failed component=retry attempt=1 maxAttempts=5 took=50.0518ms err="[network:HTTP_REQUEST_FAILED] HTTP request failed: Get \"https://argo.example.com/api/v1/applications?fields=metadata.resourceVersion%2Citems.metadata.name%2Citems.metadata.namespace%2Citems.metadata.ownerReferences%2Citems.spec%2Citems.status.sync.status%2Citems.status.health%2Citems.status.operationState.phase%2Citems.status.operationState.finishedAt%2Citems.status.operationState.startedAt\": dial tcp: lookup argo.example.com: no such host"
+2026/11/06 14:56:29 INFO Starting rollback session component=rollback app=tree-app
+2026/11/06 14:56:29 INFO Starting rollback session component=rollback app=app-b
+2026/11/06 14:56:29 INFO Starting rollback session component=rollback app=child-app
+2026/11/06 14:56:29 INFO Rollback initiated for test-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for test-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for test-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for test-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for test-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for test-app component=status
+2026/11/06 14:56:29 INFO Starting rollback session component=rollback app=test-app
+2026/11/06 14:56:29 INFO Sync initiated for test-app component=status
+2026/11/06 14:56:29 INFO Sync initiated for test-app component=status
+2026/11/06 14:56:29 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 14:56:29 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 14:56:29 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 14:56:29 INFO Executing sync confirmation component=sync target=demo-app isMulti=false
+2026/11/06 14:56:29 INFO Sync initiated for app-b component=status
+2026/11/06 14:56:29 INFO Sync initiated for app-b component=status
+2026/11/06 14:56:29 INFO Sync initiated for app-b component=status
+2026/11/06 14:56:29 INFO Sync initiated for app-b component=status
+2026/11/06 14:56:29 INFO Sync initiated for 2 app(s) component=status
+2026/11/06 14:56:29 INFO Sync initiated for 2 app(s) component=status
+2026/11/06 14:56:29 INFO Rollback initiated for app-b component=status
+2026/11/06 14:56:29 INFO Rollback initiated for app-b component=status
+2026/11/06 14:56:29 INFO Sync initiated for my-app component=status
+2026/11/06 14:56:29 INFO Sync initiated for my-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for my-app component=status
+2026/11/06 14:56:29 INFO Rollback initiated for my-app component=status
+FAIL
+FAIL	github.com/darksworm/argonaut/cmd/app	2.973s
+ok  	github.com/darksworm/argonaut/pkg/api	4.459s
+ok  	github.com/darksworm/argonaut/pkg/autocomplete	0.024s
+ok  	github.com/darksworm/argonaut/pkg/config	0.041s
+ok  	github.com/darksworm/argonaut/pkg/context	0.020s
+?   	github.com/darksworm/argonaut/pkg/errors	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/humantime	0.028s
+ok  	github.com/darksworm/argonaut/pkg/kubeconfig	0.022s
+ok  	github.com/darksworm/argonaut/pkg/model	0.024s
+ok  	github.com/darksworm/argonaut/pkg/neat	0.022s
+?   	github.com/darksworm/argonaut/pkg/portforward	[no test files]
+?   	github.com/darksworm/argonaut/pkg/retry	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/services	0.054s
+ok  	github.com/darksworm/argonaut/pkg/services/appdelete	0.033s
+ok  	github.com/darksworm/argonaut/pkg/sort	0.028s
+ok  	github.com/darksworm/argonaut/pkg/theme	0.059s
+ok  	github.com/darksworm/argonaut/pkg/trust	1.310s
+ok  	github.com/darksworm/argonaut/pkg/tui	0.135s
+?   	github.com/darksworm/argonaut/pkg/tui/clipboard	[no test files]
+ok  	github.com/darksworm/argonaut/pkg/tui/listnav	0.035s
+ok  	github.com/darksworm/argonaut/pkg/tui/selection	0.025s
+ok  	github.com/darksworm/argonaut/pkg/tui/treeview	0.025s
+FAIL

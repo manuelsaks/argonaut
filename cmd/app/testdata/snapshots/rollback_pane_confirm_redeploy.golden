@@ -1,24 +1,24 @@
- Context: argo.example.com                                                           Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> confirm  <p> prune  <w> watch  <h/l> choose  <esc> back                                    
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
- │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
- │ #28  deadbeef                                              3d ago   by automated               │ 
- │ #27  55667788                                                               mith               │ 
- ╰─────────────────── ╭──────────────────────────────────────────────────────╮ ───────────────────╯ 
+ │ #29  11223344 fix:                                                          ated               │ 
+ │ #28  deadbeef      ╭──────────────────────────────────────────────────────╮ ated               │ 
+ │ #27  55667788      │                                                      │ mith               │ 
+ ╰─────────────────── │                  Redeploy demo-app?                  │ ───────────────────╯ 
  ╭─ #30 a1b2c3d4 ──── │                                                      │ ─ deployed 1h ago ─╮ 
- │                    │                  Redeploy demo-app?                  │                    │ 
- │ DEPLOYMENT         │                                                      │                    │ 
- │ Deployed       1h  │        a1b2c3d4 (current) → a1b2c3d4 (1h ago)        │                    │ 
- │ Initiated by   jan │     fix: suggest and validate :events arguments      │                    │ 
+ │                    │        a1b2c3d4 (current) → a1b2c3d4 (1h ago)        │                    │ 
+ │ DEPLOYMENT         │     fix: suggest and validate :events arguments      │                    │ 
+ │ Deployed       1h  │                                                      │                    │ 
+ │ Initiated by   jan │              Redeploy (y)        Cancel              │                    │ 
  │ Active for     1h5 │                                                      │                    │ 
- │                    │              Redeploy (y)        Cancel              │                    │ 
+ │                    │              p: Prune Off • w: Watch On              │                    │ 
  │ COMMIT         a1b │                                                      │                    │ 
- │ Author         Jan │              p: Prune Off • w: Watch On              │                    │ 
- │ Date           22h │                                                      │                    │ 
- │                    ╰──────────────────────────────────────────────────────╯                    │ 
- │ fix: suggest and v                                                                             │ 
+ │ Author         Jan ╰──────────────────────────────────────────────────────╯                    │ 
+ │ Date           22h                                                                             │ 
  │                                                                                                │ 
- │                                                                                                │ 
+ │ fix: suggest and validate :events arguments                                                    │ 
  │                                                                                                │ 
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                p: prune • w: watch • h/l: choose • enter: confirm • esc: back • Ready • 1/4 

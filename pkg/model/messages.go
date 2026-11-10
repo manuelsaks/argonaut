@@ -564,6 +564,7 @@ type ContextSwitchResultMsg struct {
 	Error        error
 	SwitchEpoch  int
 	RequestID    int
+	Reload       bool // Refresh credentials for the current context after CLI login.
 }
 
 // Events / Sync-status pane messages
@@ -622,4 +623,5 @@ type AuthValidationResultMsg struct {
 	Mode        Mode
 	Username    string // the session's user, for "you" in event displays
 	SwitchEpoch int
+	NeedsLogin  bool // Authentication failure, excluding network/RBAC errors.
 }

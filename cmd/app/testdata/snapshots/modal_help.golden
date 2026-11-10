@@ -1,6 +1,7 @@
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
  │                                                                                                │ 
  │ GENERAL      : command • / search • ? help                                                     │ 
+ │              0/c contexts • 1 apps • 2 clusters • 3 namespaces • 4 projects • 5 appsets        │ 
  │                                                                                                │ 
  │ NAVIGATION   j/k up/down •  Space  select •  Enter  drill down •  Esc  clear/up                │ 
  │               PgUp / PgDn  page up/down                                                        │ 
@@ -8,6 +9,7 @@
  │ VIEWS        :cls|:clusters • :ns|:namespaces • :proj|:projects • :apps                        │ 
  │              :appsets|:applicationsets • :theme • :logs                                        │ 
  │              c Argo CD contexts • :ctx [name]                                                  │ 
+ │              a auto-login on/off (contexts) • L SSO login                                      │ 
  │                                                                                                │ 
  │ APPS VIEW     s  sync •  t  terminate •  R  rollback •  r  resources •  d  diff •  K  open in  │ 
  │ k9s •  Ctrl+D  delete                                                                          │ 
@@ -24,7 +26,6 @@
  │ COMMANDS     :events on|off [always] • :q (to exit, google how to exit vim)                    │ 
  │                                                                                                │ 
  │ Press ?, q or Esc to close                                                                     │ 
- │                                                                                                │ 
  │                                                                                                │ 
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                                                                                 Ready • 0/0 

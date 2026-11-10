@@ -1,0 +1,63 @@
+=== RUN   TestAuditBatchSyncOmitsSelectedApplicationNamespace
+    security_audit_test.go:48: CONFIRMED: selected team-a/same-name produced a sync without appNamespace
+--- PASS: TestAuditBatchSyncOmitsSelectedApplicationNamespace (0.01s)
+=== RUN   TestAuditBatchDeleteUsesFirstDuplicateName
+2026/11/06 12:00:43 INFO Starting sequential multi-delete component=app-delete count=1 cascade=true policy=foreground
+2026/11/06 12:00:43 INFO Successfully deleted app component=app-delete app=same-name
+2026/11/06 12:00:43 INFO Sequential multi-delete completed successfully component=app-delete count=1
+    security_audit_test.go:70: CONFIRMED: a selected duplicate name targets first matching Application in argocd
+--- PASS: TestAuditBatchDeleteUsesFirstDuplicateName (0.00s)
+=== RUN   TestAuditWatchUpdateOverwritesOtherNamespace
+    security_audit_test.go:82: CONFIRMED: team-a watch event replaced the team-b list entry
+--- PASS: TestAuditWatchUpdateOverwritesOtherNamespace (0.00s)
+=== RUN   TestAuditEventRenderingRetainsTerminalControl
+    security_audit_test.go:92: CONFIRMED: event renderer retains OSC52 bytes; terminal execution was not attempted
+--- PASS: TestAuditEventRenderingRetainsTerminalControl (0.00s)
+=== RUN   TestAuditFinalTerminalRenderingControlHandling
+=== RUN   TestAuditFinalTerminalRenderingControlHandling/direct-OSC52
+    security_audit_test.go:117: Terminal output captured in memory only: payload pass-through=false
+=== RUN   TestAuditFinalTerminalRenderingControlHandling/DCS-tmux-passthrough
+    security_audit_test.go:117: Terminal output captured in memory only: payload pass-through=false
+=== RUN   TestAuditFinalTerminalRenderingControlHandling/DCS-device-control
+    security_audit_test.go:117: Terminal output captured in memory only: payload pass-through=true
+--- PASS: TestAuditFinalTerminalRenderingControlHandling (0.00s)
+    --- PASS: TestAuditFinalTerminalRenderingControlHandling/direct-OSC52 (0.00s)
+    --- PASS: TestAuditFinalTerminalRenderingControlHandling/DCS-tmux-passthrough (0.00s)
+    --- PASS: TestAuditFinalTerminalRenderingControlHandling/DCS-device-control (0.00s)
+=== RUN   TestAuditManifestDiffLeavesPlaintextTempFiles
+2026/11/06 12:00:43 ERRO Failed to run less component=pager err="exec: \"less\": executable file not found in %PATH%"
+[2J[H    security_audit_test.go:149: CONFIRMED: diff returned while plaintext current-*.yaml remained on disk
+--- PASS: TestAuditManifestDiffLeavesPlaintextTempFiles (0.20s)
+=== RUN   TestAuditBatchCommandContinuesAfterContextSwitch
+    security_audit_test.go:166: CONFIRMED: queued mutation remains bound to old server and is not cancelled by epoch change
+--- PASS: TestAuditBatchCommandContinuesAfterContextSwitch (0.00s)
+=== RUN   TestAuditResourceDeletionLosesApplicationNamespace
+2026/11/06 12:00:43 INFO Starting resource deletion component=resource-delete count=1 cascade=true policy=foreground orphan=false force=false
+2026/11/06 12:00:43 INFO Successfully deleted resource component=resource-delete kind=ConfigMap name=audit-config
+2026/11/06 12:00:43 INFO Resource deletion completed successfully component=resource-delete count=1
+    security_audit_test.go:185: CONFIRMED: resource deletion does not send the selected Application namespace
+--- PASS: TestAuditResourceDeletionLosesApplicationNamespace (0.00s)
+=== RUN   TestAuditTreeStreamHasNoContextEpochGuard
+    security_audit_test.go:205: CONFIRMED: stream handler has no epoch guard and accepted an old-context payload
+--- PASS: TestAuditTreeStreamHasNoContextEpochGuard (0.00s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.248s
+=== RUN   TestAuditRedirectDowngradeForwardsBearer
+    security_audit_test.go:37: CONFIRMED: HTTPS redirect to HTTP on the same hostname forwarded the bearer token
+--- PASS: TestAuditRedirectDowngradeForwardsBearer (0.01s)
+=== RUN   TestAuditUnrelatedHostRedirectStripsBearer
+    security_audit_test.go:69: PASS: default redirect behavior strips bearer for an unrelated hostname
+--- PASS: TestAuditUnrelatedHostRedirectStripsBearer (0.00s)
+=== RUN   TestAuditResponseBodyHasNoApplicationSizeLimit
+    security_audit_test.go:86: OBSERVED: ordinary API response accepts 4 MiB; source uses unbounded io.ReadAll
+--- PASS: TestAuditResponseBodyHasNoApplicationSizeLimit (0.06s)
+PASS
+ok  	github.com/darksworm/argonaut/pkg/api	0.084s
+=== RUN   TestAuditArchiveTraversalAndSymlinksRejected
+    security_audit_test.go:30: PASS: updater rejects path traversal, absolute paths, and symlink entries
+--- PASS: TestAuditArchiveTraversalAndSymlinksRejected (0.00s)
+=== RUN   TestAuditBinarySelectionAcceptsWrongSubstring
+    security_audit_test.go:45: OBSERVED: updater accepts a filename merely containing argonaut
+--- PASS: TestAuditBinarySelectionAcceptsWrongSubstring (0.00s)
+PASS
+ok  	github.com/darksworm/argonaut/pkg/services	0.016s

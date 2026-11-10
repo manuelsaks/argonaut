@@ -1,0 +1,38 @@
+Interaktywne konteksty Argo CD CLI - 2026-11-06
+
+Obsluga w dzialajacym TUI:
+  c albo :ctx (takze :context, :contexts, :argocd) - otwiera liste.
+  Strzalki lub j/k - wybor; Enter - przelaczenie; / - filtrowanie.
+  Esc - powrot do aplikacji. Aktywny kontekst ma znacznik *.
+  Lista jest ponownie czytana z konfiguracji Argo CD CLI przy otwarciu.
+  Serwer, token i opcje serwera sa ponownie czytane przy przelaczeniu.
+
+Nie dodawano flagi wyboru kontekstu przy uruchamianiu.
+Przelaczanie nie potrzebuje kubeconfiga ani procesow kubectl/argocd.
+Nie zapisuje current-context w konfiguracji CLI; zmienia sesje Argonauta.
+Konteksty core i port-forward nadal nie obsluguja przelaczania na zywo.
+
+Skrot c dziala w aplikacjach, drzewie, podczas ladowania oraz po bledzie
+autoryzacji/polaczenia. Nie przechwytuje litery c we wpisywanym tekscie.
+Przelaczanie zatrzymuje stare watchery i usuwa stare aplikacje/zaznaczenia.
+Epoch i numer zadania odrzucaja stare wyniki, takze bledy i same-context no-op.
+Esc anuluje wynik przelaczenia, ktory jeszcze nie dotarl do petli UI.
+Bledy przelaczania sa pokazywane w stopce, a lista pozostaje otwarta.
+Ladowanie aplikacji w tle nie przerywa nawigacji ani wyszukiwania kontekstow.
+
+Walidacja na Windows amd64, Go 1.26.10:
+  go test -mod=readonly -timeout=90s ./cmd/app -run 'TestContextPicker|TestContextSwitch|TestStale'
+  go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+Wynik PASS: 19 pakietow z testami i 4 bez testow; bez pomijania testow.
+Testy kontekstow uzywaja fikcyjnej konfiguracji, nieistniejacego kubeconfiga
+i PATH bez narzedzi CLI. Obejmuja strzalki, filtrowanie, swiezy token, opcje
+serwera, brak zapisu konfiguracji CLI, bledy oraz stare/anulowane wyniki.
+Log pelnego przebiegu: context-switch-race-tests.log.
+Zaktualizowano tylko snapshot pomocy dla nowego skrotu.
+Kompilacja Windows i Linux amd64: PASS. --version: dev.
+Kontrola whitespace: PASS; dozwolone celowe dopelnienie w snapshotach terminala.
+Nie wykonywano polaczen z rzeczywistymi serwerami Argo CD uzytkownika.
+
+Aktualny EXE: C:\tmp\argonaut\.audit\argonaut-windows.exe
+SHA256: 93C08F40C245306994849A706569A19E12D0E5DDE31B1A245DD726F6BBC83620
+Zastepuje poprzedni build z raportu WINDOWS-FIXES-2026-11-06.txt.

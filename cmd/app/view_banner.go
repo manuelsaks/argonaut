@@ -10,46 +10,7 @@ import (
 )
 
 func (m *Model) renderBanner() string {
-	// If the terminal is short, collapse the header into 1–2 lines
-	if m.state.Terminal.Rows <= 22 {
-		return m.renderCompactBanner()
-	}
-
-	isNarrow := m.state.Terminal.Cols <= 100
-	if isNarrow {
-		// Float the small badge to the right of the first context line to save vertical space.
-		ctx := m.renderContextBlock(true)
-		ctxLines := strings.Split(ctx, "\n")
-		first := ""
-		rest := ""
-		if len(ctxLines) > 0 {
-			first = ctxLines[0]
-			if len(ctxLines) > 1 {
-				rest = strings.Join(ctxLines[1:], "\n")
-			}
-		}
-		total := max(0, m.state.Terminal.Cols-2)
-		// Width-based decision to show app version in badge
-		withVersion := m.state.Terminal.Cols >= 72
-		top := joinWithRightAlignment(first, m.renderSmallBadge(false, withVersion)+" ", total)
-		if rest != "" {
-			return top + "\n" + rest
-		}
-		return top
-	}
-
-	left := m.renderContextBlock(false)
-	right := m.renderAsciiLogo()
-	leftLines := strings.Count(left, "\n") + 1
-	rightLines := strings.Count(right, "\n") + 1
-	if leftLines < rightLines {
-		left = strings.Repeat("\n", rightLines-leftLines) + left
-	}
-	if rightLines < leftLines {
-		right = strings.Repeat("\n", leftLines-rightLines) + right
-	}
-	total := max(0, m.state.Terminal.Cols-2)
-	return joinWithRightAlignment(left, right, total)
+	return m.renderK9sHeader()
 }
 
 // renderSmallBadge renders the compact badge used in narrow terminals.

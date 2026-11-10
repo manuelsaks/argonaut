@@ -1,10 +1,14 @@
- Context: argo.example.com                                       Argonaut dev   
+ Context: argo.example.com                                         Argonaut dev 
+ View: Resources | Namespace: all | Project: all | Login: manual                
+ <enter/e> events  <h/l> fold/unfold  <space> select  <s> sync  <d> diff        
+ <a> actions  <ctrl-d> delete  <R> rollback  <t> terminate  <K> k9s             
+ <u/i> scroll events  <esc> back                                                
+ <0/c> ctx  <1> apps  <:> views  <?> help                                       
  ╭────────────────────────────────────────────────────────────────────────────╮ 
  │ Application [demo-app] (Degraded, Synced)                                  │ 
  │ ├── Deployment [demo/web] (Degraded)                                       │ 
  │ │   └── Pod [demo/web-6f7d9b-x4k2m] (Degraded)                             │ 
  │ └── Service [demo/web] (Healthy)                                           │ 
- │                                                                            │ 
  ╰────────────────────────────────────────────────────────────────────────────╯ 
  ╭─ Pod web-6f7d9b-x4k2m ───────────────────────────────── ⟳ updated 12s ago ─╮ 
  │                                                                            │ 
@@ -16,8 +20,5 @@
  │   pod spec invalid                                                         │ 
  │                                                                            │ 
  │ EVENTS                                                                     │ 
- │ BackOff                                                      x412 · 2m ago │ 
- │   Back-off restarting failed container web in pod web-6f7d9b-x4k2m_demo(a1 │ 
- │   b2c3d)                                                                   │ 
  ╰───────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <tree>                                        u/i: scroll events • Ready • 1/4 

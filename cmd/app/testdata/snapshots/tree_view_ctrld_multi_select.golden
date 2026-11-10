@@ -1,12 +1,12 @@
- Context: argo.example.com                                                           Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Resources | Namespace: all | Project: all | Login: manual                                    
+ <y> delete  <c> cascade  <p> policy  <f> force  <esc> cancel                                       
  ╭────────────────────────────────────────────────────────────────────────────────────────────────╮ 
  │ Application [multi-app] (Healthy, Synced)                                                      │ 
- │ ├── Deployment [staging/backend] (Healthy)                                                     │ 
- │ ├── Service [staging/backend-svc] (Healthy)                                                    │ 
  │ ├── Deployment [stagi                                                                          │ 
- │ └── Service [staging/ ╭────────────────────────────────────────────────╮                       │ 
- │                       │                                                │                       │ 
- │                       │             Delete 3 resource(s)?              │                       │ 
+ │ ├── Service [staging/ ╭────────────────────────────────────────────────╮                       │ 
+ │ ├── Deployment [stagi │                                                │                       │ 
+ │ └── Service [staging/ │             Delete 3 resource(s)?              │                       │ 
  │                       │                                                │                       │ 
  │                       │                   Delete (y)                   │                       │ 
  │                       │                                                │                       │ 

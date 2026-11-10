@@ -1,4 +1,6 @@
-  argo.example.com                                                                   Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps                                
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ Loading deployment history…                                                                    │ 
  │                                                                                                │ 
@@ -10,12 +12,12 @@
  │ Nothing to show.                                                                               │ 
  │                                                                                                │ 
  │                                                                                                │ 
- │                                                                                                │ 
- │                                                                                                │ 
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
 
-  argo.example.com                                                                   Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps                                
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ connection refused                                                                             │ 
  │                                                                                                │ 
@@ -27,12 +29,12 @@
  │ Nothing to show.                                                                               │ 
  │                                                                                                │ 
  │                                                                                                │ 
- │                                                                                                │ 
- │                                                                                                │ 
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 2/4 
 
-  argo.example.com                                                                   Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps                                
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ No deployment history.                                                                         │ 
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
@@ -44,12 +46,12 @@
  │                                                                                                │ 
  │                                                                                                │ 
  │                                                                                                │ 
- │                                                                                                │ 
- │                                                                                                │ 
  ╰────────────────────────────────────────────────────────────────────────────────────────────────╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 0/0 
 
-  argo.example.com                                                                   Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps                                
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
  │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
@@ -61,12 +63,12 @@
  │ DEPLOYMENT                                                                                     │ 
  │ Deployed       3d ago · 2026-08-05 09:02                                                       │ 
  │ Initiated by   automated sync policy                                                           │ 
- │ Active for     53h0m                                                                           │ 
- │                                                                                                │ 
  ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 3/4 
 
-  argo.example.com                                                                   Argonaut dev   
+ Context: argo.example.com                                                             Argonaut dev 
+ View: Deployment history | Namespace: all | Project: all | Login: manual                           
+ <enter> select revision  <d> diff  <u/i> scroll details  <esc> apps                                
  ╭─ Deployment history demo-app ──────────────────────────────────────────────────────────────────╮ 
  │ #30  a1b2c3d4 fix: suggest and validate :events arguments  1h ago   by jane.doe   current      │ 
  │ #29  11223344 fix: suggest and validate :events arguments  21h ago  by automated               │ 
@@ -78,7 +80,5 @@
  │ DEPLOYMENT                                                                                     │ 
  │ Deployed       3d ago · 2026-08-04 16:02                                                       │ 
  │ Initiated by   bob.smith                                                                       │ 
- │ Active for     17h0m                                                                           │ 
- │                                                                                                │ 
  ╰───────────────────────────────────────────────────────────────────────────────── ▼ more below ─╯ 
  <apps>                            enter: select • d: diff • u/i: scroll • esc: close • Ready • 4/4 

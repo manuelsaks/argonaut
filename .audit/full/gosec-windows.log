@@ -1,0 +1,979 @@
+go: downloading github.com/securego/gosec/v2 v2.30.0
+go: downloading github.com/securego/gosec v0.0.0-20200401082031-e946c8c39989
+go: downloading github.com/anthropics/anthropic-sdk-go v1.82.0
+go: downloading github.com/openai/openai-go/v3 v3.82.0
+go: downloading github.com/ccojocar/zxcvbn-go v1.0.4
+go: downloading google.golang.org/genai v1.75.0
+go: downloading go.opentelemetry.io/otel/trace v1.47.0
+go: downloading github.com/invopop/jsonschema v0.14.0
+go: downloading go.opentelemetry.io/otel v1.47.0
+go: downloading github.com/pb33f/ordered-map/v2 v2.3.2
+go: downloading github.com/standard-webhooks/standard-webhooks/libraries v0.0.1
+go: downloading github.com/gookit/color v1.6.3
+go: downloading go.yaml.in/yaml/v3 v3.0.5
+go: downloading cloud.google.com/go/auth v0.24.1
+go: downloading cloud.google.com/go v0.123.0
+go: downloading github.com/google/go-cmp v0.7.0
+go: downloading github.com/gorilla/websocket v1.5.3
+go: downloading github.com/bahlo/generic-list-go v0.2.0
+go: downloading github.com/buger/jsonparser v1.6.1
+go: downloading github.com/pb33f/go-yaml v0.1.1
+go: downloading github.com/coder/websocket v1.8.15
+go: downloading github.com/googleapis/gax-go/v2 v2.26.2
+go: downloading go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0
+go: downloading golang.org/x/net v0.61.0
+go: downloading google.golang.org/api v0.304.0
+go: downloading cloud.google.com/go/compute/metadata v0.10.0
+go: downloading github.com/go-logr/logr v1.4.4
+go: downloading go.opentelemetry.io/otel/log v1.47.0
+go: downloading go.opentelemetry.io/otel/metric v1.47.0
+go: downloading github.com/google/s2a-go v0.1.11
+go: downloading google.golang.org/grpc v1.84.0
+go: downloading github.com/googleapis/enterprise-certificate-proxy v0.3.23
+go: downloading google.golang.org/protobuf v1.36.12
+go: downloading github.com/felixge/httpsnoop v1.1.0
+go: downloading go.opentelemetry.io/auto/sdk v1.2.1
+go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20261012220534-4341edf3f941
+go: downloading golang.org/x/text v0.43.0
+go: downloading golang.org/x/crypto v0.58.0
+[gosec] 2026/11/06 11:48:32 Including rules: default
+[gosec] 2026/11/06 11:48:32 Excluding rules: default
+[gosec] 2026/11/06 11:48:32 Including analyzers: default
+[gosec] 2026/11/06 11:48:32 Excluding analyzers: default
+[gosec] 2026/11/06 11:48:32 Import directory: C:\tmp\argonaut\cmd\app
+[gosec] 2026/11/06 11:48:32 Skipping: . Path doesn't exist.
+[gosec] 2026/11/06 11:48:32 Import directory: C:\tmp\argonaut\pkg\config
+[gosec] 2026/11/06 11:48:41 Checking package: config
+[gosec] 2026/11/06 11:48:41 Checking file: C:\tmp\argonaut\pkg\config\argonaut_config.go
+[gosec] 2026/11/06 11:48:41 Checking file: C:\tmp\argonaut\pkg\config\cli_config.go
+[gosec] 2026/11/06 11:48:41 Import directory: C:\tmp\argonaut\pkg\kubeconfig
+[gosec] 2026/11/06 11:48:43 Checking package: kubeconfig
+[gosec] 2026/11/06 11:48:43 Checking file: C:\tmp\argonaut\pkg\kubeconfig\kubeconfig.go
+[gosec] 2026/11/06 11:48:43 Import directory: C:\tmp\argonaut\pkg\model
+[gosec] 2026/11/06 11:48:44 Checking package: model
+[gosec] 2026/11/06 11:48:44 Checking file: C:\tmp\argonaut\pkg\model\events.go
+[gosec] 2026/11/06 11:48:44 Checking file: C:\tmp\argonaut\pkg\model\index.go
+[gosec] 2026/11/06 11:48:44 Checking file: C:\tmp\argonaut\pkg\model\messages.go
+[gosec] 2026/11/06 11:48:44 Checking file: C:\tmp\argonaut\pkg\model\sort.go
+[gosec] 2026/11/06 11:48:44 Checking file: C:\tmp\argonaut\pkg\model\state.go
+[gosec] 2026/11/06 11:48:44 Checking file: C:\tmp\argonaut\pkg\model\types.go
+[gosec] 2026/11/06 11:48:44 Import directory: C:\tmp\argonaut\pkg\retry
+[gosec] 2026/11/06 11:48:45 Checking package: retry
+[gosec] 2026/11/06 11:48:45 Checking file: C:\tmp\argonaut\pkg\retry\retry.go
+[gosec] 2026/11/06 11:48:45 Import directory: C:\tmp\argonaut\pkg\theme
+[gosec] 2026/11/06 11:48:46 Checking package: main
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\api_integration.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\changelog.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\context_switch.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\default_view_migration.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\events_pane.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\input_components.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\input_handlers.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\input_mouse.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\k9s_sandbox_other.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\k9s_types.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\main.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\model.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\model_init.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\model_pager.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\model_tables.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\model_tree_stream.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\model_watchers.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\nav_router.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\resource_types.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\rollback_pane.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\theme_apply.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\theme_options.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\upgrade.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_banner.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_layout.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_lists.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_modals.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_pane.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_rollback.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_selection.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_status.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\cmd\app\view_utils.go
+[gosec] 2026/11/06 11:48:46 Import directory: C:\tmp\argonaut\pkg\tui\listnav
+[gosec] 2026/11/06 11:48:46 Checking package: theme
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\pkg\theme\presets.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\pkg\theme\sha_color.go
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\pkg\theme\theme.go
+[gosec] 2026/11/06 11:48:46 Import directory: C:\tmp\argonaut\pkg\tui\selection
+[gosec] 2026/11/06 11:48:46 Checking package: listnav
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\pkg\tui\listnav\navigator.go
+[gosec] 2026/11/06 11:48:46 Import directory: C:\tmp\argonaut\pkg\errors
+[gosec] 2026/11/06 11:48:46 Checking package: selection
+[gosec] 2026/11/06 11:48:46 Checking file: C:\tmp\argonaut\pkg\tui\selection\selection.go
+[gosec] 2026/11/06 11:48:46 Import directory: C:\tmp\argonaut\pkg\portforward
+[gosec] 2026/11/06 11:48:47 Checking package: errors
+[gosec] 2026/11/06 11:48:47 Checking file: C:\tmp\argonaut\pkg\errors\types.go
+[gosec] 2026/11/06 11:48:47 Import directory: C:\tmp\argonaut\pkg\tui\treeview
+[gosec] 2026/11/06 11:48:47 Checking package: portforward
+[gosec] 2026/11/06 11:48:47 Checking file: C:\tmp\argonaut\pkg\portforward\kubectl.go
+[gosec] 2026/11/06 11:48:47 Import directory: C:\tmp\argonaut\pkg\autocomplete
+[gosec] 2026/11/06 11:48:48 Checking package: autocomplete
+[gosec] 2026/11/06 11:48:48 Checking file: C:\tmp\argonaut\pkg\autocomplete\autocomplete.go
+[gosec] 2026/11/06 11:48:48 Import directory: C:\tmp\argonaut\pkg\context
+[gosec] 2026/11/06 11:48:48 Checking package: treeview
+[gosec] 2026/11/06 11:48:48 Checking file: C:\tmp\argonaut\pkg\tui\treeview\treeview.go
+[gosec] 2026/11/06 11:48:48 Import directory: C:\tmp\argonaut\pkg\humantime
+[gosec] 2026/11/06 11:48:48 Checking package: humantime
+[gosec] 2026/11/06 11:48:48 Checking file: C:\tmp\argonaut\pkg\humantime\humantime.go
+[gosec] 2026/11/06 11:48:48 Checking package: context
+[gosec] 2026/11/06 11:48:48 Checking file: C:\tmp\argonaut\pkg\context\timeouts.go
+[gosec] 2026/11/06 11:48:48 Import directory: C:\tmp\argonaut\pkg\services\appdelete
+[gosec] 2026/11/06 11:48:48 Import directory: C:\tmp\argonaut\pkg\tui\clipboard
+[gosec] 2026/11/06 11:48:49 Checking package: clipboard
+[gosec] 2026/11/06 11:48:49 Checking file: C:\tmp\argonaut\pkg\tui\clipboard\clipboard.go
+[gosec] 2026/11/06 11:48:49 Import directory: C:\tmp\argonaut\pkg\tui
+[gosec] 2026/11/06 11:48:49 Checking package: appdelete
+[gosec] 2026/11/06 11:48:49 Checking file: C:\tmp\argonaut\pkg\services\appdelete\service.go
+[gosec] 2026/11/06 11:48:49 Checking file: C:\tmp\argonaut\pkg\services\appdelete\types.go
+[gosec] 2026/11/06 11:48:49 Import directory: C:\tmp\argonaut\pkg\api
+[gosec] 2026/11/06 11:48:49 Checking package: tui
+[gosec] 2026/11/06 11:48:49 Checking file: C:\tmp\argonaut\pkg\tui\errors.go
+[gosec] 2026/11/06 11:48:49 Import directory: C:\tmp\argonaut\pkg\neat
+[gosec] 2026/11/06 11:48:50 Checking package: neat
+[gosec] 2026/11/06 11:48:50 Checking file: C:\tmp\argonaut\pkg\neat\neat.go
+[gosec] 2026/11/06 11:48:50 Import directory: C:\tmp\argonaut\pkg\services
+[gosec] 2026/11/06 11:48:50 Checking package: api
+[gosec] 2026/11/06 11:48:50 Checking file: C:\tmp\argonaut\pkg\api\applications.go
+[gosec] 2026/11/06 11:48:50 Checking file: C:\tmp\argonaut\pkg\api\client.go
+[gosec] 2026/11/06 11:48:50 Checking file: C:\tmp\argonaut\pkg\api\events.go
+[gosec] 2026/11/06 11:48:50 Checking file: C:\tmp\argonaut\pkg\api\resource_action_types.go
+[gosec] 2026/11/06 11:48:50 Checking file: C:\tmp\argonaut\pkg\api\sse_reader.go
+[gosec] 2026/11/06 11:48:50 Import directory: C:\tmp\argonaut\pkg\sort
+[gosec] 2026/11/06 11:48:51 Checking package: services
+[gosec] 2026/11/06 11:48:51 Checking file: C:\tmp\argonaut\pkg\services\argo.go
+[gosec] 2026/11/06 11:48:51 Checking file: C:\tmp\argonaut\pkg\services\navigation.go
+[gosec] 2026/11/06 11:48:51 Checking file: C:\tmp\argonaut\pkg\services\status.go
+[gosec] 2026/11/06 11:48:51 Checking file: C:\tmp\argonaut\pkg\services\update.go
+[gosec] 2026/11/06 11:48:51 Checking package: sort
+[gosec] 2026/11/06 11:48:51 Checking file: C:\tmp\argonaut\pkg\sort\sort.go
+[gosec] 2026/11/06 11:48:51 Import directory: C:\tmp\argonaut\pkg\trust
+[gosec] 2026/11/06 11:48:51 Checking package: trust
+[gosec] 2026/11/06 11:48:51 Checking file: C:\tmp\argonaut\pkg\trust\trust.go
+{
+	"Golang errors": {},
+	"Issues": [
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "190",
+				"url": "https://cwe.mitre.org/data/definitions/190.html"
+			},
+			"rule_id": "G115",
+			"details": "integer overflow conversion rune -\u003e byte",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\input_handlers.go",
+			"code": "1729: \t\t}\n1730: \t\tif strings.ToLower(a)[0] == byte(c) {\n1731: \t\t\treturn true\n",
+			"line": "1730",
+			"column": "35",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "190",
+				"url": "https://cwe.mitre.org/data/definitions/190.html"
+			},
+			"rule_id": "G115",
+			"details": "integer overflow conversion int64 -\u003e uint32",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "553: \t\t\t// Directory\n554: \t\t\tif err := os.MkdirAll(destPath, os.FileMode(header.Mode)); err != nil {\n555: \t\t\t\treturn fmt.Errorf(\"failed to create directory %s: %w\", destPath, err)\n",
+			"line": "554",
+			"column": "47",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "190",
+				"url": "https://cwe.mitre.org/data/definitions/190.html"
+			},
+			"rule_id": "G115",
+			"details": "integer overflow conversion int64 -\u003e uint32",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "541: \t\t\t// Regular file\n542: \t\t\tfile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))\n543: \t\t\tif err != nil {\n",
+			"line": "542",
+			"column": "86",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "190",
+				"url": "https://cwe.mitre.org/data/definitions/190.html"
+			},
+			"rule_id": "G115",
+			"details": "integer overflow conversion int -\u003e uint32",
+			"file": "C:\\tmp\\argonaut\\pkg\\theme\\sha_color.go",
+			"code": "20: \t_, _ = h.Write([]byte(key))\n21: \treturn buckets[h.Sum32()%uint32(len(buckets))]\n22: }\n",
+			"line": "21",
+			"column": "33",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "338",
+				"url": "https://cwe.mitre.org/data/definitions/338.html"
+			},
+			"rule_id": "G404",
+			"details": "Use of weak random number generator (math/rand or math/rand/v2 instead of crypto/rand)",
+			"file": "C:\\tmp\\argonaut\\pkg\\retry\\retry.go",
+			"code": "156: \tif config.Jitter {\n157: \t\tjitter := time.Duration(rand.Float64() * float64(delay) * 0.1) // 10% jitter\n158: \t\tdelay = delay + jitter\n",
+			"line": "157",
+			"column": "27",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "295",
+				"url": "https://cwe.mitre.org/data/definitions/295.html"
+			},
+			"rule_id": "G402",
+			"details": "TLS InsecureSkipVerify set to true.",
+			"file": "C:\\tmp\\argonaut\\pkg\\api\\client.go",
+			"code": "116: \t\tstreamTransport.TLSClientConfig = \u0026tls.Config{\n117: \t\t\tInsecureSkipVerify: true,\n118: \t\t}\n",
+			"line": "117",
+			"column": "24",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "295",
+				"url": "https://cwe.mitre.org/data/definitions/295.html"
+			},
+			"rule_id": "G402",
+			"details": "TLS InsecureSkipVerify set to true.",
+			"file": "C:\\tmp\\argonaut\\pkg\\api\\client.go",
+			"code": "88: \t\t\ttransport.TLSClientConfig = \u0026tls.Config{\n89: \t\t\t\tInsecureSkipVerify: true,\n90: \t\t\t}\n",
+			"line": "89",
+			"column": "25",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "295",
+				"url": "https://cwe.mitre.org/data/definitions/295.html"
+			},
+			"rule_id": "G402",
+			"details": "TLS InsecureSkipVerify set to true.",
+			"file": "C:\\tmp\\argonaut\\pkg\\api\\client.go",
+			"code": "65: \t\t\t\t}\n66: \t\t\t\tclonedTransport.TLSClientConfig.InsecureSkipVerify = true\n67: \t\t\t\thttpClient.Transport = clonedTransport\n",
+			"line": "66",
+			"column": "58",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G703",
+			"details": "Path traversal via taint analysis: path/filepath.WalkDir",
+			"file": "C:\\tmp\\argonaut\\pkg\\trust\\trust.go",
+			"code": "83: \n84: \t\t\terr := filepath.WalkDir(dir, func(p string, e fs.DirEntry, werr error) error {\n85: \t\t\t\tif werr != nil {\n",
+			"line": "84",
+			"column": "27",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G703",
+			"details": "Path traversal via taint analysis: os.Stat",
+			"file": "C:\\tmp\\argonaut\\pkg\\trust\\trust.go",
+			"code": "74: \t\t\t// Check if directory exists\n75: \t\t\tif _, err := os.Stat(dir); os.IsNotExist(err) {\n76: \t\t\t\tif isFromFlag \u0026\u0026 len(dirs) == 1 {\n",
+			"line": "75",
+			"column": "24",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G703",
+			"details": "Path traversal via taint analysis: os.ReadFile",
+			"file": "C:\\tmp\\argonaut\\pkg\\trust\\trust.go",
+			"code": "51: \tif f := first(opts.CACertFile, os.Getenv(\"SSL_CERT_FILE\")); f != \"\" {\n52: \t\tb, err := os.ReadFile(f)\n53: \t\tif err != nil {\n",
+			"line": "52",
+			"column": "24",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G703",
+			"details": "Path traversal via taint analysis: os.ReadFile",
+			"file": "C:\\tmp\\argonaut\\pkg\\kubeconfig\\kubeconfig.go",
+			"code": "40: \n41: \tdata, err := os.ReadFile(path)\n42: \tif err != nil {\n",
+			"line": "41",
+			"column": "26",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G703",
+			"details": "Path traversal via taint analysis: os.ReadFile",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\view.go",
+			"code": "932: \t}\n933: \tcontent, err := os.ReadFile(logFile)\n934: \tif err != nil {\n",
+			"line": "933",
+			"column": "29",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G703",
+			"details": "Path traversal via taint analysis: os.ReadFile",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\input_handlers.go",
+			"code": "1763: \t\t}\n1764: \t\tdata, err := os.ReadFile(logFile)\n1765: \t\tif err != nil {\n",
+			"line": "1764",
+			"column": "27",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "400",
+				"url": "https://cwe.mitre.org/data/definitions/400.html"
+			},
+			"rule_id": "G118",
+			"details": "Goroutine uses context.Background/TODO while request-scoped context is available",
+			"file": "C:\\tmp\\argonaut\\pkg\\portforward\\kubectl.go",
+			"code": "137: \t// Start monitoring goroutine\n138: \tgo m.monitor()\n139: \n",
+			"line": "138",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "HIGH",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "367",
+				"url": "https://cwe.mitre.org/data/definitions/367.html"
+			},
+			"rule_id": "G122",
+			"details": "Filesystem operation in filepath.Walk/WalkDir callback uses race-prone path; consider root-scoped APIs (e.g. os.Root) to prevent symlink TOCTOU traversal",
+			"file": "C:\\tmp\\argonaut\\pkg\\trust\\trust.go",
+			"code": "93: \t\t\t\t}\n94: \t\t\t\tb, err := os.ReadFile(p)\n95: \t\t\t\tif err != nil {\n",
+			"line": "94",
+			"column": "26",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\model_pager.go",
+			"code": "102: \t}\n103: \tc := exec.Command(\"sh\", \"-lc\", cmdStr)\n104: \tif cols \u003e 0 {\n",
+			"line": "103",
+			"column": "7",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\model_pager.go",
+			"code": "70: \tcmdStr = strings.ReplaceAll(cmdStr, \"{right}\", shellEscape(rightFile))\n71: \tc := exec.Command(\"sh\", \"-lc\", cmdStr)\n72: \tc.Stdin = os.Stdin\n",
+			"line": "71",
+			"column": "7",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\k9s_sandbox_other.go",
+			"code": "69: \n70: \t\tc := exec.Command(k9sCmd, args...)\n71: \t\tc.Stdin = os.Stdin\n",
+			"line": "70",
+			"column": "8",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\api_integration.go",
+			"code": "1310: \n1311: \t\tcmd := exec.Command(\"git\", \"--no-pager\", \"diff\", \"--no-index\", \"--no-color\", \"--\", leftFile, rightFile)\n1312: \t\tout, err := cmd.CombinedOutput()\n",
+			"line": "1311",
+			"column": "10",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\api_integration.go",
+			"code": "626: \n627: \t\tcmd := exec.Command(\"git\", \"--no-pager\", \"diff\", \"--no-index\", \"--no-color\", \"--\", leftFile, rightFile)\n628: \t\tout, err := cmd.CombinedOutput()\n",
+			"line": "627",
+			"column": "10",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\api_integration.go",
+			"code": "550: \t\t// Build raw unified diff via git (no color so delta can format it)\n551: \t\tcmd := exec.Command(\"git\", \"--no-pager\", \"diff\", \"--no-index\", \"--no-color\", \"--\", leftFile, rightFile)\n552: \t\tout, err := cmd.CombinedOutput()\n",
+			"line": "551",
+			"column": "10",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with a potential tainted input or cmd arguments",
+			"file": "C:\\tmp\\argonaut\\pkg\\tui\\clipboard\\clipboard.go",
+			"code": "110: \t\t}\n111: \t\tcmd := exec.Command(parts[0], parts[1:]...)\n112: \t\tcmd.Stdin = strings.NewReader(text)\n",
+			"line": "111",
+			"column": "10",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with a potential tainted input or cmd arguments",
+			"file": "C:\\tmp\\argonaut\\pkg\\portforward\\kubectl.go",
+			"code": "232: \t// via Stop() rather than tying it to a context that might be cancelled.\n233: \tcmd := exec.Command(\"kubectl\", \"port-forward\",\n234: \t\t\"-n\", m.namespace,\n235: \t\tpodName,\n236: \t\tportSpec,\n237: \t)\n238: \n",
+			"line": "233-237",
+			"column": "9",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "78",
+				"url": "https://cwe.mitre.org/data/definitions/78.html"
+			},
+			"rule_id": "G204",
+			"details": "Subprocess launched with a potential tainted input or cmd arguments",
+			"file": "C:\\tmp\\argonaut\\pkg\\portforward\\kubectl.go",
+			"code": "198: \n199: \tcmd := exec.CommandContext(ctx, \"kubectl\", \"get\", \"pods\",\n200: \t\t\"-n\", m.namespace,\n201: \t\t\"-l\", labelSelector,\n202: \t\t\"--field-selector=status.phase=Running\",\n203: \t\t\"-o\", \"jsonpath={.items[?(@.status.containerStatuses[0].ready==true)].metadata.name}\",\n204: \t)\n205: \n",
+			"line": "199-204",
+			"column": "9",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\trust\\trust.go",
+			"code": "93: \t\t\t\t}\n94: \t\t\t\tb, err := os.ReadFile(p)\n95: \t\t\t\tif err != nil {\n",
+			"line": "94",
+			"column": "15",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\trust\\trust.go",
+			"code": "51: \tif f := first(opts.CACertFile, os.Getenv(\"SSL_CERT_FILE\")); f != \"\" {\n52: \t\tb, err := os.ReadFile(f)\n53: \t\tif err != nil {\n",
+			"line": "52",
+			"column": "13",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "541: \t\t\t// Regular file\n542: \t\t\tfile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.FileMode(header.Mode))\n543: \t\t\tif err != nil {\n",
+			"line": "542",
+			"column": "17",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "412: \n413: \tdestFile, err := os.Create(dst)\n414: \tif err != nil {\n",
+			"line": "413",
+			"column": "19",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "406: func (u *UpdateServiceImpl) copyFile(src, dst string) error {\n407: \tsourceFile, err := os.Open(src)\n408: \tif err != nil {\n",
+			"line": "407",
+			"column": "21",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\kubeconfig\\kubeconfig.go",
+			"code": "40: \n41: \tdata, err := os.ReadFile(path)\n42: \tif err != nil {\n",
+			"line": "41",
+			"column": "15",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\config\\cli_config.go",
+			"code": "84: func ReadCLIConfigFromPath(configPath string) (*ArgoCLIConfig, error) {\n85: \tdata, err := os.ReadFile(configPath)\n86: \tif err != nil {\n",
+			"line": "85",
+			"column": "15",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\pkg\\config\\argonaut_config.go",
+			"code": "206: \t// Read and parse config file\n207: \tdata, err := os.ReadFile(configPath)\n208: \tif err != nil {\n",
+			"line": "207",
+			"column": "15",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\view.go",
+			"code": "932: \t}\n933: \tcontent, err := os.ReadFile(logFile)\n934: \tif err != nil {\n",
+			"line": "933",
+			"column": "18",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\input_handlers.go",
+			"code": "1763: \t\t}\n1764: \t\tdata, err := os.ReadFile(logFile)\n1765: \t\tif err != nil {\n",
+			"line": "1764",
+			"column": "16",
+			"nosec": false,
+			"suppressions": null,
+			"autofix": "Consider using os.Root to scope file access under a fixed root (Go \u003e=1.24). Prefer root.Open/root.Stat over os.Open/os.Stat to prevent directory traversal."
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "MEDIUM",
+			"cwe": {
+				"id": "409",
+				"url": "https://cwe.mitre.org/data/definitions/409.html"
+			},
+			"rule_id": "G110",
+			"details": "Potential DoS vulnerability via decompression bomb",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "546: \n547: \t\t\t_, err = io.Copy(file, tarReader)\n548: \t\t\tfile.Close()\n",
+			"line": "547",
+			"column": "13",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "276",
+				"url": "https://cwe.mitre.org/data/definitions/276.html"
+			},
+			"rule_id": "G302",
+			"details": "Expect file permissions to be 0600 or less",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "501: \t// Make temp file executable\n502: \tif err := os.Chmod(tempFile.Name(), 0755); err != nil {\n503: \t\treturn fmt.Errorf(\"failed to make temp file executable: %w\", err)\n",
+			"line": "502",
+			"column": "12",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "276",
+				"url": "https://cwe.mitre.org/data/definitions/276.html"
+			},
+			"rule_id": "G301",
+			"details": "Expect directory permissions to be 0750 or less",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "534: \t\t// Ensure the destination directory exists\n535: \t\tif err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {\n536: \t\t\treturn fmt.Errorf(\"failed to create directory: %w\", err)\n",
+			"line": "535",
+			"column": "13",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "276",
+				"url": "https://cwe.mitre.org/data/definitions/276.html"
+			},
+			"rule_id": "G301",
+			"details": "Expect directory permissions to be 0750 or less",
+			"file": "C:\\tmp\\argonaut\\pkg\\config\\argonaut_config.go",
+			"code": "171: \tif _, err := os.Stat(configDir); os.IsNotExist(err) {\n172: \t\treturn os.MkdirAll(configDir, 0755)\n173: \t}\n",
+			"line": "172",
+			"column": "10",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "276",
+				"url": "https://cwe.mitre.org/data/definitions/276.html"
+			},
+			"rule_id": "G306",
+			"details": "Expect WriteFile permissions to be 0600 or less",
+			"file": "C:\\tmp\\argonaut\\pkg\\config\\argonaut_config.go",
+			"code": "270: \t// Write to file\n271: \tif err := os.WriteFile(configPath, data, 0644); err != nil {\n272: \t\treturn fmt.Errorf(\"failed to write config to %s: %w\", configPath, err)\n",
+			"line": "271",
+			"column": "12",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "796: \tdefer os.Remove(tempFile.Name())\n797: \ttempFile.Close()\n798: \treturn nil\n",
+			"line": "797",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "761: \t// Remove backup on success\n762: \tos.Remove(backupPath)\n763: \n",
+			"line": "762",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "752: \t\t// Restore backup on failure\n753: \t\tu.moveFile(backupPath, execPath)\n754: \n",
+			"line": "753",
+			"column": "3",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "547: \t\t\t_, err = io.Copy(file, tarReader)\n548: \t\t\tfile.Close()\n549: \t\t\tif err != nil {\n",
+			"line": "548",
+			"column": "4",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "498: \t}\n499: \ttempFile.Close()\n500: \n",
+			"line": "499",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\services\\update.go",
+			"code": "495: \tif err != nil {\n496: \t\ttempFile.Close()\n497: \t\treturn fmt.Errorf(\"failed to write update to temp file: %w\", err)\n",
+			"line": "496",
+			"column": "3",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\pkg\\api\\sse_reader.go",
+			"code": "197: \t\t\tif r.bufferSize \u003c r.config.MaxBuffer {\n198: \t\t\t\tr.growBuffer()\n199: \t\t\t}\n",
+			"line": "198",
+			"column": "5",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\api_integration.go",
+			"code": "667: \tif err := f.Close(); err != nil {\n668: \t\tos.Remove(f.Name())\n669: \t\treturn \"\", err\n",
+			"line": "668",
+			"column": "3",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\api_integration.go",
+			"code": "663: \t\tf.Close()\n664: \t\tos.Remove(f.Name())\n665: \t\treturn \"\", err\n",
+			"line": "664",
+			"column": "3",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "C:\\tmp\\argonaut\\cmd\\app\\api_integration.go",
+			"code": "662: \tif _, err := f.WriteString(content); err != nil {\n663: \t\tf.Close()\n664: \t\tos.Remove(f.Name())\n",
+			"line": "663",
+			"column": "3",
+			"nosec": false,
+			"suppressions": null
+		}
+	],
+	"Stats": {
+		"files": 70,
+		"lines": 27081,
+		"nosec": 0,
+		"found": 50
+	},
+	"GosecVersion": "dev"
+}

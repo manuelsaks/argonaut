@@ -1,0 +1,85 @@
+Poprawki pięciu ustaleń audytu Argonauta — 2026-11-06
+
+Baza: 5a1eca5b4b4c1a1bed5843337402dc95b1eabdfc.
+Poprawki są w lokalnym drzewie roboczym C:\tmp\argonaut.
+
+1. Tożsamość Application
+
+Wspólny model.AppKey używa namespace/nazwa (metadata.namespace, nie namespace
+zasobów docelowych). Zaznaczanie, indeks aplikacji, aktualizacje i usuwanie
+przez watch, drzewa wielu aplikacji oraz cele zasobów zachowują tę tożsamość.
+Batch sync/delete/refresh przechwytują pełne cele przed rozpoczęciem pracy.
+Resource sync grupuje według pełnej tożsamości; resource delete wysyła
+appNamespace. Niejednoznaczna stara selekcja po samej nazwie kończy się błędem
+przed jakimkolwiek żądaniem. Komendy i autocomplete obsługują namespace/nazwa.
+Poprawiono też :delete, które używało namespace wdrożenia zamiast Application.
+Integracja K9s rozkodowuje pełną tożsamość korzenia drzewa.
+
+Główne pliki: pkg/model/app_identity.go, pkg/model/index.go,
+cmd/app/app_identity.go, cmd/app/api_integration.go, cmd/app/input_handlers.go,
+cmd/app/input_components.go, cmd/app/model.go, pkg/services/argo.go,
+pkg/tui/treeview/treeview.go, pkg/autocomplete/autocomplete.go.
+
+2. Developerski git daemon
+
+Domyślny bind: 127.0.0.1. --strict-paths ogranicza eksport do checkoutu
+Argonauta i dwóch nazwanych repozytoriów fixtures/history. --export-all
+obowiązuje tylko w tej ścisłej liście, nie we wszystkich katalogach obok.
+Usunięto fuser zabijający dowolny proces zajmujący port. PID zapisuje daemon.
+GIT_DAEMON_LISTEN pozwala jawnie wskazać interfejs osiągalny z k3d; Git nadal
+jest protokołem bez uwierzytelnienia, więc dostęp należy ograniczyć do klastra.
+
+Test scripts/git_daemon_test.go pobiera komendę z make -n i uruchamia jej
+rzeczywiste argumenty na syntetycznych repozytoriach, wyłącznie na localhost.
+Trzy dozwolone repozytoria: dostęp działa. Prywatny sąsiad i zagnieżdżone repo:
+odmowa. Nie uruchamiano całego środowiska k3d ani uniksowej otoczki setsid.
+
+3. Przekierowania z tokenem
+
+Zwykły klient i klient SSE stosują ten sam ogranicznik: przekierowanie musi
+zachować schemat, hostname i efektywny port. HTTPS -> HTTP, inny port, subdomena
+i inny host są blokowane przed wysłaniem żądania do celu. Zachowano callback
+niestandardowego klienta i limit 10 przekierowań. Przekierowanie ścieżki w tym
+samym origin nadal działa. Nie dodano globalnych timeoutów ani ponawiania mutacji.
+
+4. Pliki manifestów diffu
+
+Wszystkie trzy ścieżki (aplikacja, zasób, rollback) używają prywatnego katalogu
+tymczasowego i defer cleanup. Na Unix: katalog 0700, pliki 0600. Obsłużono też
+błędy zapisu i startu git. Pliki istnieją do końca synchronicznego viewera.
+Viewer musi czekać na zamknięcie widoku, np. code --wait --diff; README to opisuje.
+Awaryjne zabicie procesu/systemu omija defer i nadal może pozostawić temp;
+poprawka zapewnia sprzątanie przy zwykłym zakończeniu i obsługiwanych błędach.
+
+5. Spóźnione zdarzenia drzewa
+
+Load, stream, błąd i uruchomienie watchera niosą epokę kontekstu oraz numer
+sesji drzewa przechwycone przy tworzeniu polecenia. Odbiorca sprawdza oba
+numery i aktywny widok przed zmianą stanu. Cleanup unieważnia sesję i wymienia
+kanał; goroutine zachowuje wyłącznie kanał swojej sesji. Spóźniony watcher jest
+zatrzymywany. Usunięto starą metodę zapisującą do zmiennego kanału modelu.
+
+Weryfikacja
+
+Nowe testy: cmd/app/security_fixes_test.go,
+pkg/api/client_redirect_security_test.go, pkg/autocomplete/app_identity_test.go,
+pkg/tui/treeview/app_identity_test.go, scripts/git_daemon_test.go;
+rozszerzono też testy indeksu i dostosowano starsze fixtures namespace.
+
+Go 1.26.10, Windows amd64. Testy -race: 19 pakietów PASS, 4 bez testów.
+Polecenie:
+go test -race -mod=readonly -skip 'TestGolden_|TestGetConfigPath|TestFindDownloadURL_PrefersExactPlatformMatch|TestRollbackDiff_ComparesSelectedAgainstCurrentRevision' -timeout=150s ./cmd/... ./pkg/... ./scripts
+Log: .audit/full/fixes-race-tests.log.
+Po usunięciu martwej metody przekazywania zdarzeń ponownie przeszły testy
+drzewa, mutacji, komend namespace i K9s oraz kompilacja.
+
+Uruchomiono także testy bez wyłączeń. Pozostały wcześniej stwierdzone problemy
+Windows: 40 goldenów CRLF, TestGetConfigPath, wybór assetu w teście aktualizacji,
+TestRollbackDiff_ComparesSelectedAgainstCurrentRevision (git/less).
+Log: .audit/full/fixes-unfiltered-tests.log.
+git diff --check: PASS. Nie wykonywano operacji na rzeczywistym klastrze.
+
+Windows EXE: C:\tmp\argonaut\.audit\argonaut-fixed.exe
+Build: GOTOOLCHAIN=go1.26.10, go build -mod=readonly -trimpath.
+--version: dev.
+SHA256: E63F761A6B77EC96FD61682A15D0D0367529B52C6E026802511F023CE9D2A2C5

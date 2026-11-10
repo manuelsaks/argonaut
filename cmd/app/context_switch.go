@@ -114,7 +114,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 		m.statusService.Error(message)
 		return m, m.showFooterNotice(message)
 	}
-	if msg.ContextName == m.currentContextName {
+	if msg.ContextName == m.currentContextName && !msg.Reload {
 		m.statusService.Set("Already on context: " + msg.ContextName)
 		if m.state.Navigation.View == model.ViewContexts {
 			return m.closeContextPicker()
@@ -128,6 +128,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 		"server", msg.Server.BaseURL)
 
 	// 1. Cleanup old goroutines — ORDER MATTERS:
+	m.cancelContextRelogin()
 	//    a. Stop forwarding goroutine FIRST
 	m.cleanupAppWatcher()
 	//    b. Stop tree watchers
@@ -148,6 +149,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 	newM.state.Server = msg.Server             // New server config
 	newM.state.ContextNames = msg.ContextNames // From result (no 2nd config read)
 	newM.switchEpoch = m.switchEpoch + 1       // Increment epoch
+	newM.reloginAttempts = m.reloginAttempts   // Throttle failed login loops across context switches.
 
 	// 5. Start fresh load cycle
 	return newM, tea.Batch(
