@@ -9,27 +9,40 @@ import (
 
 type appColumnWidths struct{ context, name, owner, sync, health, destination int }
 
-func appColumns(width int) appColumnWidths {
-	w := appColumnWidths{sync: 2, health: 2}
-	if width >= 75 {
-		w.sync, w.health = 11, 13
-	}
-	remaining := max(0, width-w.sync-w.health-4)
-	w.name = remaining * 32 / 100
-	w.owner = remaining * 34 / 100
-	w.destination = remaining - w.name - w.owner
-	return w
-}
-
 func (m *Model) appListColumns() appColumnWidths {
 	width := m.contentInnerWidth()
-	ctx := 0
-	if m.allContexts != nil {
-		ctx = min(20, max(10, width/6))
-		width -= ctx + 1
+	desired := []int{9, 5, 5, 7, 23, 0}
+	counts := make(map[string]int, len(m.state.Apps))
+	for _, app := range m.state.Apps {
+		counts[app.Name]++
 	}
-	w := appColumns(width)
-	w.context = ctx
+	for _, app := range m.state.Apps {
+		name := app.Name
+		if counts[name] > 1 {
+			name = model.AppKey(name, app.AppNamespace)
+		}
+		values := []string{name, applicationOwner(app), m.getSyncIcon(app.Sync) + " " + app.Sync, m.getHealthIcon(app.Health) + " " + app.Health, m.applicationLocation(app), app.ContextName}
+		for i, value := range values {
+			desired[i] = max(desired[i], lipgloss.Width(value))
+		}
+	}
+	minimum := []int{min(16, desired[0]), min(12, desired[1]), desired[2], desired[3], 12, 0}
+	if width < 75 {
+		desired[2], desired[3], minimum[2], minimum[3] = 2, 2, 2, 2
+	}
+	if m.allContexts == nil {
+		desired = desired[:5]
+		minimum = minimum[:5]
+	} else {
+		desired[5] = max(7, desired[5])
+		minimum[5] = min(10, desired[5])
+	}
+	widths := fitTableColumns(width-len(desired)+1, desired, minimum, []int{8, 3, 1, 1, 2, 2})
+	w := appColumnWidths{name: widths[0], owner: widths[1], sync: widths[2], health: widths[3], destination: widths[4]}
+	if len(widths) > 5 {
+		w.context = min(widths[5], desired[5])
+		w.destination += widths[5] - w.context
+	}
 	return w
 }
 
@@ -47,28 +60,50 @@ func appColumnRow(w appColumnWidths, name, owner, sync, health, destination stri
 	return tableCell(name, w.name) + " " + tableCell(owner, w.owner) + " " + tableCell(sync, w.sync) + " " + tableCell(health, w.health) + " " + tableCell(destination, w.destination)
 }
 
-func (m *Model) dimensionRow(name, count, location string) string {
-	if m.allContexts != nil {
-		contextWidth := min(20, max(10, m.contentInnerWidth()/6))
-		return tableCell("CONTEXT", contextWidth) + " " + dimensionRowAtWidth(name, count, location, m.contentInnerWidth()-contextWidth-1)
+type dimensionColumnWidths struct{ context, name, count, location int }
+
+func (m *Model) dimensionColumns() dimensionColumnWidths {
+	if m.state.Navigation.View != model.ViewClusters && m.state.Navigation.View != model.ViewApplicationSets {
+		return dimensionColumnWidths{}
 	}
-	return dimensionRowAtWidth(name, count, location, m.contentInnerWidth())
+	desired := []int{11, 4, 23, 0}
+	for _, item := range m.getVisibleItems() {
+		key, ok := item.(string)
+		if !ok || key == allServersChoice {
+			continue
+		}
+		ctx, name, count, location := m.dimensionValues(key)
+		for i, value := range []string{name, count, location, ctx} {
+			desired[i] = max(desired[i], lipgloss.Width(value))
+		}
+	}
+	minimum := []int{min(18, desired[0]), 4, 12, 0}
+	if m.allContexts == nil {
+		desired, minimum = desired[:3], minimum[:3]
+	} else {
+		desired[3] = max(7, desired[3])
+		minimum[3] = min(10, desired[3])
+	}
+	widths := fitTableColumns(m.contentInnerWidth()-len(desired)+1, desired, minimum, []int{8, 1, 2, 2})
+	w := dimensionColumnWidths{name: widths[0], count: widths[1], location: widths[2]}
+	if len(widths) > 3 {
+		w.context = min(widths[3], desired[3])
+		w.location += widths[3] - w.context
+	}
+	return w
 }
 
-func dimensionRowAtWidth(name, count, location string, width int) string {
-	nameWidth := max(8, (width-9)*36/100)
-	return tableCell(name, nameWidth) + " " + tableCell(count, 5) + " " + tableCell(location, max(0, width-nameWidth-7))
+func dimensionColumnRow(w dimensionColumnWidths, ctx, name, count, location string) string {
+	row := tableCell(name, w.name) + " " + tableCell(count, w.count) + " " + tableCell(location, w.location)
+	if w.context > 0 {
+		row = tableCell(ctx, w.context) + " " + row
+	}
+	return row
 }
 
-func (m *Model) renderDimensionRow(key string, cursor bool) string {
-	row := ""
-	ctx := ""
-	name, count, location := "", "", ""
+func (m *Model) dimensionValues(key string) (ctx, name, count, location string) {
 	switch m.state.Navigation.View {
 	case model.ViewClusters:
-		if key == allServersChoice {
-			return m.renderSimpleRow("all  (all destination servers)", cursor)
-		}
 		if server, ok := m.destinationByKey(key); ok {
 			name = server.Name
 			ctx = server.ContextName
@@ -79,11 +114,11 @@ func (m *Model) renderDimensionRow(key string, cursor bool) string {
 			if server.Project != "" {
 				address += " [" + server.Project + "]"
 			}
-			count := 0
+			appCount := 0
 			if m.state.Index != nil {
-				count = len(m.state.Index.ByCluster[key])
+				appCount = len(m.state.Index.ByCluster[key])
 			}
-			row = m.dimensionRow(name, fmt.Sprint(count), address)
+			count = fmt.Sprint(appCount)
 			location = address
 		}
 	case model.ViewApplicationSets:
@@ -93,18 +128,19 @@ func (m *Model) renderDimensionRow(key string, cursor bool) string {
 		name = localKey
 		count = fmt.Sprint(appCount)
 		location = where
-		row = m.dimensionRow(localKey, count, location)
 	}
-	if m.allContexts != nil && row != "" {
-		if m.state.Navigation.View == model.ViewClusters {
-			count = fmt.Sprint(len(m.state.Index.ByCluster[key]))
-		}
-		contextWidth := min(20, max(10, m.contentInnerWidth()/6))
-		row = tableCell(ctx, contextWidth) + " " + dimensionRowAtWidth(name, count, location, m.contentInnerWidth()-contextWidth-1)
+	return
+}
+
+func (m *Model) renderDimensionRow(key string, cursor bool, w dimensionColumnWidths) string {
+	if m.state.Navigation.View == model.ViewClusters && key == allServersChoice {
+		return m.renderSimpleRow("all  (all destination servers)", cursor)
 	}
-	if row == "" {
+	ctx, name, count, location := m.dimensionValues(key)
+	if name == "" {
 		return m.renderSimpleRow(key, cursor)
 	}
+	row := dimensionColumnRow(w, ctx, name, count, location)
 	if cursor && !m.willDesaturateBase() {
 		return selectedStyle.Render(row)
 	}

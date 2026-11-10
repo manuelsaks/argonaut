@@ -1,0 +1,45 @@
+Kargo action colors, table widths and Promotion metadata - 2026-11-10
+
+Changes
+- Color both legend keys and action labels: promotion/sync green, retry/force
+  yellow, delete/terminate red. Kargo confirmation titles, fields, submitting
+  state, login state and error footer use the active theme palette.
+- Keep individual Kargo cell colors when applying the selected-row background,
+  with a contrast check. Failure phase/message cells keep their error styling.
+- Allocate Kargo, Argo application, ApplicationSet and server column widths
+  from actual content, prioritizing names and revisions. Calculate application
+  widths once per rendered table rather than once per visible row.
+- Show Promotion revision/artifacts, local creation date and duration in the
+  table, with responsive column selection on narrow terminals. The selected
+  Promotion preview and describe include local creation/start/end timestamps.
+- Read Git commit SHA/tag, image tag/digest and chart version from the target
+  Freight reference embedded in Promotion status. Support legacy status.freight
+  and status.freightCollection.freight. Ignore unrelated carried-over Freight.
+- Missing artifact data remains '-'; the Freight ID is a separate value.
+  No per-Promotion GET requests or other network fan-out were added. Full
+  source objects and full SHAs are preserved for YAML and API operations.
+- Existing action keys and confirmation requirements remain unchanged.
+
+Verification
+- PASS: GOTOOLCHAIN=go1.26.10 go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See promotion-ui-race.log.
+- PASS: rendered layouts at 40, 60, 80, 100, 120, 160, 180, 220 and 300 columns
+  across the relevant tests, including all-context Argo tables and long names.
+- PASS: semantic ANSI colors for retry/promotion legends and confirmations;
+  target/legacy Freight revisions; local timestamps; running/finished/unknown
+  duration; filtering by revision; unchanged raw SHA; zero additional API reads
+  or promotion writes during rendering, describe and filtering.
+  See promotion-metadata-final.log for representative 120/220-column captures.
+- PASS: updated application-table golden and existing responsive Kargo tests.
+- PASS: Windows amd64 build and Git Bash --version startup.
+- PASS: native Windows PTY TestTerminalWindowsRestoresConsoleModes.
+- PASS: Linux amd64 cross-build.
+
+Windows artifact
+C:\tmp\argonaut\argonaut.exe
+SHA256: B486344D96F8858E78A75009701B59BFC7B963D168330068E3B3360CB2A4C902
+
+Reference used for existing Kargo status field semantics
+https://github.com/akuity/kargo/blob/main/api/v1alpha1/promotion_types.go
+https://github.com/akuity/kargo/blob/main/api/v1alpha1/stage_types.go
+https://github.com/akuity/kargo/blob/main/api/v1alpha1/freight_types.go

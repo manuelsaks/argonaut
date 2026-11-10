@@ -68,11 +68,14 @@ func (m *Model) renderKargoHeader() string {
 		network = "low bandwidth | " + network
 	}
 	login := "SSO manual"
+	loginStyle := lipgloss.NewStyle().Foreground(dimColor)
 	if connection.AutoRelogin {
 		login = "SSO auto"
+		loginStyle = loginStyle.Foreground(syncedColor)
 	}
 	if st.LoginBusy {
 		login = "SSO signing in..."
+		loginStyle = loginStyle.Foreground(progressColor).Bold(true)
 	}
 	view := st.Kind
 	if st.Detail != nil {
@@ -81,7 +84,7 @@ func (m *Model) renderKargoHeader() string {
 	style := lipgloss.NewStyle().Bold(true).Foreground(cyanBright)
 	rows := []string{
 		style.Render("Kargo") + " | Instance: " + connection.Name + " | Project: " + project,
-		"View: " + view + " | " + login + " | " + network,
+		"View: " + style.Render(view) + " | " + loginStyle.Render(login) + " | " + network,
 	}
 	if connection.Server != "" && m.state.Terminal.Rows > 22 {
 		rows = append(rows, "Server: "+connection.Server)
@@ -188,66 +191,66 @@ func (m *Model) renderKargoView() string {
 	if st.Confirm || st.Executing {
 		draft := st.Draft
 		if draft != nil {
-			lines = []string{headerStyle.Render("PROMOTE FREIGHT"), "", "Instance: " + kargoSingleLine(draft.Connection), "Server: " + kargoSingleLine(draft.Server), "Project: " + kargoSingleLine(draft.Project), "Stage: " + kargoSingleLine(draft.Stage), "Freight: " + kargoSingleLine(draft.Freight), "", "Ctrl+P: submit this promotion   Esc: cancel"}
+			field := func(label, value string) string {
+				return lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render(label+": ") + lipgloss.NewStyle().Foreground(whiteBright).Render(kargoSingleLine(value))
+			}
+			lines = []string{lipgloss.NewStyle().Foreground(syncedColor).Bold(true).Render("PROMOTE FREIGHT"), "", field("Instance", draft.Connection), field("Server", draft.Server), field("Project", draft.Project), field("Stage", draft.Stage), field("Freight", draft.Freight), "", renderHotkey(viewHotkey{"ctrl-p", "submit promotion"}) + "   " + renderHotkey(viewHotkey{"esc", "cancel"})}
 			if draft.RetryOf != "" {
-				lines[0] = headerStyle.Render("RETRY PROMOTION")
-				lines = append(lines[:len(lines)-1], "Previous: "+kargoSingleLine(draft.RetryOf), "Creates a new Promotion for the same Freight and Stage, using the current Stage template.", "Ctrl+T: confirm retry   Esc: cancel")
+				lines[0] = lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("RETRY PROMOTION")
+				lines = append(lines[:len(lines)-1], field("Previous", draft.RetryOf), "Creates a new Promotion for the same Freight and Stage, using the current Stage template.", renderHotkey(viewHotkey{"ctrl-t", "confirm retry"})+"   "+renderHotkey(viewHotkey{"esc", "cancel"}))
 			}
 			if st.Executing {
-				lines[len(lines)-1] = "Submitting once... waiting for the Kargo API response"
+				lines[len(lines)-1] = lipgloss.NewStyle().Foreground(progressColor).Bold(true).Render("Submitting once... waiting for the Kargo API response")
 			}
 		}
 	} else {
 		rows := m.kargoRows()
-		columns := []string{"NAME", "STATUS", "DETAILS"}
-		switch st.Kind {
-		case "Connection":
-			columns = []string{"INSTANCE", "LOGIN", "API SERVER"}
-		case "Stage":
-			columns = []string{"STAGE", "STATUS", "FREIGHT", "PROMOTION", "MESSAGE"}
-		case "Promotion":
-			columns = []string{"PROMOTION", "PHASE", "STAGE", "FREIGHT", "MESSAGE"}
-		case "Warehouse":
-			columns = []string{"WAREHOUSE", "STATUS", "LATEST FREIGHT", "SOURCES", "MESSAGE"}
-		case "Freight":
-			columns = []string{"FREIGHT", "ALIAS", "WAREHOUSE", "ARTIFACTS"}
+		columns := kargoTableColumns(st.Kind, width, rows)
+		var preview []string
+		if st.Kind == "Promotion" && st.Cursor >= 0 && st.Cursor < len(rows) && height >= 8 {
+			for _, line := range m.kargoPromotionSummary(rows[st.Cursor].Resource) {
+				preview = append(preview, m.colorInspectionLine(kargoSingleLine(line), "Describe"))
+			}
 		}
-		visibleColumns := len(columns)
-		if width < 75 {
-			visibleColumns = min(3, visibleColumns)
-		}
-		if width < 48 {
-			visibleColumns = 2
-		}
-		cellWidths := make([]int, visibleColumns)
-		remaining := width - (visibleColumns-1)*2
-		for i := range cellWidths {
-			cellWidths[i] = remaining / (visibleColumns - i)
-			remaining -= cellWidths[i]
+		tableHeight := height
+		if len(preview) > 0 {
+			tableHeight -= len(preview) + 1
 		}
 		renderCells := func(values []string, selected bool) string {
-			cells := make([]string, visibleColumns)
-			for i := range cells {
+			cells := make([]string, len(columns))
+			for i, column := range columns {
 				value := ""
-				if i < len(values) {
-					value = inspectionPlainText(values[i])
-					value = strings.Join(strings.Fields(value), " ")
+				if column.Index < len(values) {
+					value = kargoSingleLine(values[column.Index])
 				}
-				cell := tableCell(value, cellWidths[i])
-				if i == 1 && st.Kind != "Freight" && st.Kind != "Connection" {
-					cell = kargoStatusStyle(value).Render(cell)
+				style := lipgloss.NewStyle().Foreground(whiteBright)
+				if column.Index == 0 {
+					style = style.Foreground(cyanBright)
+				} else if column.Index == 1 && st.Kind != "Freight" && st.Kind != "Connection" {
+					style = kargoStatusStyle(value)
+				} else if st.Kind == "Promotion" && column.Index == 3 || st.Kind == "Freight" && column.Index == 1 {
+					style = style.Foreground(magentaBright)
+				} else if column.Index == len(values)-1 && value != "" && st.Kind != "Freight" && st.Kind != "Connection" {
+					style = kargoStatusStyle(values[1])
 				}
-				cells[i] = cell
+				if selected {
+					style = style.Background(currentPalette.CursorBG).Foreground(ensureContrastingForeground(currentPalette.CursorBG, style.GetForeground()))
+				}
+				cells[i] = style.Render(tableCell(value, column.Width))
 			}
 			line := strings.Join(cells, "  ")
 			if selected {
-				line = lipgloss.NewStyle().Background(currentPalette.CursorBG).Foreground(ensureContrastingForeground(currentPalette.CursorBG, whiteBright)).Render(line)
+				line = lipgloss.NewStyle().Background(currentPalette.CursorBG).Render(line)
 			}
 			return line
 		}
-		lines = append(lines, headerStyle.Render(renderCells(columns, false)))
-		start := max(0, st.Cursor-max(0, height-2)+1)
-		for i := start; i < min(len(rows), start+height-1); i++ {
+		heading := make([]string, len(columns))
+		for i, column := range columns {
+			heading[i] = tableCell(column.Header, column.Width)
+		}
+		lines = append(lines, headerStyle.Render(strings.Join(heading, "  ")))
+		start := max(0, st.Cursor-max(0, tableHeight-2)+1)
+		for i := start; i < min(len(rows), start+tableHeight-1); i++ {
 			lines = append(lines, renderCells(rows[i].Columns, i == st.Cursor))
 		}
 		if len(rows) == 0 {
@@ -259,6 +262,13 @@ func (m *Model) renderKargoView() string {
 				message = "Press 1 and choose a Project"
 			}
 			lines = append(lines, lipgloss.NewStyle().Foreground(dimColor).Render(message))
+		}
+		if len(preview) > 0 {
+			for len(lines) < tableHeight {
+				lines = append(lines, "")
+			}
+			lines = append(lines, lipgloss.NewStyle().Foreground(dimColor).Render(strings.Repeat("─", width)))
+			lines = append(lines, preview...)
 		}
 	}
 	if st.Confirm || st.Executing {
@@ -302,6 +312,12 @@ func (m *Model) renderKargoView() string {
 	if input != "" {
 		sections = append(sections, clipAnsiToWidth(input, width+2))
 	}
-	sections = append(sections, body, clipAnsiToWidth(statusStyle.Render(inspectionPlainText(status)), width+2))
+	footer := statusStyle
+	if st.Error != "" {
+		footer = footer.Foreground(redColor).Bold(true)
+	} else if st.Loading || st.Executing {
+		footer = footer.Foreground(progressColor)
+	}
+	sections = append(sections, body, clipAnsiToWidth(footer.Render(inspectionPlainText(status)), width+2))
 	return mainContainerStyle.Render(strings.Join(sections, "\n"))
 }

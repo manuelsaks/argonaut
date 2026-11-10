@@ -26,6 +26,7 @@ func (m *Model) renderListView(availableRows int) string {
 
 		switch m.state.Navigation.View {
 		case model.ViewApps:
+			columns := m.appListColumns()
 			// Custom-render apps list to restore full-row selection highlight and per-cell colors
 			// Use edge-based scrolling with ListNavigator
 			total := len(visibleItems)
@@ -54,12 +55,12 @@ func (m *Model) renderListView(availableRows int) string {
 
 			// Build header + rows
 			var b strings.Builder
-			b.WriteString(m.renderListHeader())
+			b.WriteString(m.renderAppHeader(columns))
 			b.WriteString("\n")
 			for i := start; i < end; i++ {
 				app := visibleItems[i].(model.App)
 				isCursor := (i == cursor)
-				b.WriteString(m.renderAppRow(app, isCursor))
+				b.WriteString(m.renderAppRow(app, isCursor, columns))
 				if i < end-1 {
 					b.WriteString("\n")
 				}
@@ -71,6 +72,7 @@ func (m *Model) renderListView(availableRows int) string {
 			tableView = b.String()
 
 		case model.ViewClusters, model.ViewNamespaces, model.ViewProjects, model.ViewApplicationSets, model.ViewContexts:
+			columns := m.dimensionColumns()
 			// Custom-render single-column lists with full-row highlight
 			total := len(visibleItems)
 			visibleRows := max(0, tableHeight-1)
@@ -99,7 +101,7 @@ func (m *Model) renderListView(availableRows int) string {
 			for i := start; i < end; i++ {
 				label := fmt.Sprintf("%v", visibleItems[i])
 				isCursor := (i == cursor)
-				b.WriteString(m.renderDimensionRow(label, isCursor))
+				b.WriteString(m.renderDimensionRow(label, isCursor, columns))
 				if i < end-1 {
 					b.WriteString("\n")
 				}
@@ -130,40 +132,19 @@ func (m *Model) renderListView(availableRows int) string {
 // renderListHeader - matches ListView header row with responsive widths
 func (m *Model) renderListHeader() string {
 	if m.state.Navigation.View == model.ViewApps {
-		w := m.appListColumns()
-		name, sync, health := "APP NAME", "SYNC", "HEALTH"
-		indicator := m.state.UI.Sort.Direction.Indicator()
-		switch m.state.UI.Sort.Field {
-		case model.SortFieldName:
-			name = indicator + name
-		case model.SortFieldSync:
-			sync = indicator + sync
-		case model.SortFieldHealth:
-			health = indicator + health
-		}
-		if w.sync < 5 {
-			sync = "S"
-		}
-		if w.health < 7 {
-			health = "H"
-		}
-		row := appColumnRow(w, name, "OWNER", sync, health, "DESTINATION / NAMESPACE")
-		if w.context > 0 {
-			row = tableCell("CONTEXT", w.context) + " " + row
-		}
-		return headerStyle.Render(row)
+		return m.renderAppHeader(m.appListColumns())
 	}
 	if m.state.Navigation.View == model.ViewClusters {
 		if !m.destinationLoaded || m.destinationError != "" || m.destinationLoading {
 			return headerStyle.Render(clipAnsiToWidth(m.destinationListHeading(), m.contentInnerWidth()))
 		}
-		return headerStyle.Render(m.dimensionRow("SERVER NAME", "APPS", "ADDRESS / PROJECT"))
+		return headerStyle.Render(dimensionColumnRow(m.dimensionColumns(), "CONTEXT", "SERVER NAME", "APPS", "ADDRESS / PROJECT"))
 	}
 	if m.state.Navigation.View == model.ViewApplicationSets {
 		if heading := m.applicationSetListHeading(); heading != "" {
 			return headerStyle.Render(clipAnsiToWidth(heading, m.contentInnerWidth()))
 		}
-		return headerStyle.Render(m.dimensionRow("APPSET NAME", "APPS", "DESTINATION / NAMESPACE"))
+		return headerStyle.Render(dimensionColumnRow(m.dimensionColumns(), "CONTEXT", "APPSET NAME", "APPS", "DESTINATION / NAMESPACE"))
 	}
 
 	// Simple header for other views padded to full content width
@@ -181,8 +162,32 @@ func (m *Model) renderListHeader() string {
 	return hdr
 }
 
+func (m *Model) renderAppHeader(w appColumnWidths) string {
+	name, sync, health := "APP NAME", "SYNC", "HEALTH"
+	indicator := m.state.UI.Sort.Direction.Indicator()
+	switch m.state.UI.Sort.Field {
+	case model.SortFieldName:
+		name = indicator + name
+	case model.SortFieldSync:
+		sync = indicator + sync
+	case model.SortFieldHealth:
+		health = indicator + health
+	}
+	if w.sync < 5 {
+		sync = "S"
+	}
+	if w.health < 7 {
+		health = "H"
+	}
+	row := appColumnRow(w, name, "OWNER", sync, health, "DESTINATION / NAMESPACE")
+	if w.context > 0 {
+		row = tableCell("CONTEXT", w.context) + " " + row
+	}
+	return headerStyle.Render(row)
+}
+
 // renderAppRow - matches ListView app row rendering
-func (m *Model) renderAppRow(app model.App, isCursor bool) string {
+func (m *Model) renderAppRow(app model.App, isCursor bool, w appColumnWidths) string {
 	// Selection checking (matches ListView isChecked logic)
 	isSelected := m.state.Selections.HasSelectedApp(app.Key())
 	// While a desaturating modal is up, suppress the cursor-only highlight
@@ -195,7 +200,6 @@ func (m *Model) renderAppRow(app model.App, isCursor bool) string {
 	}
 	active := isCursor || isSelected
 
-	w := m.appListColumns()
 	fullRowWidth := m.contentInnerWidth()
 	syncText := fmt.Sprintf("%s %s", m.getSyncIcon(app.Sync), app.Sync)
 	healthText := fmt.Sprintf("%s %s", m.getHealthIcon(app.Health), app.Health)

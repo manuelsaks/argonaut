@@ -40,7 +40,7 @@ func (m *Model) kargoRows() []kargoRow {
 		case "Stage":
 			columns = append(columns, resource.String("status.freightSummary", "status.freight.name"), resource.String("status.currentPromotion.name", "status.lastPromotion.name"), resource.Message())
 		case "Promotion":
-			columns = append(columns, resource.String("spec.stage"), resource.String("spec.freight", "status.freight.name"), resource.Message())
+			columns = append(columns, resource.String("spec.stage"), kargoPromotionRevision(resource), kargoPromotionCreated(resource), kargoPromotionDuration(resource, m.now()), resource.String("spec.freight", "status.freight.name"), resource.Message())
 		case "Warehouse":
 			columns = append(columns, resource.String("status.lastFreightID"), kargoSources(resource), resource.Message())
 		case "Freight":
@@ -522,6 +522,11 @@ func (m *Model) showKargoDocument(resource kargo.Resource, kind string, preserve
 	} else {
 		var out strings.Builder
 		fmt.Fprintf(&out, "Instance: %s\nServer: %s\nProject: %s\nKind: %s\nName: %s\nPhase: %s\n", st.Connections[st.Connection].Name, st.Connections[st.Connection].Server, resource.Project, resource.Kind, resource.Name, resource.Phase())
+		if resource.Kind == "Promotion" {
+			for _, line := range m.kargoPromotionSummary(resource)[1:] {
+				fmt.Fprintln(&out, line)
+			}
+		}
 		if message := resource.Message(); message != "" {
 			fmt.Fprintf(&out, "Message: %s\n", message)
 		}

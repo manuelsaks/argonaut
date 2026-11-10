@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -108,8 +109,23 @@ func (m *Model) headerViewName() string {
 	return string(m.state.Navigation.View)
 }
 
+func hotkeyColor(action string) color.Color {
+	action = strings.ToLower(action)
+	switch {
+	case strings.Contains(action, "delete"), strings.Contains(action, "terminate"):
+		return redColor
+	case strings.Contains(action, "retry"), strings.Contains(action, "force"):
+		return progressColor
+	case strings.Contains(action, "promot"), strings.Contains(action, "sync"), strings.Contains(action, "confirm"):
+		return syncedColor
+	default:
+		return cyanBright
+	}
+}
+
 func renderHotkey(k viewHotkey) string {
-	return lipgloss.NewStyle().Foreground(cyanBright).Bold(true).Render("<"+k.key+">") + " " + k.action
+	style := lipgloss.NewStyle().Foreground(hotkeyColor(k.action))
+	return style.Bold(true).Render("<"+k.key+">") + " " + style.Render(k.action)
 }
 
 func (m *Model) renderK9sHeader() string {

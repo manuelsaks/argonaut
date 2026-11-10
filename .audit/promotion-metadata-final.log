@@ -1,0 +1,78 @@
+=== RUN   TestKargoPromotionMetadataAndColorsRenderWithoutNetworkReads
+    kargo_promotion_info_test.go:123: 
+        Promotion 120 columns
+         Kargo | Instance: cli | Project: team-b                                                                              
+         View: Promotion | SSO manual | low bandwidth | manual refresh                                                        
+         Server: http://127.0.0.1:14383                                                                                       
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <ctrl-t> retry  <d/y> describe/YAML  </> filter     
+         <?> help                                                                                                             
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                  
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ PROMOTION                                           PHASE   STAGE  REVISION                     CREATED          │ 
+         │ production-web-services-release-2026-11-10-abcd...  Failed  prod   web@v2.1 (abcdef123456) ...  2026-11-10 13:01 │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │                                                                                                                  │ 
+         │ ──────────────────────────────────────────────────────────────────────────────────────────────────────────────── │ 
+         │ Promotion: production-web-services-release-2026-11-10-abcdefghijklmnop | Stage: prod                             │ 
+         │ Revision: web@v2.1 (abcdef123456) | web:2.1.0 | web-chart@3.2.0 | Freight: freight-a                             │ 
+         │ Created: 2026-11-10 13:01:00 CET | Duration: 2m3s | Started: 2026-11-10 13:02:00 CET | Finished: 2026-11-10 13:0 │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 19:26:15                                                                                           
+    kargo_promotion_info_test.go:123: 
+        Promotion 220 columns
+         Kargo | Instance: cli | Project: team-b                                                                                                                                                                                  
+         View: Promotion | SSO manual | low bandwidth | manual refresh                                                                                                                                                            
+         Server: http://127.0.0.1:14383                                                                                                                                                                                           
+         <enter> open  <ctrl-r> refresh  <ctrl-l> SSO  <ctrl-a> auto SSO  <ctrl-t> retry  <d/y> describe/YAML  </> filter  <?> help                                                                                               
+         <0/c> instances  <1> projects  <2> stages  <3> promotions  <4> warehouses  <5> freight  <a> Argo CD                                                                                                                      
+         ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ 
+         │ PROMOTION                                                    PHASE   STAGE  REVISION / ARTIFACT                                    CREATED           DURATION  FREIGHT    MESSAGE                                    │ 
+         │ production-web-services-release-2026-11-10-abcdefghijklmnop  Failed  prod   web@v2.1 (abcdef123456) | web:2.1.0 | web-chart@3.2.0  2026-11-10 13:01  2m3s      freight-a  git push failed                            │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │                                                                                                                                                                                                                      │ 
+         │ ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── │ 
+         │ Promotion: production-web-services-release-2026-11-10-abcdefghijklmnop | Stage: prod                                                                                                                                 │ 
+         │ Revision: web@v2.1 (abcdef123456) | web:2.1.0 | web-chart@3.2.0 | Freight: freight-a                                                                                                                                 │ 
+         │ Created: 2026-11-10 13:01:00 CET | Duration: 2m3s | Started: 2026-11-10 13:02:00 CET | Finished: 2026-11-10 13:04:03 CET                                                                                             │ 
+         ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ 
+         1 items | updated 19:26:15                                                                                                                                                                                               
+--- PASS: TestKargoPromotionMetadataAndColorsRenderWithoutNetworkReads (0.02s)
+=== RUN   TestLongNamesUseAvailableTableWidth
+--- PASS: TestLongNamesUseAvailableTableWidth (0.00s)
+=== RUN   TestKargoLongNamesUseAvailableTableWidth
+--- PASS: TestKargoLongNamesUseAvailableTableWidth (0.01s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.053s

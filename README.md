@@ -368,7 +368,7 @@ The default `cli` instance reads `$XDG_CONFIG_HOME/kargo/config`, or
 | `0` / `c` | Choose instance |
 | `1` | Projects; Enter chooses a project |
 | `2` | Stages; Enter shows that stage's Promotions |
-| `3` | Promotions: phase, Stage, Freight and errors |
+| `3` | Promotions: phase, Stage, revision/artifacts, creation date, duration and errors |
 | `4` | Warehouses: status, latest Freight, subscriptions and errors |
 | `5` | Freight: alias, origin and artifacts |
 | `d` / `y` | Compact describe / full YAML |
@@ -399,6 +399,14 @@ Retry follows the [Kargo UI](https://github.com/akuity/kargo/blob/main/ui/src/fe
 it creates a new Promotion for the original Freight and Stage, using the current
 Stage template. It starts a new run; it does not resume the failed step.
 The original Promotion is re-read before submission to reject stale selections.
+
+Promotion tables allocate column widths from the loaded data, giving long names
+and artifact revisions priority. They show Git SHA/tag, image tag/digest and Helm
+chart version when present in the target Freight reference embedded in Promotion
+status. Missing revisions remain `-`; the Freight ID is shown separately.
+Creation dates use local time. The selected row preview and `d` describe also show
+start/end timestamps and duration. These fields require no additional API requests.
+Promotion actions are green, retry actions yellow and failure states red.
 
 Normal mode polls only the visible data every 10 seconds. Low-bandwidth mode
 uses the global network interval (two minutes by default); `refresh_interval = "0"`
