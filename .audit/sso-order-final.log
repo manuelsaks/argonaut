@@ -1,0 +1,17 @@
+=== RUN   TestCLILoginArgumentsAndEnvironmentAreContextBound
+--- PASS: TestCLILoginArgumentsAndEnvironmentAreContextBound (0.00s)
+=== RUN   TestExpiredTokenStartsSSOBeforeAnyApplicationRequest
+2026/11/10 19:43:35 INFO Switching context component=context-switch from=prod to=prod server=http://127.0.0.1:1260
+2026/11/10 19:43:35 INFO Switching context component=context-switch from=prod to=prod server=http://127.0.0.1:1260
+2026/11/10 19:43:35 INFO SetInitialLoadingMsg received component=model loading=true
+2026/11/10 19:43:35 INFO Authentication validated successfully component=auth
+--- PASS: TestExpiredTokenStartsSSOBeforeAnyApplicationRequest (0.05s)
+=== RUN   TestLegacyCLIProbeFallsBackToFullContextBoundSSO
+2026/11/10 19:43:35 INFO Switching context component=context-switch from=prod to=prod server=https://prod.example.test
+--- PASS: TestLegacyCLIProbeFallsBackToFullContextBoundSSO (0.02s)
+=== RUN   TestRealArgoCDCLIFullSSOReachesSettingsWithoutExpiredAuthorization
+    sso_login_order_test.go:142: real CLI request: /version.VersionService/Version
+    sso_login_order_test.go:142: real CLI request: /cluster.SettingsService/Get
+--- PASS: TestRealArgoCDCLIFullSSOReachesSettingsWithoutExpiredAuthorization (0.07s)
+PASS
+ok  	github.com/darksworm/argonaut/cmd/app	0.160s

@@ -88,7 +88,7 @@ func TestSelectedContextAuthenticatesBeforeLoadingEvenWithoutToken(t *testing.T)
 			if cmd == nil || next.currentContextName != name || !next.reloginInProgress || next.state.Mode == model.ModeAuthRequired {
 				t.Fatal("selection should authenticate without showing not logged in")
 			}
-			login, err := argoCDCommand(t.Context(), next.config.GetArgoCDCommand(), next.argoConfigPath, name, "relogin")
+			login, err := argoCDCommand(t.Context(), next.config.GetArgoCDCommand(), next.argoConfigPath, name, "login")
 			if err != nil || !slices.Contains(login.Args, "--sso") || !slices.Contains(login.Args, "--name") {
 				t.Fatal("missing-token login must use context-bound browser SSO")
 			}
@@ -138,7 +138,11 @@ func TestSilentCLIProbeDetectsLoggedOutSessionsAndMissingCredentials(t *testing.
 			}
 			t.Setenv("ARGONAUT_TEST_CLI_USERINFO", body)
 			msg := m.beginContextRelogin("prod", true)().(contextReloginMsg)
-			if msg.Error != nil || !msg.Interactive || msg.Probed {
+			if missingToken {
+				if msg.Error != nil || msg.Server == nil || msg.Server.Token != "renewed-test-token" || msg.Probed {
+					t.Fatalf("missing credentials must start full SSO immediately: %+v", msg)
+				}
+			} else if msg.Error != nil || !msg.Interactive || msg.Probed {
 				t.Fatalf("logged-out CLI exit 0 must request browser SSO: %+v", msg)
 			}
 			m.cancelContextRelogin()

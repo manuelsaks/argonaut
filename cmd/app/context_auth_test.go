@@ -16,6 +16,7 @@ import (
 	"github.com/darksworm/argonaut/pkg/config"
 	apperrors "github.com/darksworm/argonaut/pkg/errors"
 	"github.com/darksworm/argonaut/pkg/model"
+	"gopkg.in/yaml.v3"
 )
 
 // Run the test binary as a real fake CLI subprocess, without external tools,
@@ -28,10 +29,38 @@ func TestMain(m *testing.M) {
 		args := os.Args[1:]
 		index := slices.Index(args, "--config")
 		contextIndex := slices.Index(args, "--argocd-context")
-		if index < 0 || contextIndex < 0 || contextIndex+1 >= len(args) || !slices.Contains([]string{"dev", "prod"}, args[contextIndex+1]) {
+		if index < 0 || index+1 >= len(args) || len(args) == 0 {
 			os.Exit(8)
 		}
 		path := args[index+1]
+		if args[0] == "context" && len(args) > 1 {
+			data, err := os.ReadFile(path)
+			var cfg map[string]any
+			if err != nil || yaml.Unmarshal(data, &cfg) != nil {
+				os.Exit(9)
+			}
+			cfg["current-context"] = args[1]
+			data, err = yaml.Marshal(cfg)
+			if err != nil || os.WriteFile(path, data, 0600) != nil {
+				os.Exit(10)
+			}
+			os.Exit(0)
+		}
+		if args[0] == "login" {
+			// Match older real CLIs: login binds the context with --name and
+			// rejects --argocd-context. Never let a fake accept invalid flags.
+			if contextIndex >= 0 || !slices.Contains(args, "--sso") {
+				os.Exit(8)
+			}
+			contextIndex = slices.Index(args, "--name")
+		}
+		if contextIndex < 0 || contextIndex+1 >= len(args) || !slices.Contains([]string{"dev", "prod"}, args[contextIndex+1]) || args[0] == "relogin" {
+			os.Exit(8)
+		}
+		if os.Getenv("ARGONAUT_TEST_CLI_LEGACY") == "1" && slices.Contains(args, "get-user-info") {
+			fmt.Fprintln(os.Stderr, "Error: unknown flag: --argocd-context")
+			os.Exit(1)
+		}
 		if userInfo := os.Getenv("ARGONAUT_TEST_CLI_USERINFO"); userInfo != "" && slices.Contains(args, "get-user-info") {
 			fmt.Print(userInfo)
 			os.Exit(0)
@@ -61,6 +90,23 @@ func TestMain(m *testing.M) {
 			renewed = "renewed-dev-test-token"
 		}
 		data = []byte(strings.ReplaceAll(string(data), name+"-test-token", renewed))
+		if args[0] == "login" {
+			var cfg map[string]any
+			if yaml.Unmarshal(data, &cfg) != nil {
+				os.Exit(9)
+			}
+			cfg["current-context"] = name
+			for _, value := range cfg["users"].([]any) {
+				user := value.(map[string]any)
+				if user["name"] == name+"-user" {
+					user["auth-token"] = renewed
+				}
+			}
+			data, err = yaml.Marshal(cfg)
+			if err != nil {
+				os.Exit(10)
+			}
+		}
 		if err := os.WriteFile(path, data, 0o600); err != nil {
 			os.Exit(10)
 		}
@@ -185,12 +231,12 @@ func TestCLILoginArgumentsAndEnvironmentAreContextBound(t *testing.T) {
 	t.Setenv("ARGOCD_SERVER", "https://attacker.example.test")
 	t.Setenv("ARGOCD_OPTS", "--argocd-context wrong")
 	t.Setenv("HTTPS_PROXY", "http://proxy.example.test")
-	cmd, err := argoCDCommand(t.Context(), m.config.GetArgoCDCommand(), m.argoConfigPath, "prod", "relogin")
+	cmd, err := argoCDCommand(t.Context(), m.config.GetArgoCDCommand(), m.argoConfigPath, "prod", "login")
 	if err != nil {
 		t.Fatal(err)
 	}
 	joined := strings.Join(cmd.Args, " ")
-	if !strings.Contains(joined, "--argocd-context prod") || !strings.Contains(joined, "--grpc-web-root-path /argo") || strings.Contains(joined, "test-token") || strings.Contains(joined, "--password") {
+	if !strings.Contains(joined, "login prod.example.test --sso --name prod") || strings.Contains(joined, "--argocd-context") || !strings.Contains(joined, "--grpc-web-root-path /argo") || strings.Contains(joined, "test-token") || strings.Contains(joined, "--password") {
 		t.Fatal("CLI args must select context/options without carrying secrets")
 	}
 	for _, env := range cmd.Env {
@@ -205,6 +251,7 @@ func TestCLILoginArgumentsAndEnvironmentAreContextBound(t *testing.T) {
 
 func TestContextAutoReloginPreferencePersistsPerContext(t *testing.T) {
 	m := authTestModel(t)
+	t.Cleanup(m.cancelContextRelogin)
 	_, _ = m.openContextPicker()
 	_, _ = m.handleKeyMsg(testKeyMsg("ctrl+a")) // prod, active row
 	if m.config.IsAutoReloginEnabled("prod") {

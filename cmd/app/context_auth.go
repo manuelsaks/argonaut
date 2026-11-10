@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -87,8 +88,9 @@ func (m *Model) toggleContextAutoRelogin() (tea.Model, tea.Cmd) {
 		state = "ON"
 	}
 	notice := m.showFooterNotice("Auto-login " + state + ": " + name)
-	if enabled && name == m.currentContextName {
-		return m, tea.Batch(notice, m.validateAuthentication())
+	if enabled {
+		login, _ := m.maybeAutoReloginForContext(name)
+		return m, tea.Batch(notice, login)
 	}
 	return m, notice
 }
@@ -112,20 +114,27 @@ func argoCDCommand(ctx context.Context, executable, configPath, contextName stri
 	if pf, _ := cfg.IsContextPortForward(contextName); pf {
 		return nil, fmt.Errorf("port-forward contexts do not support live login")
 	}
-	connection, err := cfg.ConnectionForContext(contextName)
-	if err != nil {
+	if _, err := cfg.ConnectionForContext(contextName); err != nil {
 		return nil, err
 	}
-	// relogin needs claims from the previous JWT. With no saved token, use
-	// the official SSO login, explicitly bound to the saved server and name.
-	if len(args) == 1 && args[0] == "relogin" && connection.Token == "" {
+	login := len(args) == 1 && args[0] == "login"
+	// Full SSO does not depend on claims or the refresh token from the expired
+	// session. --name binds it to this context, including on CLI 2.12, which
+	// does not support --argocd-context (and relogin uses current-context).
+	if login {
 		for _, c := range cfg.Contexts {
 			if c.Name == contextName {
-				args = []string{"login", c.Server, "--sso", "--name", contextName}
+				// The saved TLS/plaintext settings are explicit; avoid the CLI's
+				// extra detection connection and interactive TLS-mode questions.
+				// Certificate verification still follows the saved --insecure flag.
+				args = []string{"login", c.Server, "--sso", "--name", contextName, "--skip-test-tls"}
 			}
 		}
 	}
-	args = append(args, "--config", configPath, "--argocd-context", contextName)
+	args = append(args, "--config", configPath)
+	if !login {
+		args = append(args, "--argocd-context", contextName)
+	}
 	for _, c := range cfg.Contexts {
 		if c.Name != contextName {
 			continue
@@ -274,6 +283,11 @@ func (m *Model) beginContextRelogin(name string, automatic bool) tea.Cmd {
 	if !automatic {
 		return m.interactiveContextRelogin(name, epoch, seq, path, executable)
 	}
+	if cfg, err := config.ReadCLIConfigFromPath(path); err == nil {
+		if server, err := cfg.ConnectionForContext(name); err == nil && argoTokenNeedsLogin(server.Token, m.now()) {
+			return m.interactiveContextRelogin(name, epoch, seq, path, executable)
+		}
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	m.reloginCancel = cancel
 	// A harmless CLI read first picks up a concurrent login or uses the CLI's
@@ -308,6 +322,27 @@ func (m *Model) beginContextRelogin(name string, automatic bool) tea.Cmd {
 	}
 }
 
+// Expiry is only a hint to start SSO sooner, never proof of authentication.
+// Argo CD still validates every credential. Avoid sending a known-expired JWT
+// to user-info before starting the login the user has enabled.
+func argoTokenNeedsLogin(token string, now time.Time) bool {
+	if token == "" {
+		return true
+	}
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return false
+	}
+	var claims struct {
+		Expiry *int64 `json:"exp"`
+	}
+	return json.Unmarshal(payload, &claims) == nil && claims.Expiry != nil && *claims.Expiry <= now.Add(30*time.Second).Unix()
+}
+
 func readReloggedServer(path, name string) (*model.Server, error) {
 	cfg, err := config.ReadCLIConfigFromPath(path)
 	if err != nil {
@@ -319,7 +354,7 @@ func readReloggedServer(path, name string) (*model.Server, error) {
 func (m *Model) interactiveContextRelogin(name string, epoch, seq int, path, executable string) tea.Cmd {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	m.reloginCancel = cancel
-	cmd, err := argoCDCommand(ctx, executable, path, name, "relogin")
+	cmd, err := argoCDCommand(ctx, executable, path, name, "login")
 	if err != nil {
 		cancel()
 		return func() tea.Msg {
@@ -333,9 +368,31 @@ func (m *Model) interactiveContextRelogin(name string, epoch, seq int, path, exe
 	return func() tea.Msg {
 		defer cancel()
 		msg := contextReloginMsg{ContextName: name, SwitchEpoch: epoch, RequestID: seq}
-		if err := cmd.Run(); err != nil {
-			msg.Error = fmt.Errorf("Argo CD CLI login did not complete; Ctrl+L retries")
+		before, err := config.ReadCLIConfigFromPath(path)
+		if err != nil {
+			msg.Error = err
 			return msg
+		}
+		if err := cmd.Run(); err != nil {
+			msg.Error = fmt.Errorf("Argo CD CLI SSO login did not complete; Ctrl+L retries")
+			return msg
+		}
+		// `login --name` also changes the CLI's global current-context. Restore
+		// it through the CLI, preserving its full config and refresh tokens.
+		if before.CurrentContext != "" && before.CurrentContext != name {
+			after, err := config.ReadCLIConfigFromPath(path)
+			if err != nil {
+				msg.Error = err
+				return msg
+			}
+			if after.CurrentContext == name {
+				restore := exec.CommandContext(ctx, executable, "context", before.CurrentContext, "--config", path)
+				restore.Env = cmd.Env
+				if err := restore.Run(); err != nil {
+					msg.Error = fmt.Errorf("SSO completed but restoring the CLI context failed; select the context again")
+					return msg
+				}
+			}
 		}
 		msg.Server, msg.Error = readReloggedServer(path, name)
 		return msg

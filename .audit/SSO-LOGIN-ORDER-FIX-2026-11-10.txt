@@ -1,0 +1,56 @@
+SSO login command compatibility and startup ordering - 2026-11-10
+
+Confirmed defects
+- The installed Argo CD CLI v2.12.3 rejects --argocd-context. Every previous
+  login invocation included it; the permissive test CLI did not detect this.
+- Argo CD 2.12 relogin uses the saved global current-context and old token
+  claims. It is unsuitable for an explicit full SSO login to a selected row.
+- Known-expired/missing tokens still went through the initial account probe.
+- Enabling automatic SSO validated the API before starting login.
+- Pressing Enter on the context being logged in cancelled and restarted it.
+
+Changes
+- Browser SSO now uses login SAVED_SERVER --sso --name SELECTED_CONTEXT.
+  Do not add --argocd-context to login; --name is its explicit context binding.
+- Retain saved TLS, plaintext and grpc-web settings and strip ARGOCD_* target
+  overrides from the subprocess. No password/token is passed in arguments.
+- Skip the CLI's separate TLS-mode detection connection using --skip-test-tls;
+  normal certificate verification still follows saved settings.
+- A missing or known-expired JWT (including a 30-second margin) starts SSO
+  immediately, before authenticated reads. Local expiry parsing is only a
+  login hint, never proof of authentication.
+- If an older CLI rejects the silent account probe, continue with full SSO.
+- Restore the CLI's previous global current-context through `argocd context`
+  after successful login, preserving its full credential/refresh-token config.
+- Enabling auto SSO starts login, not API validation. Enter on the same pending
+  context keeps SSO running; another context can still cancel and replace it.
+- The fake CLI now rejects invalid login flags and relogin, simulates login's
+  global current-context update, and supports its restoration.
+
+Verification
+- PASS: GOTOOLCHAIN=go1.26.10 ARGONAUT_REAL_ARGOCD=C:\tools\argocd.exe
+  go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See sso-order-race.log.
+- PASS: real Bubble Tea event loop + expired JWT + waiting login subprocess:
+  zero application API requests before SSO completion, repeated Enter leaves
+  the picker and login alive, new token loaded, original CLI current-context
+  and unrelated token preserved, all subsequent API reads use the new token.
+- PASS: real installed CLI v2.12.3 accepts the production login arguments and
+  reaches Version and SSO Settings over a local TLS/HTTP2 gRPC fixture without
+  sending an expired or unrelated Authorization header. Fixture intentionally
+  stops at Settings, before any external browser/IdP access.
+  See sso-order-final.log.
+- PASS: main repository argonaut.exe in a native Windows PTY with an expired
+  fixture token: contexts and 'Login: signing in...' appear immediately;
+  fixture SSO completes and displays 'Logged in: prod; Enter: open context'.
+  Ctrl+C exits successfully. No company server or identity provider was used.
+- PASS: native PTY TestTerminalWindowsRestoresConsoleModes; Git Bash startup;
+  Windows amd64 build and Linux amd64 cross-build.
+
+Updated main Windows binary
+C:\tmp\argonaut\argonaut.exe
+SHA256: C5D8B1B45A00A278A7ACBEA4464542F4CFEB9A4E7F5B1EE6CBA6EB97E17CC6FB
+
+Official CLI source inspected
+https://github.com/argoproj/argo-cd/blob/v2.12.3/cmd/argocd/commands/login.go
+https://github.com/argoproj/argo-cd/blob/v2.12.3/cmd/argocd/commands/relogin.go

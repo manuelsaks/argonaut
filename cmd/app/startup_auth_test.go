@@ -134,16 +134,17 @@ func TestSelectingAnotherContextCancelsPendingSSOAndRejectsItsReply(t *testing.T
 
 type startupProbeMsg struct{ Reply chan startupSnapshot }
 type startupSnapshot struct {
-	View model.View
-	Mode model.Mode
-	Row  int
-	Busy bool
+	View    model.View
+	Mode    model.Mode
+	Row     int
+	Busy    bool
+	Renewed bool
 }
 type responsiveSSOModel struct{ *Model }
 
 func (m *responsiveSSOModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	if msg, ok := message.(startupProbeMsg); ok {
-		msg.Reply <- startupSnapshot{m.state.Navigation.View, m.state.Mode, m.state.Navigation.SelectedIdx, m.reloginInProgress}
+		msg.Reply <- startupSnapshot{View: m.state.Navigation.View, Mode: m.state.Mode, Row: m.state.Navigation.SelectedIdx, Busy: m.reloginInProgress, Renewed: m.state.Server != nil && m.state.Server.Token == "renewed-test-token"}
 		return m, nil
 	}
 	updated, cmd := m.Model.Update(message)

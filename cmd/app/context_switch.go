@@ -76,6 +76,9 @@ func (m *Model) closeContextPicker() (tea.Model, tea.Cmd) {
 // performContextSwitch re-reads the ArgoCD config and resolves the named context.
 // Returns a ContextSwitchResultMsg with the new server config or an error.
 func (m *Model) performContextSwitch(contextName string) tea.Cmd {
+	if m.reloginInProgress && m.reloginContext == contextName && m.currentContextName == contextName {
+		return m.showFooterNotice("SSO: signing in to " + contextName + "; finish browser login first")
+	}
 	// A login completing while this selection resolves must not steal focus
 	// back or invalidate the user's context-switch result.
 	m.cancelContextRelogin()
