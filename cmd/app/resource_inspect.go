@@ -204,12 +204,14 @@ func (m *Model) startResourceInspection(target inspectionTarget, kind string) te
 		}
 		var events []model.ResourceEvent
 		var diffText string
+		var diffErr error
 		var diffLoad sync.WaitGroup
 		diffLoad.Go(func() {
 			diffCtx, diffCancel := appcontext.WithMinAPITimeout(ctx, 45*time.Second)
 			defer diffCancel()
 			ns := target.AppNamespace
 			diffs, err := services.NewArgoApiService(server).GetResourceDiffs(diffCtx, server, target.AppName, &ns)
+			diffErr = err
 			if err != nil {
 				diffText = "  Unavailable through Argo CD: " + err.Error() + "\n"
 			} else {
@@ -229,10 +231,16 @@ func (m *Model) startResourceInspection(target inspectionTarget, kind string) te
 			eventCancel()
 			if eventErr != nil {
 				notice = "Unavailable through Argo CD: " + eventErr.Error()
+				if requiresRelogin(eventErr) {
+					msg.Error = eventErr
+				}
 			}
 		}
 		msg.Text = describeInspectionObject(object, document.Desired, events, notice)
 		diffLoad.Wait()
+		if requiresRelogin(diffErr) {
+			msg.Error = diffErr
+		}
 		msg.Text += "\nDiff (live -> desired):\n" + diffText
 		return msg
 	}

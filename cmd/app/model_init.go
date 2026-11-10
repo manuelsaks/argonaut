@@ -220,7 +220,7 @@ func (m *Model) validateAuthentication() tea.Cmd {
 				return model.AuthValidationResultMsg{Mode: model.ModeCoreDetected, SwitchEpoch: epoch}
 			}
 			cblog.With("component", "auth").Info("No server configured - showing auth required")
-			return model.AuthValidationResultMsg{Mode: model.ModeAuthRequired, SwitchEpoch: epoch}
+			return model.AuthValidationResultMsg{Mode: model.ModeAuthRequired, SwitchEpoch: epoch, NeedsLogin: true}
 		}
 
 		// Create API service to validate authentication

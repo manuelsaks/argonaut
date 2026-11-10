@@ -195,13 +195,17 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "esc", "q":
 			st.Confirm, st.Draft = false, nil
 			st.Error = ""
-		case "ctrl+p":
-			return m, m.executeKargoPromotion()
+		case "ctrl+p", "ctrl+t":
+			if st.Draft != nil && ((st.Draft.RetryOf == "" && key == "ctrl+p") || (st.Draft.RetryOf != "" && key == "ctrl+t")) {
+				return m, m.executeKargoPromotion()
+			}
 		}
 		return m, nil
 	}
 	if m.state.Diff != nil {
 		switch key {
+		case "ctrl+t":
+			return m, m.prepareKargoRetry()
 		case "esc", "q":
 			m.cancelKargoLoad()
 			st.Detail, st.DetailKind = nil, ""
@@ -249,6 +253,8 @@ func (m *Model) handleKargoKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	switch key {
+	case "ctrl+t":
+		return m, m.prepareKargoRetry()
 	case "q":
 		return m, func() tea.Msg { return model.QuitMsg{} }
 	case "a":
@@ -439,6 +445,51 @@ func (m *Model) startKargoPromotion() tea.Cmd {
 		st.Stage = draft.Stage
 	}
 	return m.loadKargoView(true)
+}
+
+// Kargo's own Retry action submits the same Freight to the same Stage as a
+// new Promotion. Terminal failures cannot be resumed from the failed step.
+func kargoPromotionRetryable(resource kargo.Resource) bool {
+	if resource.Kind != "Promotion" {
+		return false
+	}
+	switch resource.Phase() {
+	case "Failed", "Errored", "Aborted":
+		return true
+	}
+	return false
+}
+
+func (m *Model) selectedKargoPromotion() (kargo.Resource, bool) {
+	st := m.kargo
+	if st.Detail != nil {
+		return *st.Detail, kargoPromotionRetryable(*st.Detail)
+	}
+	rows := m.kargoRows()
+	if st.Cursor >= 0 && st.Cursor < len(rows) {
+		resource := rows[st.Cursor].Resource
+		return resource, kargoPromotionRetryable(resource)
+	}
+	return kargo.Resource{}, false
+}
+
+func (m *Model) prepareKargoRetry() tea.Cmd {
+	st := m.kargo
+	resource, retryable := m.selectedKargoPromotion()
+	if !retryable || st.Client == nil || st.LoginBusy {
+		return m.showFooterNotice("Retry is available for Failed, Errored or Aborted Promotions")
+	}
+	stage, freight := resource.String("spec.stage"), resource.String("spec.freight")
+	if resource.Project != st.Project || stage == "" || freight == "" {
+		return m.showFooterNotice("Promotion has no unambiguous project, Stage or Freight; refresh first")
+	}
+	m.cancelKargoLoad()
+	connection := st.Connections[st.Connection]
+	st.Draft = &kargoPromotion{Connection: connection.Name, Server: st.Client.Connection.Server, Project: st.Project, Stage: stage, Freight: freight, RetryOf: resource.Name}
+	st.Confirm, st.ConfirmOffset, st.Error = true, 0, ""
+	st.Detail, st.DetailKind = nil, ""
+	m.state.Diff, m.state.Mode = nil, model.ModeNormal
+	return nil
 }
 
 func (m *Model) showKargoText(title, text string) {

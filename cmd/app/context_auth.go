@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -22,6 +24,7 @@ type contextReloginMsg struct {
 	RequestID   int
 	Server      *model.Server
 	Interactive bool
+	Probed      bool
 	Error       error
 }
 
@@ -30,13 +33,18 @@ func requiresRelogin(err error) bool {
 		return false
 	}
 	if argErr, ok := errors.AsType[*apperrors.ArgonautError](err); ok {
-		return argErr != nil && !hasHTTPStatusCtx(argErr, 403) && argErr.Category == apperrors.ErrorAuth
+		if argErr == nil || hasHTTPStatusCtx(argErr, 403) || argErr.Category == apperrors.ErrorPermission {
+			return false
+		}
+		if argErr.Category == apperrors.ErrorAuth || hasHTTPStatusCtx(argErr, 401) {
+			return true
+		}
 	}
 	text := strings.ToLower(err.Error())
 	if strings.Contains(text, "403") || strings.Contains(text, "forbidden") || strings.Contains(text, "permission denied") {
 		return false
 	}
-	return strings.Contains(text, "401") || strings.Contains(text, "unauthenticated") || strings.Contains(text, "unauthorized") || strings.Contains(text, "token expired") || strings.Contains(text, "token is expired") || strings.Contains(text, "invalid session")
+	return strings.Contains(text, "401") || strings.Contains(text, "unauthenticated") || strings.Contains(text, "unauthorized") || strings.Contains(text, "token expired") || strings.Contains(text, "token is expired") || strings.Contains(text, "invalid session") || strings.Contains(text, "no auth token") || strings.Contains(text, "not logged in") || strings.Contains(text, "not authenticated") || strings.Contains(text, "invalid token")
 }
 
 func (m *Model) selectedArgoContext() string {
@@ -104,8 +112,18 @@ func argoCDCommand(ctx context.Context, executable, configPath, contextName stri
 	if pf, _ := cfg.IsContextPortForward(contextName); pf {
 		return nil, fmt.Errorf("port-forward contexts do not support live login")
 	}
-	if _, err := cfg.ToServerConfigForContext(contextName); err != nil {
+	connection, err := cfg.ConnectionForContext(contextName)
+	if err != nil {
 		return nil, err
+	}
+	// relogin needs claims from the previous JWT. With no saved token, use
+	// the official SSO login, explicitly bound to the saved server and name.
+	if len(args) == 1 && args[0] == "relogin" && connection.Token == "" {
+		for _, c := range cfg.Contexts {
+			if c.Name == contextName {
+				args = []string{"login", c.Server, "--sso", "--name", contextName}
+			}
+		}
 	}
 	args = append(args, "--config", configPath, "--argocd-context", contextName)
 	for _, c := range cfg.Contexts {
@@ -114,6 +132,12 @@ func argoCDCommand(ctx context.Context, executable, configPath, contextName stri
 		}
 		for _, s := range cfg.Servers {
 			if s.Server == c.Server {
+				if s.Insecure {
+					args = append(args, "--insecure")
+				}
+				if s.PlainText {
+					args = append(args, "--plaintext")
+				}
 				if s.GrpcWeb {
 					args = append(args, "--grpc-web")
 				}
@@ -144,7 +168,16 @@ func (m *Model) maybeAutoReloginForContext(name string) (tea.Cmd, bool) {
 		return nil, false
 	}
 	if m.reloginInProgress {
+		if name != m.reloginContext && !slices.Contains(m.reloginQueue, name) {
+			m.reloginQueue = append(m.reloginQueue, name)
+		}
 		return nil, true
+	}
+	// A CLI account read can exit successfully even when userinfo says
+	// loggedIn=false. If the API rejects that probe, escalate to browser SSO
+	// once, rather than throttling it as a failed browser login.
+	if m.reloginProbed[name] {
+		return m.beginContextRelogin(name, false), true
 	}
 	// An expired refresh token, cancelled SSO, or invalid credentials must not
 	// open a browser or ask for a password in an endless retry loop.
@@ -152,6 +185,31 @@ func (m *Model) maybeAutoReloginForContext(name string) (tea.Cmd, bool) {
 		return nil, false
 	}
 	return m.beginContextRelogin(name, true), true
+}
+
+func (m *Model) markContextAuthenticated(name string) {
+	delete(m.reloginAttempts, name)
+	delete(m.reloginProbed, name)
+}
+
+// Browser callbacks and CLI config writes must run serially. Never drop a
+// context just because another context currently owns the SSO callback port.
+func (m *Model) nextContextRelogin() tea.Cmd {
+	for !m.reloginInProgress && len(m.reloginQueue) > 0 {
+		name := m.reloginQueue[0]
+		m.reloginQueue = m.reloginQueue[1:]
+		if cmd, handled := m.maybeAutoReloginForContext(name); handled {
+			return cmd
+		}
+	}
+	return nil
+}
+
+func (m *Model) autoReloginForError(err error) (tea.Cmd, bool) {
+	if requiresRelogin(err) {
+		return m.maybeAutoRelogin()
+	}
+	return nil, false
 }
 
 func (m *Model) beginContextRelogin(name string, automatic bool) tea.Cmd {
@@ -170,6 +228,8 @@ func (m *Model) beginContextRelogin(name string, automatic bool) tea.Cmd {
 	executable := m.config.GetArgoCDCommand()
 	m.reloginInProgress = true
 	m.reloginContext = name
+	delete(m.reloginProbed, name)
+	m.state.UI.FooterNotice = "SSO: signing in to " + name
 	if name == m.currentContextName {
 		m.cleanupAppWatcher()
 		if m.state.Navigation.View == model.ViewTree {
@@ -191,16 +251,29 @@ func (m *Model) beginContextRelogin(name string, automatic bool) tea.Cmd {
 	return func() tea.Msg {
 		msg := contextReloginMsg{ContextName: name, SwitchEpoch: epoch, RequestID: seq}
 		defer cancel()
-		cmd, err := argoCDCommand(ctx, executable, path, name, "account", "get-user-info")
+		cmd, err := argoCDCommand(ctx, executable, path, name, "account", "get-user-info", "--output", "json")
 		if err != nil {
 			msg.Error = err
 			return msg
 		}
-		if err := cmd.Run(); err != nil {
+		output, err := cmd.Output()
+		if err != nil {
+			msg.Interactive = true
+			return msg
+		}
+		var info struct {
+			LoggedIn *bool `json:"loggedIn"`
+		}
+		if json.Unmarshal(output, &info) == nil && info.LoggedIn != nil && !*info.LoggedIn {
 			msg.Interactive = true
 			return msg
 		}
 		msg.Server, msg.Error = readReloggedServer(path, name)
+		if requiresRelogin(msg.Error) {
+			msg.Error, msg.Interactive = nil, true
+			return msg
+		}
+		msg.Probed = msg.Error == nil
 		return msg
 	}
 }
@@ -227,7 +300,7 @@ func (m *Model) interactiveContextRelogin(name string, epoch, seq int, path, exe
 		defer cancel()
 		msg := contextReloginMsg{ContextName: name, SwitchEpoch: epoch, RequestID: seq}
 		if err != nil {
-			msg.Error = fmt.Errorf("Argo CD CLI login did not complete; press L to retry")
+			msg.Error = fmt.Errorf("Argo CD CLI login did not complete; Ctrl+L retries")
 			return msg
 		}
 		msg.Server, msg.Error = readReloggedServer(path, name)
@@ -242,6 +315,7 @@ func (m *Model) cancelContextRelogin() {
 	}
 	m.reloginInProgress = false
 	m.reloginContext = ""
+	m.reloginQueue = nil
 	m.reloginSeq++
 }
 
@@ -269,9 +343,28 @@ func (m *Model) handleContextRelogin(msg contextReloginMsg) (tea.Model, tea.Cmd)
 		if m.allContexts == nil && m.state.Navigation.View != model.ViewContexts {
 			m.state.Mode = model.ModeAuthRequired
 		}
-		return m, m.showFooterNotice("Login failed: " + msg.Error.Error())
+		next := m.nextContextRelogin()
+		if next == nil && m.allContexts != nil {
+			next = m.reloadAllContexts()
+		}
+		return m, tea.Batch(m.showFooterNotice("Login failed: "+msg.ContextName+": "+msg.Error.Error()), next)
+	}
+	if m.reloginValidated == nil {
+		m.reloginValidated = map[string]bool{}
+	}
+	m.reloginValidated[msg.ContextName] = true
+	if msg.Probed {
+		if m.reloginProbed == nil {
+			m.reloginProbed = map[string]bool{}
+		}
+		m.reloginProbed[msg.ContextName] = true
 	}
 	if m.allContexts != nil {
+		// Re-read tokens only after the queue drains. Reloading during SSO
+		// otherwise cancels the other contexts and races CLI config updates.
+		if next := m.nextContextRelogin(); next != nil {
+			return m, next
+		}
 		reload := m.reloadAllContexts()
 		var inspection tea.Cmd
 		if st := m.inspection; st != nil && st.Target.ContextName == msg.ContextName {
@@ -282,7 +375,7 @@ func (m *Model) handleContextRelogin(msg contextReloginMsg) (tea.Model, tea.Cmd)
 	// Logging into an inactive row refreshes its CLI credentials without
 	// changing the currently selected server in this TUI.
 	if msg.ContextName != m.currentContextName {
-		return m, m.showFooterNotice("Logged in: " + msg.ContextName)
+		return m, tea.Batch(m.showFooterNotice("Logged in: "+msg.ContextName), m.nextContextRelogin())
 	}
 	if m.state.Server != nil && msg.Server.BaseURL != m.state.Server.BaseURL {
 		return m, m.showFooterNotice("Context server changed during login; select the context again")

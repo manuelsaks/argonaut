@@ -1,0 +1,56 @@
+Argo CD / Kargo recovery fixes - 2026-11-10
+
+Changes
+- Fetch ApplicationSets from /api/v1/applicationsets independently of app ownerReferences.
+  Preserve namespace/context identity, including sets with zero generated Applications.
+  Cache registries for five minutes; manual refresh bypasses the cache.
+  The Argo CD ApplicationSet API does not support a fields projection.
+- Authenticate enabled Argo CD contexts before opening them. The all view serializes
+  CLI refresh / browser SSO across all enabled contexts rather than dropping busy logins.
+  Handle missing credentials and loggedIn=false even when HTTP or CLI returns success.
+  On later session failures, renew credentials from app, registry, inspection, events,
+  resource action, delete/sync, refresh and tree-watch flows. Never replay writes.
+  Genuine HTTP 403/RBAC denials remain permission errors; cancelled/failed SSO is throttled.
+- Leave mouse capture disabled by default for native terminal selection/copy.
+  Optional [clipboard] mouse_selection=true retains built-in drag selection.
+  Ctrl+Y copies the complete document or focused diff pane. Report clipboard failures;
+  Windows does not silently pretend an unsupported OSC 52 sequence copied successfully.
+- Ctrl+T retries Failed / Errored / Aborted Kargo Promotions from the list or describe.
+  A second Ctrl+T explicitly confirms instance/server/project/Stage/Freight.
+  Re-read the original Promotion and reject a changed/non-retryable target before POST.
+  Follow official Kargo UI semantics: create a new same-Freight, same-Stage Promotion
+  using the current Stage template. Do not resume a failed step or replay writes.
+
+Verification
+- PASS: GOTOOLCHAIN=go1.26.10 go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See recovery-race.log.
+- PASS: final additional CLI loggedIn=false / missing-token cases and all cmd/app
+  race tests. See recovery-auth-final.log.
+- PASS: Windows amd64 build, native PTY TestTerminalWindowsRestoresConsoleModes.
+- PASS: new Windows executable --version / --help under Git Bash.
+- PASS: Linux amd64 cross-build with CGO_ENABLED=0.
+- Tests cover serial multi-context SSO and deduplication, failure continuation,
+  missing-token context selection, subsequent session expiry, empty AppSets with
+  identical names in different namespaces/contexts, cache/manual refresh, clipboard
+  completion/failure, Kargo retry confirmation and stale-phase rejection.
+- Existing responsive UI/layout and snapshot tests pass in the full suite.
+
+Artifacts
+- C:\tmp\argonaut\argonaut.exe
+  SHA256: 14B559F0753FBD3E323B513FFF0A2C20EBB098075BFF743AE2FCE9E1E07C4643
+- .audit/argonaut-windows.exe (same Windows binary)
+- .audit/argonaut-linux-check
+
+Limits
+- Corporate Argo CD/Kargo endpoints and real IdP/MFA were not accessed.
+- Native terminal selection was verified via mouse configuration and terminal tests;
+  an interactive copy/paste session in the user's particular terminal was not exercised.
+- Test CLI credentials and API payloads are local fixtures, not user secrets.
+
+Primary protocol references consulted
+- https://github.com/argoproj/argo-cd/blob/master/cmd/argocd/commands/account.go
+- https://github.com/argoproj/argo-cd/blob/master/cmd/argocd/commands/relogin.go
+- https://github.com/argoproj/argo-cd/blob/master/server/applicationset/applicationset.go
+- https://github.com/argoproj/argo-cd/blob/master/server/applicationset/applicationset.proto
+- https://github.com/akuity/kargo/blob/main/ui/src/features/stage/promotions.tsx
+- https://github.com/akuity/kargo/blob/main/ui/src/features/common/promotion-status/utils.ts

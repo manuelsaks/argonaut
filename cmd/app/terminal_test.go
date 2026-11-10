@@ -22,8 +22,12 @@ func TestTerminalResetDisablesReportsWithoutQueryingTheShell(t *testing.T) {
 		t.Fatal("cleanup must not solicit terminal responses after input stops")
 	}
 	m := buildSyncTestModel(80, 24)
+	if m.View().MouseMode != tea.MouseModeNone {
+		t.Fatal("default mouse handling must leave selection to the terminal")
+	}
+	m.config.Clipboard.MouseSelection = true
 	if m.View().MouseMode != tea.MouseModeCellMotion {
-		t.Fatal("hover movement should not generate terminal input")
+		t.Fatal("opt-in application selection should report drag movements only")
 	}
 }
 

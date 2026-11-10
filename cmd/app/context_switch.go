@@ -69,10 +69,11 @@ func (m *Model) performContextSwitch(contextName string) tea.Cmd {
 	}
 	currentCtx := m.currentContextName
 	fromOverview := m.allContexts != nil
+	autoLogin := m.config.IsAutoReloginEnabled(contextName)
 	return func() tea.Msg {
 		result := model.ContextSwitchResultMsg{ContextName: contextName, SwitchEpoch: epoch, RequestID: seq}
 		// Same-context no-op
-		if contextName == currentCtx && !fromOverview {
+		if contextName == currentCtx && !fromOverview && !autoLogin {
 			return result
 		}
 
@@ -95,6 +96,9 @@ func (m *Model) performContextSwitch(contextName string) tea.Cmd {
 
 		// Resolve context to Server
 		server, err := cfg.ToServerConfigForContext(contextName)
+		if autoLogin {
+			server, err = cfg.ConnectionForContext(contextName)
+		}
 		if err != nil {
 			result.Error = err
 			return result
@@ -118,7 +122,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 		m.statusService.Error(message)
 		return m, m.showFooterNotice(message)
 	}
-	if msg.ContextName == m.currentContextName && !msg.Reload && m.allContexts == nil {
+	if msg.ContextName == m.currentContextName && !msg.Reload && m.allContexts == nil && !m.config.IsAutoReloginEnabled(msg.ContextName) {
 		m.statusService.Set("Already on context: " + msg.ContextName)
 		if m.state.Navigation.View == model.ViewContexts {
 			return m.closeContextPicker()
@@ -156,10 +160,20 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 	newM.state.ContextNames = msg.ContextNames // From result (no 2nd config read)
 	newM.switchEpoch = m.switchEpoch + 1       // Increment epoch
 	newM.reloginAttempts = m.reloginAttempts   // Throttle failed login loops across context switches.
+	newM.reloginProbed = m.reloginProbed
 	if msg.Reload && msg.ContextName == m.currentContextName {
 		newM.allOverview = m.allOverview
 	}
 
+	// Validate/refresh through the CLI before opening an enabled context.
+	// A completed login reload must validate via the API rather than recurse.
+	if !msg.Reload {
+		delete(newM.reloginAttempts, msg.ContextName)
+		delete(newM.reloginProbed, msg.ContextName)
+		if login, handled := newM.maybeAutoRelogin(); handled {
+			return newM, tea.Batch(newM.spinner.Tick, login)
+		}
+	}
 	// 5. Start fresh load cycle
 	return newM, tea.Batch(
 		newM.spinner.Tick,

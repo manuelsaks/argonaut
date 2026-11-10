@@ -24,6 +24,9 @@ type allContextsState struct {
 	Destinations         map[string][]model.DestinationServer
 	DestinationFetchedAt map[string]time.Time
 	DestinationPending   map[string]bool
+	ApplicationSets      map[string][]model.ApplicationSet
+	AppSetFetchedAt      map[string]time.Time
+	AppSetPending        map[string]bool
 	Errors               map[string]string
 	Pending              map[string]bool
 	Cancel               context.CancelFunc
@@ -110,6 +113,13 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 	if st.DestinationFetchedAt == nil {
 		st.DestinationFetchedAt = map[string]time.Time{}
 	}
+	st.AppSetPending = map[string]bool{}
+	if st.ApplicationSets == nil {
+		st.ApplicationSets = map[string][]model.ApplicationSet{}
+	}
+	if st.AppSetFetchedAt == nil {
+		st.AppSetFetchedAt = map[string]time.Time{}
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	st.Cancel = cancel
 	concurrency := 4
@@ -127,7 +137,14 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 			st.Errors[name] = "port-forward context is excluded"
 			continue
 		}
-		server, err := cfg.ToServerConfigForContext(name)
+		if m.config.IsAutoReloginEnabled(name) && !m.reloginValidated[name] {
+			if login, handled := m.maybeAutoReloginForContext(name); handled {
+				commands = append(commands, login)
+				st.Errors[name] = "SSO: signing in..."
+				continue
+			}
+		}
+		server, err := cfg.ConnectionForContext(name)
 		if err != nil {
 			st.Errors[name] = err.Error()
 			continue
@@ -137,6 +154,8 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 			delete(st.Apps, name)
 			delete(st.Destinations, name)
 			delete(st.DestinationFetchedAt, name)
+			delete(st.ApplicationSets, name)
+			delete(st.AppSetFetchedAt, name)
 		}
 		st.Pending[name] = true
 		commands = append(commands, func() tea.Msg {
@@ -154,6 +173,23 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 			appCancel()
 			return msg
 		})
+		if force || m.now().Sub(st.AppSetFetchedAt[name]) >= 5*time.Minute {
+			st.AppSetPending[name] = true
+			commands = append(commands, func() tea.Msg {
+				msg := applicationSetsMsg{SwitchEpoch: epoch, Sequence: sequence, ContextName: name}
+				select {
+				case limit <- struct{}{}:
+				case <-ctx.Done():
+					msg.Error = ctx.Err()
+					return msg
+				}
+				defer func() { <-limit }()
+				requestCtx, requestCancel := appcontext.WithAPITimeout(ctx)
+				defer requestCancel()
+				msg.Items, msg.Error = api.NewApplicationService(server).ListApplicationSets(requestCtx)
+				return msg
+			})
+		}
 		// Registry data changes infrequently. Keep it in memory, and deliver it
 		// independently so a slow /clusters never delays rendering Applications.
 		if force || m.now().Sub(st.DestinationFetchedAt[name]) >= 5*time.Minute {
@@ -179,6 +215,8 @@ func (m *Model) loadAllContexts(force bool) tea.Cmd {
 			delete(st.Apps, name)
 			delete(st.Destinations, name)
 			delete(st.DestinationFetchedAt, name)
+			delete(st.ApplicationSets, name)
+			delete(st.AppSetFetchedAt, name)
 		}
 	}
 	m.rebuildAllContextItems()
@@ -212,12 +250,19 @@ func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.
 			delete(st.Apps, msg.ContextName)
 			delete(st.Destinations, msg.ContextName)
 			delete(st.DestinationFetchedAt, msg.ContextName)
+			delete(st.ApplicationSets, msg.ContextName)
+			delete(st.AppSetFetchedAt, msg.ContextName)
 		}
 		st.Errors[msg.ContextName] = msg.Error.Error()
 		if requiresRelogin(msg.Error) {
-			relogin, _ = m.maybeAutoReloginForContext(msg.ContextName)
+			var handled bool
+			relogin, handled = m.maybeAutoReloginForContext(msg.ContextName)
+			if handled {
+				st.Errors[msg.ContextName] = "SSO: signing in..."
+			}
 		}
 	} else {
+		m.markContextAuthenticated(msg.ContextName)
 		for i := range msg.Apps {
 			msg.Apps[i].ContextName = msg.ContextName
 		}
@@ -225,7 +270,7 @@ func (m *Model) handleAllContextLoaded(msg allContextLoadedMsg) (tea.Model, tea.
 	}
 	m.rebuildAllContextItems()
 	m.updateAllContextsStatus()
-	if len(st.Pending) == 0 && len(st.DestinationPending) == 0 {
+	if m.allContextLoadsDone() {
 		return m, tea.Batch(relogin, m.nextAllContextsRefresh())
 	}
 	return m, relogin
@@ -237,8 +282,16 @@ func (m *Model) handleAllContextDestinations(msg allContextDestinationsMsg) (tea
 		return m, nil
 	}
 	delete(st.DestinationPending, msg.ContextName)
+	var relogin tea.Cmd
 	if msg.Error != nil {
 		st.Errors[msg.ContextName+" (servers)"] = "server registry: " + msg.Error.Error()
+		if requiresRelogin(msg.Error) {
+			var handled bool
+			relogin, handled = m.maybeAutoReloginForContext(msg.ContextName)
+			if handled {
+				st.Errors[msg.ContextName+" (servers)"] = "SSO: signing in..."
+			}
+		}
 	} else if st.Errors[msg.ContextName] == "" {
 		for i := range msg.Servers {
 			msg.Servers[i].ContextName = msg.ContextName
@@ -248,10 +301,15 @@ func (m *Model) handleAllContextDestinations(msg allContextDestinationsMsg) (tea
 	}
 	m.rebuildAllContextItems()
 	m.updateAllContextsStatus()
-	if len(st.Pending) == 0 && len(st.DestinationPending) == 0 {
-		return m, m.nextAllContextsRefresh()
+	if m.allContextLoadsDone() {
+		return m, tea.Batch(relogin, m.nextAllContextsRefresh())
 	}
-	return m, nil
+	return m, relogin
+}
+
+func (m *Model) allContextLoadsDone() bool {
+	st := m.allContexts
+	return len(st.Pending) == 0 && len(st.DestinationPending) == 0 && len(st.AppSetPending) == 0
 }
 
 func (m *Model) rebuildAllContextItems() {
@@ -268,9 +326,11 @@ func (m *Model) rebuildAllContextItems() {
 	}
 	m.state.Apps = nil
 	m.state.DestinationServers = nil
+	m.state.ApplicationSets = nil
 	for _, name := range m.state.ContextNames {
 		m.state.Apps = append(m.state.Apps, st.Apps[name]...)
 		m.state.DestinationServers = append(m.state.DestinationServers, st.Destinations[name]...)
+		m.state.ApplicationSets = append(m.state.ApplicationSets, st.ApplicationSets[name]...)
 	}
 	m.destinationLoaded = true
 	m.rebuildAppIndex()

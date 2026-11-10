@@ -70,6 +70,7 @@ func (m *Model) handleNetworkSnapshot(msg networkSnapshotMsg) (tea.Model, tea.Cm
 	if msg.Result == nil {
 		return m, m.nextNetworkPoll()
 	}
+	m.markContextAuthenticated(m.currentContextName)
 	selected := ""
 	if m.state.Navigation.View == model.ViewApps {
 		items := m.getVisibleItems()
@@ -93,7 +94,7 @@ func (m *Model) handleNetworkSnapshot(msg networkSnapshotMsg) (tea.Model, tea.Cm
 	m.listNav.SetItemCount(len(items))
 	m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
 	m.statusService.Set(fmt.Sprintf("Updated %s | low bandwidth | refresh %s", m.now().Format("15:04:05"), m.config.GetNetworkRefreshInterval()))
-	return m, tea.Batch(m.ensureDestinationServers(), m.nextNetworkPoll())
+	return m, tea.Batch(m.ensureDestinationServers(), m.ensureApplicationSets(), m.nextNetworkPoll())
 }
 
 // An explicit refresh replaces the pending poll instead of starting another

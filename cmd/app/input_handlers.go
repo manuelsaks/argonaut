@@ -510,7 +510,7 @@ func (m *Model) handleEscape() (tea.Model, tea.Cmd) {
 				m.state.Selections.ScopeApplicationSets = model.NewStringSet()
 				m = m.safeChangeView(model.ViewApplicationSets)
 				m.state.Navigation.SelectedIdx = 0
-				return m, nil
+				return m, m.ensureApplicationSets()
 			}
 			// Clear current level (selected apps) and prior (projects), go up to Projects
 			m.state.Selections.SelectedApps = model.NewStringSet()
@@ -1920,6 +1920,13 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			text = m.selection.ExtractText(m.lastRenderedLines)
 		}
 		return m, clipboard.CopyCmd(text)
+	}
+	if msg.String() == "ctrl+y" && m.state.Diff != nil && !m.state.Diff.Loading {
+		lines := m.state.Diff.Content
+		if m.state.Diff.FocusDiff && len(m.state.Diff.SideContent) > 0 {
+			lines = m.state.Diff.SideContent
+		}
+		return m, clipboard.CopyCmd(strings.Join(lines, "\n"))
 	}
 	if m.selection != nil && !m.selection.IsEmpty() && msg.String() != "esc" {
 		m.selection.Clear()

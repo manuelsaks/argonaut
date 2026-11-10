@@ -486,6 +486,14 @@ func TestAppSetCommandAutocomplete(t *testing.T) {
 	}
 }
 
+func TestAppSetCommandAutocompleteIncludesEmptyRegistrySets(t *testing.T) {
+	state := &model.AppState{ApplicationSets: []model.ApplicationSet{{ContextName: "prod", Name: "empty", Namespace: "argocd"}}}
+	suggestions := NewAutocompleteEngine().GetArgumentSuggestions("appset", "empty", state)
+	if len(suggestions) != 1 || suggestions[0] != ":appset prod::argocd/empty" {
+		t.Fatalf("empty ApplicationSet omitted from completion: %v", suggestions)
+	}
+}
+
 func TestAppSetCommandAutocomplete_NoAppSets(t *testing.T) {
 	engine := NewAutocompleteEngine()
 

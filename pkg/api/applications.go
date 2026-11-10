@@ -11,6 +11,7 @@ import (
 	"time"
 
 	cblog "github.com/charmbracelet/log"
+	apperrors "github.com/darksworm/argonaut/pkg/errors"
 	"github.com/darksworm/argonaut/pkg/model"
 )
 
@@ -971,8 +972,15 @@ func (s *ApplicationService) GetUserInfo(ctx context.Context) (string, error) {
 	}
 	var info struct {
 		Username string `json:"username"`
+		LoggedIn *bool  `json:"loggedIn"`
 	}
-	_ = json.Unmarshal(data, &info) // authentication already proven by the 200
+	if err := json.Unmarshal(data, &info); err != nil {
+		return "", fmt.Errorf("invalid Argo CD user info: %w", err)
+	}
+	// This endpoint returns HTTP 200 for anonymous sessions too.
+	if info.LoggedIn != nil && !*info.LoggedIn {
+		return "", apperrors.New(apperrors.ErrorAuth, "UNAUTHENTICATED", "Argo CD session is not authenticated")
+	}
 	return info.Username, nil
 }
 

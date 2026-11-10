@@ -443,6 +443,14 @@ func (e *AutocompleteEngine) getProjectSuggestions(prefix string, state *model.A
 func (e *AutocompleteEngine) getAppSetSuggestions(prefix string, state *model.AppState) []string {
 	var suggestions []string
 	seen := make(map[string]bool)
+	for _, set := range state.ApplicationSets {
+		key := set.Key()
+		_, localKey := model.SplitContextKey(key)
+		if strings.HasPrefix(strings.ToLower(key), prefix) || strings.HasPrefix(strings.ToLower(localKey), prefix) || strings.HasPrefix(strings.ToLower(set.Name), prefix) {
+			suggestions = append(suggestions, key)
+			seen[strings.ToLower(key)] = true
+		}
+	}
 
 	for _, app := range state.Apps {
 		if app.ApplicationSet == nil {

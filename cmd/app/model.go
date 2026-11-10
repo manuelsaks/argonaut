@@ -44,6 +44,7 @@ type Model struct {
 	destinationLoading   bool
 	destinationError     string
 	destinationFetchedAt time.Time
+	applicationSets      *applicationSetsState
 	networkPollSeq       int
 	networkPollCancel    context.CancelFunc
 	networkPollLoading   bool
@@ -189,6 +190,9 @@ type Model struct {
 	reloginInProgress  bool
 	reloginAttempts    map[string]time.Time
 	reloginCancel      context.CancelFunc
+	reloginQueue       []string
+	reloginValidated   map[string]bool
+	reloginProbed      map[string]bool
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -272,8 +276,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case clipboard.CopyMsg:
-		// Clipboard copy completed (success or failure logged elsewhere)
-		return m, nil
+		if msg.Success {
+			return m, m.showCopiedStatus()
+		}
+		return m, m.showFooterNotice("Copy failed; use terminal selection and Ctrl+Shift+C (or configure clipboard.copy_command)")
 
 	// Tree stream messages from watcher goroutine
 	case model.ResourceTreeStreamMsg:
@@ -304,7 +310,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if msg.err != nil {
 			m.statusService.Error("Tree watch failed: " + msg.err.Error())
-			return m, nil
+			login, _ := m.autoReloginForError(msg.err)
+			return m, login
 		}
 		if msg.cleanup != nil {
 			m.treeWatchCleanups = append(m.treeWatchCleanups, msg.cleanup)
@@ -376,6 +383,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Mode messages
 	case model.SetModeMsg:
+		if m.reloginInProgress && (msg.Mode == model.ModeAuthRequired || msg.Mode == model.ModeConnectionError || msg.Mode == model.ModeLoading) {
+			return m, nil // Late API errors must not replace an active SSO login.
+		}
 		if m.state.Navigation.View == model.ViewKargo {
 			return m, nil
 		}
@@ -544,6 +554,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			"watchChan_nil", m.watchChan == nil,
 			"resourceVersion", msg.ResourceVersion)
 		m.state.Apps = msg.Apps
+		m.markContextAuthenticated(m.currentContextName)
 		m.rebuildAppIndex()
 		// Store resource version for watch coordination
 		if msg.ResourceVersion != "" {
@@ -570,11 +581,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				func() tea.Msg { return model.SetModeMsg{Mode: targetMode} },
 				m.startWatchingApplications(),
 				m.ensureDestinationServers(),
+				m.ensureApplicationSets(),
 			)
 		}
 		// Watch is already running — the batch handler maintains the chain.
 		// Do NOT call consumeWatchEvents() here to avoid duplicate consumers.
-		return m, tea.Batch(func() tea.Msg { return model.SetModeMsg{Mode: targetMode} }, m.ensureDestinationServers())
+		return m, tea.Batch(func() tea.Msg { return model.SetModeMsg{Mode: targetMode} }, m.ensureDestinationServers(), m.ensureApplicationSets())
 
 	case model.AppsBatchUpdateMsg:
 		// Gate by switch epoch — discard entire batch from a previous context
@@ -1065,7 +1077,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state.Modals.DeleteError = &msg.Error
 		m.state.Modals.DeleteLoading = false
 		// Keep modal open to show error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.ResourceDeleteSuccessMsg:
 		if msg.SwitchEpoch != m.switchEpoch {
@@ -1112,7 +1125,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state.Modals.ResourceDeleteError = &msg.Error
 		m.state.Modals.ResourceDeleteLoading = false
 		// Keep modal open to show error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.ResourceSyncSuccessMsg:
 		// Gate by switch epoch
@@ -1162,6 +1176,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				st.Error = msg.Error
 				st.Loading = false
 			}
+			if owned {
+				login, _ := m.autoReloginForError(errors.New(msg.Error))
+				return m, login
+			}
 			return m, nil
 		}
 		m.statusService.Set(fmt.Sprintf("Terminating operation for %s", msg.AppName))
@@ -1179,7 +1197,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state.Modals.ResourceSyncError = &msg.Error
 		m.state.Modals.ResourceSyncLoading = false
 		// Keep modal open to show error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.PaneFetchDueMsg:
 		if msg.SwitchEpoch != m.switchEpoch {
@@ -1255,7 +1274,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		st.Loading = false
 		st.Error = msg.Error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.SyncStatusLoadedMsg:
 		if msg.SwitchEpoch != m.switchEpoch {
@@ -1282,7 +1302,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		st.DetailsLoading = false
 		st.DetailsError = msg.Error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.ResourceActionsLoadedMsg:
 		if msg.SwitchEpoch != m.switchEpoch {
@@ -1339,7 +1360,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		st.Loading = false
 		st.Error = msg.Error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.ResourceActionExecutedMsg:
 		if msg.SwitchEpoch != m.switchEpoch {
@@ -1373,7 +1395,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		st.Executing = false
 		st.Error = msg.Error
-		return m, nil
+		login, _ := m.autoReloginForError(errors.New(msg.Error))
+		return m, login
 
 	case model.MultiSyncCompletedMsg:
 		// Gate by switch epoch
@@ -1438,6 +1461,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case model.RefreshCompletedMsg:
 		if msg.SwitchEpoch != m.switchEpoch {
 			return m, nil
+		}
+		if login, handled := m.autoReloginForError(msg.Error); handled {
+			return m, login
 		}
 		// Handle single app refresh completion
 		if msg.Success {
@@ -1570,6 +1596,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case model.RollbackMetadataErrorMsg:
 		if row := m.rollbackRowForMetadataReply(msg.SwitchEpoch, msg.AppName, msg.Revision, msg.RowIndex); row != nil {
 			row.MetaError = &msg.Error
+			login, _ := m.autoReloginForError(errors.New(msg.Error))
+			return m, login
 		}
 		return m, nil
 
@@ -1612,6 +1640,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Username != "" {
 			m.currentUsername = msg.Username
 		}
+		if msg.Mode == model.ModeLoading {
+			m.markContextAuthenticated(m.currentContextName)
+		}
 		if msg.Mode == model.ModeAuthRequired && msg.NeedsLogin {
 			if cmd, handled := m.maybeAutoRelogin(); handled {
 				return m, cmd
@@ -1621,6 +1652,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case contextReloginMsg:
 		return m.handleContextRelogin(msg)
+	case applicationSetsMsg:
+		return m.handleApplicationSets(msg)
 
 	case model.ContextSwitchResultMsg:
 		return m.handleContextSwitchResult(msg)

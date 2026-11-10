@@ -1084,7 +1084,7 @@ func (m *Model) refreshMultipleApplications(hard bool) tea.Cmd {
 	epoch := m.switchEpoch
 	if m.state.Server == nil {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No server configured"}
+			return model.ApiErrorMsg{Message: "No server configured", SwitchEpoch: epoch}
 		}
 	}
 
@@ -1095,7 +1095,7 @@ func (m *Model) refreshMultipleApplications(hard bool) tea.Cmd {
 
 	if len(selectedApps) == 0 {
 		return func() tea.Msg {
-			return model.ApiErrorMsg{Message: "No applications selected"}
+			return model.ApiErrorMsg{Message: "No applications selected", SwitchEpoch: epoch}
 		}
 	}
 
@@ -1115,6 +1115,9 @@ func (m *Model) refreshMultipleApplications(hard bool) tea.Cmd {
 			cancel()
 			if err != nil {
 				cblog.With("component", "api").Error("Refresh failed for app", "app", appName, "err", err)
+				if requiresRelogin(err) {
+					return model.AuthErrorMsg{Error: err, SwitchEpoch: epoch}
+				}
 				// Continue with other apps
 			}
 		}

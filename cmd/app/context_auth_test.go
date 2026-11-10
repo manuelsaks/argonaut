@@ -28,15 +28,24 @@ func TestMain(m *testing.M) {
 		args := os.Args[1:]
 		index := slices.Index(args, "--config")
 		contextIndex := slices.Index(args, "--argocd-context")
-		if index < 0 || contextIndex < 0 || contextIndex+1 >= len(args) || args[contextIndex+1] != "prod" {
+		if index < 0 || contextIndex < 0 || contextIndex+1 >= len(args) || !slices.Contains([]string{"dev", "prod"}, args[contextIndex+1]) {
 			os.Exit(8)
 		}
 		path := args[index+1]
+		if userInfo := os.Getenv("ARGONAUT_TEST_CLI_USERINFO"); userInfo != "" {
+			fmt.Print(userInfo)
+			os.Exit(0)
+		}
 		data, err := os.ReadFile(path)
 		if err != nil {
 			os.Exit(9)
 		}
-		data = []byte(strings.ReplaceAll(string(data), "prod-test-token", "renewed-test-token"))
+		name := args[contextIndex+1]
+		renewed := "renewed-test-token"
+		if name == "dev" {
+			renewed = "renewed-dev-test-token"
+		}
+		data = []byte(strings.ReplaceAll(string(data), name+"-test-token", renewed))
 		if err := os.WriteFile(path, data, 0o600); err != nil {
 			os.Exit(10)
 		}
@@ -92,9 +101,10 @@ func TestAutoReloginRefreshesOnlySelectedContextViaCLI(t *testing.T) {
 	if err != nil || dev.Token != "dev-test-token" || cfg.CurrentContext != "dev" {
 		t.Fatal("refresh must not change another context or current-context")
 	}
-	if _, handled := updated.maybeAutoRelogin(); handled {
-		t.Fatal("failed renewed credentials must not trigger an immediate login loop")
+	if cmd, handled := updated.maybeAutoRelogin(); !handled || cmd == nil || !updated.reloginInProgress {
+		t.Fatal("an API rejection after the silent CLI probe must escalate to SSO")
 	}
+	updated.cancelContextRelogin()
 }
 
 func TestAutoReloginFallsBackToSSOAndThrottlesFailures(t *testing.T) {

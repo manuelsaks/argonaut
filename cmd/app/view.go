@@ -331,7 +331,9 @@ func (m *Model) View() tea.View {
 
 	v := tea.NewView(content)
 	v.AltScreen = true
-	v.MouseMode = tea.MouseModeCellMotion // Drag selection without reporting every hover to the terminal.
+	if m.config.Clipboard.MouseSelection {
+		v.MouseMode = tea.MouseModeCellMotion
+	}
 	return v
 }
 

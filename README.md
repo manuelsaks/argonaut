@@ -195,7 +195,10 @@ ApplicationSets. `:` opens commands and `?` shows full help. View shortcuts do
 not intercept text input or bypass confirmation dialogs.
 
 For SSO, open contexts and press `Ctrl+A` on a row to toggle **auto-login** for that
-context. Preferences persist in Argonaut's config. On an authentication failure,
+context. Preferences persist in Argonaut's config. Selecting an enabled context
+checks/renews its session before loading. Selecting `all` does this for every
+enabled context, serially, so browser callbacks and CLI config writes cannot clash.
+On an authentication failure in any Argo CD view,
 Argonaut first asks the Argo CD CLI to refresh the session silently. If a new SSO
 login is necessary, it hands the terminal to `argocd relogin`, which can open your
 browser, then reloads credentials and returns to the TUI. Press `Ctrl+L` to log in
@@ -364,6 +367,8 @@ The default `cli` instance reads `$XDG_CONFIG_HOME/kargo/config`, or
 | `5` | Freight: alias, origin and artifacts |
 | `d` / `y` | Compact describe / full YAML |
 | `Ctrl+P` | Select Stage and Freight, then open promotion confirmation |
+| `Ctrl+T` | Retry a Failed, Errored or Aborted Promotion (list or describe); press again to confirm |
+| `Ctrl+Y` | Copy the whole displayed YAML/describe document or focused diff pane |
 | `Ctrl+R` | Fetch fresh data immediately |
 | `Ctrl+L` | Browser SSO for the current/selected instance |
 | `Ctrl+A` | Enable/disable automatic SSO for that instance |
@@ -383,6 +388,11 @@ step execution results and error messages. Its status refreshes until terminal;
 Ctrl+R also refreshes manually. Esc cancels before submission. A lost response
 never causes an automatic retry: check Promotions before submitting again.
 Server RBAC and promotion eligibility checks remain authoritative.
+
+Retry follows the [Kargo UI](https://github.com/akuity/kargo/blob/main/ui/src/features/stage/promotions.tsx):
+it creates a new Promotion for the original Freight and Stage, using the current
+Stage template. It starts a new run; it does not resume the failed step.
+The original Promotion is re-read before submission to reject stale selections.
 
 Normal mode polls only the visible data every 10 seconds. Low-bandwidth mode
 uses the global network interval (two minutes by default); `refresh_interval = "0"`
@@ -420,9 +430,25 @@ and a promotion is never replayed after login. Only HTTP 401 triggers automatic
 login; HTTP 403 is shown as an RBAC error and stops background retries.
 See the official [Kargo SSO login documentation](https://docs.kargo.io/user-guide/how-to-guides/logging-in).
 
-Mouse selections remain highlighted after release and are copied automatically.
-The selected screen stays stable during watch updates. Ctrl+C or Ctrl+Y copies
-again; Esc clears the selection. Windows uses its native Unicode clipboard.
+Mouse selection is handled by the terminal by default, as in k9s. Drag to select
+and use the terminal's Copy shortcut (Ctrl+Shift+C in Windows Terminal,
+Ctrl+Insert in Git Bash/mintty). Ctrl+Y inside YAML/describe copies the whole
+document using the native Windows Unicode clipboard. Clipboard failures are
+reported instead of displaying a false success.
+
+To opt into Argonaut's own selection and automatic copy on release:
+
+```toml
+[clipboard]
+mouse_selection = true
+```
+
+In this mode the selected screen stays stable during watch updates; Ctrl+C or
+Ctrl+Y copies the selection again, and Esc clears it.
+
+ApplicationSets are fetched directly from Argo CD, including sets with no
+generated Applications. The registry is cached for five minutes;
+Ctrl+R in the AppSets view bypasses the cache. API/RBAC errors appear in the view.
 
 ## Advanced Features
 

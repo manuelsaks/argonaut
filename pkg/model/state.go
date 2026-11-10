@@ -199,6 +199,7 @@ type ModalState struct {
 
 // AppState represents the complete application state for Bubbletea
 type AppState struct {
+	ApplicationSets    []ApplicationSet    `json:"applicationSets,omitempty"`
 	DestinationServers []DestinationServer `json:"destinationServers,omitempty"`
 	Mode               Mode                `json:"mode"`
 	Terminal           TerminalState       `json:"terminal"`

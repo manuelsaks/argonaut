@@ -74,6 +74,11 @@ func CopyCmd(text string) tea.Cmd {
 			cblog.Info("Copied to clipboard via native method", "len", len(text))
 			return CopyMsg{Success: true, Text: text, Method: "native"}
 		}
+		// Windows terminals may silently ignore OSC 52. Report native failures
+		// instead of displaying a false success and printing an escape sequence.
+		if runtime.GOOS == "windows" {
+			return CopyMsg{Success: false}
+		}
 
 		// Fall back to OSC 52 - actually send the escape sequence
 		cblog.Info("Native clipboard failed, trying OSC 52")

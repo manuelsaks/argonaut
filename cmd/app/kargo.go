@@ -21,7 +21,7 @@ type kargoCacheEntry struct {
 	Items []kargo.Resource
 	At    time.Time
 }
-type kargoPromotion struct{ Connection, Server, Project, Stage, Freight string }
+type kargoPromotion struct{ Connection, Server, Project, Stage, Freight, RetryOf string }
 type kargoUIState struct {
 	Connections                             []kargo.Connection
 	Connection                              int
@@ -298,6 +298,7 @@ func (m *Model) handleKargoLoaded(msg kargoLoadedMsg) (tea.Model, tea.Cmd) {
 		return m, m.nextKargoRefresh()
 	}
 	st.Client, st.Updated = msg.Client, m.now()
+	delete(st.LoginAttempts, st.Connections[st.Connection].Name)
 	st.SessionIdentity = st.Connections[st.Connection].SessionIdentity()
 	if msg.Object != nil {
 		st.Detail = msg.Object
@@ -436,6 +437,15 @@ func (m *Model) executeKargoPromotion() tea.Cmd {
 	st.Cancel = cancel
 	return func() tea.Msg {
 		defer cancel()
+		if target.RetryOf != "" {
+			previous, err := client.Get(ctx, "Promotion", target.Project, target.RetryOf)
+			if err != nil {
+				return kargoPromotedMsg{epoch, seq, target, kargo.Resource{}, err}
+			}
+			if !kargoPromotionRetryable(previous) || previous.String("spec.stage") != target.Stage || previous.String("spec.freight") != target.Freight {
+				return kargoPromotedMsg{epoch, seq, target, kargo.Resource{}, fmt.Errorf("promotion changed or is no longer retryable; refresh Promotions")}
+			}
+		}
 		promotion, err := client.Promote(ctx, target.Project, target.Stage, target.Freight)
 		return kargoPromotedMsg{epoch, seq, target, promotion, err}
 	}

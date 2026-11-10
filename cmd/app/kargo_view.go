@@ -92,14 +92,23 @@ func (m *Model) renderKargoHeader() string {
 		legend = []viewHotkey{{"ctrl-c", "quit"}}
 	case st.Confirm:
 		legend = []viewHotkey{{"ctrl-p", "confirm promotion"}, {"j/k", "scroll"}, {"esc", "cancel"}}
+		if st.Draft != nil && st.Draft.RetryOf != "" {
+			legend[0] = viewHotkey{"ctrl-t", "confirm retry"}
+		}
 	case m.state.Mode == model.ModeSearch || m.state.Mode == model.ModeCommand:
 		legend = []viewHotkey{{"enter", "apply"}, {"esc", "cancel"}}
 	case m.state.Diff != nil:
-		legend = []viewHotkey{{"d/y", "describe/YAML"}, {"ctrl-r", "refresh"}, {"/", "find"}, {"esc", "back"}}
+		legend = []viewHotkey{{"d/y", "describe/YAML"}, {"ctrl-y", "copy"}, {"ctrl-r", "refresh"}, {"/", "find"}, {"esc", "back"}}
+		if _, retryable := m.selectedKargoPromotion(); retryable {
+			legend = append(legend, viewHotkey{"ctrl-t", "retry"})
+		}
 	default:
 		legend = []viewHotkey{{"enter", "open"}, {"ctrl-r", "refresh"}, {"ctrl-l", "SSO"}, {"ctrl-a", "auto SSO"}}
 		if st.Kind == "Stage" || st.Kind == "Freight" {
 			legend = append(legend, viewHotkey{"ctrl-p", "promote"})
+		}
+		if _, retryable := m.selectedKargoPromotion(); retryable {
+			legend = append(legend, viewHotkey{"ctrl-t", "retry"})
 		}
 		if st.Kind != "Connection" {
 			legend = append(legend, viewHotkey{"d/y", "describe/YAML"})
@@ -180,6 +189,10 @@ func (m *Model) renderKargoView() string {
 		draft := st.Draft
 		if draft != nil {
 			lines = []string{headerStyle.Render("PROMOTE FREIGHT"), "", "Instance: " + kargoSingleLine(draft.Connection), "Server: " + kargoSingleLine(draft.Server), "Project: " + kargoSingleLine(draft.Project), "Stage: " + kargoSingleLine(draft.Stage), "Freight: " + kargoSingleLine(draft.Freight), "", "Ctrl+P: submit this promotion   Esc: cancel"}
+			if draft.RetryOf != "" {
+				lines[0] = headerStyle.Render("RETRY PROMOTION")
+				lines = append(lines[:len(lines)-1], "Previous: "+kargoSingleLine(draft.RetryOf), "Creates a new Promotion for the same Freight and Stage, using the current Stage template.", "Ctrl+T: confirm retry   Esc: cancel")
+			}
 			if st.Executing {
 				lines[len(lines)-1] = "Submitting once... waiting for the Kargo API response"
 			}

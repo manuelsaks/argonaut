@@ -61,10 +61,7 @@ func (m *Model) finalizeSelection() (tea.Model, tea.Cmd) {
 
 		if text != "" {
 			// Return command to copy to clipboard and show status
-			return m, tea.Batch(
-				clipboard.CopyCmd(text),
-				m.showCopiedStatus(),
-			)
+			return m, clipboard.CopyCmd(text)
 		}
 	}
 	// Clear selection

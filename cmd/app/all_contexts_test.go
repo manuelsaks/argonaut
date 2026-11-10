@@ -33,6 +33,8 @@ func allContextsTestModel(t *testing.T) *Model {
 				fmt.Fprintf(w, `{"items":[{"metadata":{"name":"web","namespace":"argocd","ownerReferences":[{"kind":"ApplicationSet","name":"websites"}]},"spec":{"destination":{"name":"site1","namespace":"apps"}},"status":{"sync":{"status":"Synced"},"health":{"status":"Healthy"}}}]}`)
 			case "/api/v1/clusters":
 				w.Write([]byte(`{"items":[{"name":"site1","server":"https://same-cluster.example"}]}`))
+			case "/api/v1/applicationsets":
+				fmt.Fprint(w, `{"items":[{"metadata":{"name":"websites","namespace":"argocd"}},{"metadata":{"name":"empty-set","namespace":"argocd"}}]}`)
 			case "/api/v1/applications/web":
 				if r.URL.Query().Get("appNamespace") != "argocd" {
 					t.Error("missing Application namespace")
@@ -76,6 +78,8 @@ func driveAllContextLoads(t *testing.T, m *Model, msg tea.Msg) {
 	case allContextLoadedMsg:
 		m.Update(msg)
 	case allContextDestinationsMsg:
+		m.Update(msg)
+	case applicationSetsMsg:
 		m.Update(msg)
 	default:
 		t.Fatalf("unexpected all-context load result %T", msg)

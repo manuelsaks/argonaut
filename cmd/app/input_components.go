@@ -1156,6 +1156,7 @@ func (m *Model) handleEnhancedCommandModeKeys(msg tea.KeyMsg) (tea.Model, tea.Cm
 				// Show ApplicationSets list
 				m.state.Selections.ScopeApplicationSets = model.NewStringSet()
 				m = m.safeChangeView(model.ViewApplicationSets)
+				return m, m.ensureApplicationSets()
 			}
 			return m, nil
 		case "help":

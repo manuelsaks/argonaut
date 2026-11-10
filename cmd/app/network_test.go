@@ -35,7 +35,7 @@ func networkOverviewModel(t *testing.T, serverURL string) *Model {
 }
 
 func TestOverviewCachesRegistryAndManualRefreshBypassesCache(t *testing.T) {
-	var apps, registries atomic.Int32
+	var apps, registries, appsets atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/v1/applications":
@@ -44,6 +44,9 @@ func TestOverviewCachesRegistryAndManualRefreshBypassesCache(t *testing.T) {
 		case "/api/v1/clusters":
 			registries.Add(1)
 			fmt.Fprint(w, `{"items":[{"name":"site1","server":"https://site1.example"}]}`)
+		case "/api/v1/applicationsets":
+			appsets.Add(1)
+			fmt.Fprint(w, `{"items":[]}`)
 		default:
 			t.Errorf("unexpected request: %s", r.URL)
 			w.WriteHeader(404)
@@ -52,7 +55,7 @@ func TestOverviewCachesRegistryAndManualRefreshBypassesCache(t *testing.T) {
 	defer server.Close()
 	m := networkOverviewModel(t, server.URL)
 	driveAllContextLoads(t, m, m.loadAllContexts(false)())
-	if apps.Load() != 2 || registries.Load() != 1 {
+	if apps.Load() != 2 || registries.Load() != 1 || appsets.Load() != 1 {
 		t.Fatalf("fresh registry was downloaded again: apps=%d registry=%d", apps.Load(), registries.Load())
 	}
 	m.allContexts.DestinationFetchedAt["vpn"] = m.now().Add(-6 * time.Minute)
@@ -61,7 +64,7 @@ func TestOverviewCachesRegistryAndManualRefreshBypassesCache(t *testing.T) {
 		t.Fatal("expired registry was not refreshed")
 	}
 	driveAllContextLoads(t, m, m.reloadAllContexts()())
-	if apps.Load() != 4 || registries.Load() != 3 {
+	if apps.Load() != 4 || registries.Load() != 3 || appsets.Load() != 2 {
 		t.Fatal("manual refresh must bypass cache")
 	}
 	raw, err := os.ReadFile(m.argoConfigPath)

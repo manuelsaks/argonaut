@@ -140,6 +140,9 @@ type PortForwardConfig struct {
 
 // ClipboardConfig holds settings for clipboard operations
 type ClipboardConfig struct {
+	// MouseSelection enables in-app drag selection. The default leaves the
+	// mouse to the terminal, including its own Copy / Ctrl+Shift+C shortcuts.
+	MouseSelection bool `toml:"mouse_selection,omitempty"`
 	// CopyCommand is the command to copy text to clipboard.
 	// Text is passed via stdin. Examples: "pbcopy", "xclip -selection clipboard", "wl-copy"
 	CopyCommand string `toml:"copy_command,omitempty"`

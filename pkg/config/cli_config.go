@@ -214,6 +214,16 @@ func (c *ArgoCLIConfig) GetContextNames() []string {
 
 // ToServerConfigForContext converts a named context to a Server model
 func (c *ArgoCLIConfig) ToServerConfigForContext(contextName string) (*model.Server, error) {
+	return c.serverConfigForContext(contextName, true)
+}
+
+// ConnectionForContext also resolves logged-out contexts so the CLI can renew
+// their credentials. It still validates the saved context and server binding.
+func (c *ArgoCLIConfig) ConnectionForContext(contextName string) (*model.Server, error) {
+	return c.serverConfigForContext(contextName, false)
+}
+
+func (c *ArgoCLIConfig) serverConfigForContext(contextName string, requireToken bool) (*model.Server, error) {
 	// Find context
 	var ctx *ArgoContext
 	for i := range c.Contexts {
@@ -243,7 +253,7 @@ func (c *ArgoCLIConfig) ToServerConfigForContext(contextName string) (*model.Ser
 	}
 
 	// Find user token
-	if ctx.User == "" {
+	if ctx.User == "" && requireToken {
 		return nil, fmt.Errorf("no user specified for context %q", contextName)
 	}
 	var token string
@@ -253,7 +263,7 @@ func (c *ArgoCLIConfig) ToServerConfigForContext(contextName string) (*model.Ser
 			break
 		}
 	}
-	if token == "" {
+	if token == "" && requireToken {
 		return nil, fmt.Errorf("no auth token found for user %s in context %q", ctx.User, contextName)
 	}
 

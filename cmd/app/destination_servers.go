@@ -52,6 +52,10 @@ func (m *Model) handleDestinationServers(msg destinationServersMsg) (tea.Model, 
 	m.destinationError = ""
 	if msg.Error != nil {
 		m.destinationError = msg.Error.Error()
+		if login, handled := m.autoReloginForError(msg.Error); handled {
+			m.destinationError = "SSO: signing in..."
+			return m, login
+		}
 		return m, nil
 	}
 	m.destinationLoaded = true
@@ -70,6 +74,14 @@ func (m *Model) handleDestinationServers(msg destinationServersMsg) (tea.Model, 
 
 func (m *Model) rebuildAppIndex() {
 	m.state.Index = model.BuildAppIndex(m.state.Apps)
+	for _, set := range m.state.ApplicationSets {
+		key := set.Key()
+		if _, exists := m.state.Index.ByApplicationSet[key]; !exists {
+			m.state.Index.ApplicationSets = append(m.state.Index.ApplicationSets, key)
+			m.state.Index.ByApplicationSet[key] = nil
+		}
+	}
+	sort.Strings(m.state.Index.ApplicationSets)
 	// Keep existing scope aliases working; server rows use exact URL/project keys.
 	for _, server := range m.state.DestinationServers {
 		m.state.Index.ByCluster[server.Key()] = nil
@@ -173,6 +185,9 @@ func (m *Model) refreshCurrentView() (tea.Model, tea.Cmd) {
 	}
 	if m.state.Navigation.View == model.ViewClusters {
 		return m, m.loadDestinationServers()
+	}
+	if m.state.Navigation.View == model.ViewApplicationSets {
+		return m, m.loadApplicationSets()
 	}
 	return m.handleRefreshCommand("", false)
 }

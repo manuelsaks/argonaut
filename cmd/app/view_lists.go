@@ -160,6 +160,9 @@ func (m *Model) renderListHeader() string {
 		return headerStyle.Render(m.dimensionRow("SERVER NAME", "APPS", "ADDRESS / PROJECT"))
 	}
 	if m.state.Navigation.View == model.ViewApplicationSets {
+		if heading := m.applicationSetListHeading(); heading != "" {
+			return headerStyle.Render(clipAnsiToWidth(heading, m.contentInnerWidth()))
+		}
 		return headerStyle.Render(m.dimensionRow("APPSET NAME", "APPS", "DESTINATION / NAMESPACE"))
 	}
 

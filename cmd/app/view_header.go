@@ -22,7 +22,7 @@ func (m *Model) viewHotkeys() []viewHotkey {
 		return []viewHotkey{{"ctrl-l", "SSO login"}, {"c", "contexts"}, {"q", "quit"}}
 	case model.ModeDiff:
 		if m.inspection != nil {
-			return []viewHotkey{{"d", "describe"}, {"y", "YAML"}, {"tab", "describe/diff"}, {"ctrl-r", "reload"}, {"j/k", "scroll"}, {"h/l", "pan"}, {"/", "find"}, {"esc/q", "back"}}
+			return []viewHotkey{{"d", "describe"}, {"y", "YAML"}, {"ctrl-y", "copy"}, {"tab", "describe/diff"}, {"ctrl-r", "reload"}, {"j/k", "scroll"}, {"h/l", "pan"}, {"/", "find"}, {"esc/q", "back"}}
 		}
 		return []viewHotkey{{"j/k", "scroll"}, {"h/l", "pan"}, {"/", "filter"}, {"esc/q", "close"}}
 	case model.ModeConfirmSync:
