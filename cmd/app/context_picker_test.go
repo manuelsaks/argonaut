@@ -243,14 +243,14 @@ func TestContextSwitchRejectsStaleAndCancelledResults(t *testing.T) {
 	}
 }
 
-func TestContextPickerReadErrorPreservesCurrentView(t *testing.T) {
+func TestContextPickerReadErrorStillOpensNavigablePicker(t *testing.T) {
 	m := contextPickerTestModel(t)
 	if err := os.Remove(m.argoConfigPath); err != nil {
 		t.Fatal(err)
 	}
 	_, _ = m.handleKeyMsg(testKeyMsg("c"))
-	if m.state.Navigation.View != model.ViewApps || m.currentContextName != "prod" {
-		t.Fatal("unreadable config must not change the view or context")
+	if m.state.Navigation.View != model.ViewContexts || m.state.Mode != model.ModeNormal || m.currentContextName != "prod" {
+		t.Fatal("unreadable config must not trap the user outside the picker")
 	}
 	if !strings.Contains(stripANSI(m.renderStatusLine()), "Cannot load Argo CD contexts") {
 		t.Fatal("config read error must be visible in the UI")

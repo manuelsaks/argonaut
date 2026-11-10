@@ -1,0 +1,49 @@
+Startup / unauthorized recovery / responsive browser SSO - 2026-11-10
+
+Root causes
+- Initial startup validated the saved server directly, bypassing the proactive
+  auto-login path used for explicit context selection.
+- Full-screen authentication/error states could mask the context picker.
+  The advertised numeric context shortcut was accepted only in normal mode.
+- Browser SSO used tea.ExecProcess, which suspends Bubble Tea's event loop for
+  the full browser/MFA wait, so navigation and context switching stopped.
+
+Changes
+- Argo CD startup renders the context picker before network or CLI work.
+- Immediately start saved automatic SSO for the current context.
+- Handle unauthorized validation/structured/API/auth messages through one
+  recovery path: clear error/loading overlays, retire the rejected session's
+  async results, show contexts and attempt enabled SSO.
+- Run the official context-bound CLI browser login asynchronously without
+  taking the terminal's input. Keep subprocess output private and cancel the
+  subprocess on context selection or exit. Do not replay writes.
+- Keep the picker open and navigable on missing CLI, cancelled/failed SSO,
+  missing credentials or unreadable CLI config.
+- A successful login in the picker refreshes credentials without stealing
+  focus; Enter opens the chosen context and starts a fresh API load.
+- Ensure selecting the initial current-context row actually loads it rather
+  than treating it as an already-loaded no-op.
+- Accept 0/c from startup and error views. Advertise Ctrl+C to exit when an
+  Applications view has not been loaded yet.
+
+Verification
+- PASS: GOTOOLCHAIN=go1.26.10 go test -race -mod=readonly -timeout=180s ./cmd/... ./pkg/... ./scripts
+  See startup-race.log.
+- PASS: final focused startup, unauthorized recovery, context-switch cancellation,
+  real Bubble Tea event-loop responsiveness and header/layout tests.
+  See startup-final.log.
+- The real event-loop test starts a fake CLI subprocess that waits for SSO
+  completion and verifies row navigation, help, context picker and quit while
+  it remains running. It does not simply invoke individual key handlers.
+- PASS: Windows native PTY smoke test with expired fixture credentials and an
+  unreachable local server: startup shows contexts, k changes the selected row,
+  and Ctrl+C exits. No company endpoints were used.
+- PASS: native PTY TestTerminalWindowsRestoresConsoleModes.
+- PASS: Windows amd64 build, Git Bash startup, Linux amd64 cross-build.
+
+Windows artifact
+C:\tmp\argonaut\argonaut.exe
+SHA256: CA5C3A16572E3337940FEE16DC3178D66AC5356A0F50A4B3C3A3867CE8EC9CD0
+
+Real corporate IdP/MFA was not accessed; CLI login and API error behavior were
+verified with local fixtures and subprocesses.

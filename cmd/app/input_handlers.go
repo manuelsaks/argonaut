@@ -1948,7 +1948,7 @@ func (m *Model) handleKeyMsg(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 	// reached or its token expired. Do not intercept text input or confirmations.
-	if msg.String() == "c" {
+	if msg.String() == "c" || msg.String() == "0" {
 		switch m.state.Mode {
 		case model.ModeNormal, model.ModeLoading, model.ModeAuthRequired, model.ModeConnectionError, model.ModeError:
 			return m.openContextPicker()

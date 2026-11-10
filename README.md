@@ -194,14 +194,20 @@ available in that view, in a layout inspired by k9s. Press `0`/`c` for contexts,
 ApplicationSets. `:` opens commands and `?` shows full help. View shortcuts do
 not intercept text input or bypass confirmation dialogs.
 
+Argo CD starts in the context picker. Saved automatic SSO for the current context
+starts immediately. The picker remains usable while the CLI waits for browser/MFA
+completion; failed or missing authentication returns here instead of an error screen.
+Enter opens the selected context. `0` or `c` also opens the picker from error views.
+
 For SSO, open contexts and press `Ctrl+A` on a row to toggle **auto-login** for that
 context. Preferences persist in Argonaut's config. Selecting an enabled context
 checks/renews its session before loading. Selecting `all` does this for every
 enabled context, serially, so browser callbacks and CLI config writes cannot clash.
 On an authentication failure in any Argo CD view,
 Argonaut first asks the Argo CD CLI to refresh the session silently. If a new SSO
-login is necessary, it hands the terminal to `argocd relogin`, which can open your
-browser, then reloads credentials and returns to the TUI. Press `Ctrl+L` to log in
+login is necessary, it runs `argocd relogin` in the background, which opens your
+browser, then reloads credentials. The TUI keeps handling keys during SSO.
+Press `Ctrl+L` to log in
 manually for the selected context (or the active context outside the picker).
 SSO/MFA can still require confirmation in the browser. Failed or cancelled login
 attempts are throttled; interrupted sync/delete actions are never retried.

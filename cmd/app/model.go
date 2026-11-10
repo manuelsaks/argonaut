@@ -186,6 +186,7 @@ type Model struct {
 	currentContextName string // Active ArgoCD context name
 	switchEpoch        int    // Incremented on each context switch; captured by async closures
 	contextSwitchSeq   int    // Latest context switch request within this epoch
+	contextNeedsLoad   bool   // Picker opened before a usable authenticated app load.
 	reloginSeq         int
 	reloginInProgress  bool
 	reloginAttempts    map[string]time.Time
@@ -383,6 +384,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// Mode messages
 	case model.SetModeMsg:
+		if msg.Mode == model.ModeAuthRequired {
+			return m.recoverArgoAuthentication(true)
+		}
 		if m.reloginInProgress && (msg.Mode == model.ModeAuthRequired || msg.Mode == model.ModeConnectionError || msg.Mode == model.ModeLoading) {
 			return m, nil // Late API errors must not replace an active SSO login.
 		}
@@ -743,9 +747,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if requiresRelogin(msg.Error) {
-			if cmd, handled := m.maybeAutoRelogin(); handled {
-				return m, cmd
-			}
+			return m.recoverArgoAuthentication(true)
+		}
+		if msg.Error != nil && msg.Error.Category == apperrors.ErrorAuth {
+			return m.recoverArgoAuthentication(false)
 		}
 		// Handle structured errors with proper error state management
 		if msg.Error != nil {
@@ -799,9 +804,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if msg.StatusCode != 403 && (msg.StatusCode == 401 || requiresRelogin(errors.New(msg.Message))) {
-			if cmd, handled := m.maybeAutoRelogin(); handled {
-				return m, cmd
-			}
+			return m.recoverArgoAuthentication(true)
 		}
 		m.cleanupAppWatcher()
 		// If we're already in auth-required mode, suppress generic API errors to avoid
@@ -938,39 +941,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.SwitchEpoch != m.switchEpoch {
 			return m, nil
 		}
-		if requiresRelogin(msg.Error) {
-			if cmd, handled := m.maybeAutoRelogin(); handled {
-				return m, cmd
-			}
-		}
-		m.cleanupAppWatcher()
-		// Log error and store in model for display
-		m.statusService.Error(msg.Error.Error())
-		m.err = msg.Error
-
-		// Turn off initial loading modal if it was active
-		m.state.Modals.InitialLoading = false
-
-		// Handle rollback-specific auth errors
-		if m.state.Mode == model.ModeRollback {
-			// Initialize rollback state with error if not exists
-			if m.state.Rollback == nil && m.state.Modals.RollbackAppName != nil {
-				m.state.Rollback = &model.RollbackState{
-					AppName: *m.state.Modals.RollbackAppName,
-					Loading: false,
-					Error:   "Authentication required: " + msg.Error.Error(),
-					Mode:    "list",
-				}
-			} else if m.state.Rollback != nil {
-				// Update existing rollback state with auth error
-				m.state.Rollback.Loading = false
-				m.state.Rollback.Error = "Authentication required: " + msg.Error.Error()
-			}
-			// Stay in rollback mode to show the error
-			return m, nil
-		}
-
-		return m, tea.Batch(func() tea.Msg { return model.SetModeMsg{Mode: model.ModeAuthRequired} })
+		return m.recoverArgoAuthentication(requiresRelogin(msg.Error))
 
 	// Navigation update messages
 	case model.NavigationUpdateMsg:
@@ -1643,10 +1614,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Mode == model.ModeLoading {
 			m.markContextAuthenticated(m.currentContextName)
 		}
-		if msg.Mode == model.ModeAuthRequired && msg.NeedsLogin {
-			if cmd, handled := m.maybeAutoRelogin(); handled {
-				return m, cmd
-			}
+		if msg.Mode == model.ModeAuthRequired {
+			return m.recoverArgoAuthentication(msg.NeedsLogin)
 		}
 		return m, func() tea.Msg { return model.SetModeMsg{Mode: msg.Mode} }
 

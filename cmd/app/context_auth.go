@@ -207,9 +207,39 @@ func (m *Model) nextContextRelogin() tea.Cmd {
 
 func (m *Model) autoReloginForError(err error) (tea.Cmd, bool) {
 	if requiresRelogin(err) {
-		return m.maybeAutoRelogin()
+		_, cmd := m.recoverArgoAuthentication(true)
+		return cmd, true
 	}
 	return nil, false
+}
+
+// Authentication is recoverable navigation state, never a full-screen dead end.
+// Keep the picker alive even when SSO is disabled, cancelled or unavailable.
+func (m *Model) recoverArgoAuthentication(renew bool) (tea.Model, tea.Cmd) {
+	if m.state.Navigation.View == model.ViewKargo {
+		return m, nil
+	}
+	var picker tea.Cmd
+	if m.allContexts == nil {
+		m.contextNeedsLoad = true
+		m.cleanupAppWatcher()
+		if m.state.Navigation.View != model.ViewContexts {
+			if !m.reloginInProgress {
+				m.switchEpoch++ // Retire responses from the rejected session.
+			}
+			_, picker = m.openContextPicker()
+		}
+		if m.state.Mode == model.ModeAuthRequired || m.state.Mode == model.ModeError || m.state.Mode == model.ModeConnectionError || m.state.Mode == model.ModeLoading {
+			m.state.Mode = model.ModeNormal
+		}
+		m.state.Modals.InitialLoading = false
+	}
+	if renew {
+		if login, handled := m.maybeAutoRelogin(); handled {
+			return m, tea.Batch(picker, login)
+		}
+	}
+	return m, tea.Batch(picker, m.showFooterNotice("Select a context; Ctrl+L: SSO login; Ctrl+A: auto SSO"))
 }
 
 func (m *Model) beginContextRelogin(name string, automatic bool) tea.Cmd {
@@ -296,16 +326,20 @@ func (m *Model) interactiveContextRelogin(name string, epoch, seq int, path, exe
 			return contextReloginMsg{ContextName: name, SwitchEpoch: epoch, RequestID: seq, Error: err}
 		}
 	}
-	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+	// Browser SSO needs no terminal input. ExecProcess suspends Bubble Tea's
+	// event loop for the entire IdP/MFA wait, trapping the user on the old view.
+	// Run the context-bound CLI in a command goroutine; nil stdin is EOF and
+	// output stays private. Switching context/quit cancels this process.
+	return func() tea.Msg {
 		defer cancel()
 		msg := contextReloginMsg{ContextName: name, SwitchEpoch: epoch, RequestID: seq}
-		if err != nil {
+		if err := cmd.Run(); err != nil {
 			msg.Error = fmt.Errorf("Argo CD CLI login did not complete; Ctrl+L retries")
 			return msg
 		}
 		msg.Server, msg.Error = readReloggedServer(path, name)
 		return msg
-	})
+	}
 }
 
 func (m *Model) cancelContextRelogin() {
@@ -340,14 +374,19 @@ func (m *Model) handleContextRelogin(msg contextReloginMsg) (tea.Model, tea.Cmd)
 		msg.Error = fmt.Errorf("CLI did not return context credentials")
 	}
 	if msg.Error != nil {
-		if m.allContexts == nil && m.state.Navigation.View != model.ViewContexts {
-			m.state.Mode = model.ModeAuthRequired
+		m.reloginAttempts[msg.ContextName] = m.now()
+		var picker tea.Cmd
+		if m.allContexts == nil && m.state.Navigation.View != model.ViewKargo {
+			m.contextNeedsLoad = true
+			if m.state.Navigation.View != model.ViewContexts {
+				_, picker = m.openContextPicker()
+			}
 		}
 		next := m.nextContextRelogin()
 		if next == nil && m.allContexts != nil {
 			next = m.reloadAllContexts()
 		}
-		return m, tea.Batch(m.showFooterNotice("Login failed: "+msg.ContextName+": "+msg.Error.Error()), next)
+		return m, tea.Batch(picker, m.showFooterNotice("Login failed: "+msg.ContextName+": "+msg.Error.Error()), next)
 	}
 	if m.reloginValidated == nil {
 		m.reloginValidated = map[string]bool{}
@@ -379,6 +418,13 @@ func (m *Model) handleContextRelogin(msg contextReloginMsg) (tea.Model, tea.Cmd)
 	}
 	if m.state.Server != nil && msg.Server.BaseURL != m.state.Server.BaseURL {
 		return m, m.showFooterNotice("Context server changed during login; select the context again")
+	}
+	if m.state.Navigation.View == model.ViewContexts {
+		m.state.Server = msg.Server
+		m.state.Apps, m.state.ApplicationSets, m.state.DestinationServers = nil, nil, nil
+		m.rebuildAppIndex()
+		m.contextNeedsLoad = true
+		return m, tea.Batch(m.showFooterNotice("Logged in: "+msg.ContextName+"; Enter: open context"), m.nextContextRelogin())
 	}
 	m.contextSwitchSeq++
 	return m.handleContextSwitchResult(model.ContextSwitchResultMsg{

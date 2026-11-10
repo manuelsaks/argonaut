@@ -193,19 +193,17 @@ func (m *Model) Init() tea.Cmd {
 	if m.state.Navigation.View == model.ViewKargo && m.kargo != nil {
 		return tea.Batch(append(cmds, m.loadKargoView(false))...)
 	}
-	if m.state.Server != nil {
-		cmds = append(cmds, func() tea.Msg { return model.SetInitialLoadingMsg{Loading: true} })
+	if m.state.Mode == model.ModeCoreDetected {
+		return tea.Batch(append(cmds, m.validateAuthentication(), m.scheduleInitialUpdateCheck())...)
 	}
-
-	cmds = append(cmds,
-		// Validate authentication if server is configured
-		m.validateAuthentication(),
-		// Start periodic update check (delayed)
-		m.scheduleInitialUpdateCheck(),
-	)
-
-	_ = context.TODO() // keep import stable if unused on some builds
-	_ = time.Second
+	// Render a usable picker before dispatching any network/CLI work. An
+	// expired default context must never be the application's entry screen.
+	m.contextNeedsLoad = true
+	_, picker := m.openContextPicker()
+	cmds = append(cmds, picker, m.scheduleInitialUpdateCheck())
+	if login, handled := m.maybeAutoRelogin(); handled {
+		cmds = append(cmds, login)
+	}
 	return tea.Batch(cmds...)
 }
 

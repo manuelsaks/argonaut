@@ -32,9 +32,24 @@ func TestMain(m *testing.M) {
 			os.Exit(8)
 		}
 		path := args[index+1]
-		if userInfo := os.Getenv("ARGONAUT_TEST_CLI_USERINFO"); userInfo != "" {
+		if userInfo := os.Getenv("ARGONAUT_TEST_CLI_USERINFO"); userInfo != "" && slices.Contains(args, "get-user-info") {
 			fmt.Print(userInfo)
 			os.Exit(0)
+		}
+		if waitDir := os.Getenv("ARGONAUT_TEST_CLI_WAIT_DIR"); waitDir != "" && !slices.Contains(args, "get-user-info") {
+			if err := os.WriteFile(filepath.Join(waitDir, "started"), []byte("ready"), 0600); err != nil {
+				os.Exit(11)
+			}
+			deadline := time.Now().Add(20 * time.Second)
+			for {
+				if _, err := os.Stat(filepath.Join(waitDir, "continue")); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					os.Exit(12)
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
@@ -87,8 +102,8 @@ func TestAutoReloginRefreshesOnlySelectedContextViaCLI(t *testing.T) {
 	}
 	result, load := m.Update(msg)
 	updated := result.(*Model)
-	if load == nil || updated == m || updated.switchEpoch != 1 || updated.state.Server.Token != "renewed-test-token" || updated.currentContextName != "prod" {
-		t.Fatal("renewed credentials should replace the server and reload data")
+	if load == nil || updated.switchEpoch != 1 || updated.state.Server.Token != "renewed-test-token" || updated.currentContextName != "prod" || updated.state.Navigation.View != model.ViewContexts || updated.state.Mode != model.ModeNormal {
+		t.Fatal("renewed credentials should return to an operable context picker")
 	}
 	if len(updated.state.Apps) != 0 {
 		t.Fatal("old authenticated data must not survive the reload")
@@ -120,7 +135,7 @@ func TestAutoReloginFallsBackToSSOAndThrottlesFailures(t *testing.T) {
 	}
 	_, interactive := m.Update(msg)
 	if interactive == nil || !m.reloginInProgress {
-		t.Fatal("SSO must run through terminal handoff")
+		t.Fatal("SSO must run asynchronously while the picker remains available")
 	}
 	// Simulate cancelled/failed SSO; a subsequent 401 must not reopen it.
 	_, _ = m.Update(contextReloginMsg{ContextName: "prod", SwitchEpoch: m.switchEpoch, RequestID: m.reloginSeq, Error: errors.New("cancelled")})
@@ -281,7 +296,7 @@ func (m *reloginRoundTripModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func TestInteractiveSSOHandsOffTerminalAndReloadsCLICredentials(t *testing.T) {
+func TestBrowserSSORunsAsynchronouslyAndReloadsCLICredentials(t *testing.T) {
 	m := &reloginRoundTripModel{Model: authTestModel(t)}
 	p := tea.NewProgram(m, tea.WithInput(nil), tea.WithOutput(io.Discard), tea.WithoutRenderer())
 	if _, err := p.Run(); err != nil {

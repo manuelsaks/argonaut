@@ -17,14 +17,22 @@ func (m *Model) openContextPicker() (tea.Model, tea.Cmd) {
 		configPath = config.GetConfigPath()
 	}
 	cfg, err := config.ReadCLIConfigFromPath(configPath)
-	if err != nil {
-		message := "Cannot load Argo CD contexts: " + err.Error()
-		m.statusService.Error(message)
-		return m, m.showFooterNotice(message)
-	}
 	m.contextSwitchSeq++
-	m.state.ContextNames = cfg.GetContextNames()
+	if err == nil {
+		m.state.ContextNames = cfg.GetContextNames()
+	}
 	m.state.Mode = model.ModeNormal
+	m.err = nil
+	m.state.CurrentError = nil
+	if m.state.ErrorState != nil {
+		m.state.ErrorState.Current = nil
+	}
+	m.state.Modals = model.ModalState{}
+	m.cancelResourceInspection()
+	m.state.Diff = nil
+	m.selection.Clear()
+	m.selectionSnapshot, m.selectedText = "", ""
+	m.inputComponents.BlurInputs()
 	m.state.UI.SearchQuery = ""
 	m.state.UI.ActiveFilter = ""
 	m = m.safeChangeView(model.ViewContexts)
@@ -45,11 +53,19 @@ func (m *Model) openContextPicker() (tea.Model, tea.Cmd) {
 	m.listNav.SetItemCount(len(m.getVisibleItems()))
 	m.listNav.SetViewportHeight(m.listViewportHeight())
 	m.listNav.SetCursor(m.state.Navigation.SelectedIdx)
+	if err != nil {
+		message := "Cannot load Argo CD contexts: " + err.Error()
+		m.statusService.Error(message)
+		return m, m.showFooterNotice(message)
+	}
 	return m, nil
 }
 
 func (m *Model) closeContextPicker() (tea.Model, tea.Cmd) {
 	m.contextSwitchSeq++ // Cancel a switch whose result has not arrived yet.
+	if m.contextNeedsLoad {
+		return m, m.showFooterNotice("Select an Argo CD context; Ctrl+L: SSO login")
+	}
 	m.state.UI.SearchQuery = ""
 	m.state.UI.ActiveFilter = ""
 	m = m.safeChangeView(model.ViewApps)
@@ -60,6 +76,9 @@ func (m *Model) closeContextPicker() (tea.Model, tea.Cmd) {
 // performContextSwitch re-reads the ArgoCD config and resolves the named context.
 // Returns a ContextSwitchResultMsg with the new server config or an error.
 func (m *Model) performContextSwitch(contextName string) tea.Cmd {
+	// A login completing while this selection resolves must not steal focus
+	// back or invalidate the user's context-switch result.
+	m.cancelContextRelogin()
 	epoch := m.switchEpoch
 	m.contextSwitchSeq++
 	seq := m.contextSwitchSeq
@@ -70,10 +89,11 @@ func (m *Model) performContextSwitch(contextName string) tea.Cmd {
 	currentCtx := m.currentContextName
 	fromOverview := m.allContexts != nil
 	autoLogin := m.config.IsAutoReloginEnabled(contextName)
+	needsLoad := m.contextNeedsLoad
 	return func() tea.Msg {
 		result := model.ContextSwitchResultMsg{ContextName: contextName, SwitchEpoch: epoch, RequestID: seq}
 		// Same-context no-op
-		if contextName == currentCtx && !fromOverview && !autoLogin {
+		if contextName == currentCtx && !fromOverview && !autoLogin && !needsLoad {
 			return result
 		}
 
@@ -122,7 +142,7 @@ func (m *Model) handleContextSwitchResult(msg model.ContextSwitchResultMsg) (tea
 		m.statusService.Error(message)
 		return m, m.showFooterNotice(message)
 	}
-	if msg.ContextName == m.currentContextName && !msg.Reload && m.allContexts == nil && !m.config.IsAutoReloginEnabled(msg.ContextName) {
+	if msg.ContextName == m.currentContextName && !msg.Reload && m.allContexts == nil && !m.config.IsAutoReloginEnabled(msg.ContextName) && !m.contextNeedsLoad {
 		m.statusService.Set("Already on context: " + msg.ContextName)
 		if m.state.Navigation.View == model.ViewContexts {
 			return m.closeContextPicker()

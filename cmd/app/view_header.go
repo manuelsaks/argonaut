@@ -49,7 +49,11 @@ func (m *Model) viewHotkeys() []viewHotkey {
 		return []viewHotkey{{"c", "contexts"}, {"ctrl-l", "SSO login"}, {"ctrl-c", "quit"}}
 	}
 	if m.state.Navigation.View == model.ViewContexts {
-		return []viewHotkey{{"enter", "switch"}, {"ctrl-a", "auto-login on/off"}, {"ctrl-l", "SSO login"}, {"/", "filter"}, {"esc", "apps"}}
+		back := viewHotkey{"esc", "apps"}
+		if m.contextNeedsLoad {
+			back = viewHotkey{"ctrl-c", "quit"}
+		}
+		return []viewHotkey{{"enter", "switch"}, {"ctrl-a", "auto-login on/off"}, {"ctrl-l", "SSO login"}, {"/", "filter"}, back}
 	}
 	if m.state.Navigation.View == model.ViewTree {
 		return []viewHotkey{{"enter/e", "events"}, {"h/l", "fold/unfold"}, {"space", "select"}, {"ctrl-s", "sync"}, {"d", "describe"}, {"y", "YAML"}, {"ctrl-r", "refresh"}, {"ctrl-a", "actions"}, {"ctrl-d", "delete"}, {"ctrl-b", "rollback"}, {"ctrl-t", "terminate"}, {"ctrl-k", "k9s"}, {"u/i", "scroll events"}, {"esc", "back"}}

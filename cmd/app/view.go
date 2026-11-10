@@ -681,9 +681,9 @@ func (m *Model) renderAuthRequiredView() string {
 
 	// Instructions (matches AuthRequiredView.tsx instructions array)
 	instructions := []string{
-		"Press L to log in with the Argo CD CLI and return here.",
-		"Press c to select another Argo CD context.",
-		"In contexts, press a to enable automatic SSO login per context.",
+		"Press Ctrl+L to log in with browser SSO.",
+		"Press 0 or c to select another Argo CD context.",
+		"In contexts, press Ctrl+A to enable automatic SSO per context.",
 	}
 
 	// Header - ArgoNaut Banner
